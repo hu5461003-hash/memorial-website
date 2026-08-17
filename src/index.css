@@ -1,0 +1,155 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  font-family: "Noto Serif SC", Georgia, serif;
+  line-height: 1.7;
+  font-weight: 400;
+  color: #4A3B47;
+  background-color: #FFF5F7;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+}
+
+body {
+  /* 淡粉奶油底 + 极淡纸纹噪点 */
+  background-color: #FFF5F7;
+  position: relative;
+  overflow-x: hidden;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.78 0 0 0 0 0.6 0 0 0 0 0.65 0 0 0 0.04 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  opacity: 0.6;
+  mix-blend-mode: multiply;
+}
+
+#root {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+  isolation: isolate;
+}
+
+@layer components {
+  .page-shell {
+    @apply mx-auto w-full max-w-[480px] px-5 pt-6 pb-20;
+  }
+
+  .page-title {
+    @apply font-hand text-2xl text-ink tracking-wide;
+  }
+
+  .card {
+    @apply bg-cream-200 rounded-card border border-coffee-line/70 shadow-paper;
+  }
+
+  .btn-gold {
+    @apply inline-flex items-center justify-center gap-1.5 rounded-soft border border-gold/60 bg-gold/10 px-4 py-2 text-sm font-medium text-coffee transition-all hover:bg-gold/20 hover:border-gold active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-1.5 rounded-soft border border-coffee-line px-4 py-2 text-sm text-ink-soft transition-all hover:bg-cream-200 hover:text-ink active:scale-[0.98];
+  }
+
+  .input-line {
+    @apply w-full bg-transparent border-0 border-b border-coffee-line px-0 py-2 text-ink placeholder:text-ink-mute focus:outline-none focus:border-gold transition-colors;
+  }
+
+  .field-label {
+    @apply text-xs text-ink-mute tracking-wide mb-1;
+  }
+}
+
+/* Leaflet 马卡龙粉定制 */
+.leaflet-container {
+  background: #FFF0F3;
+  font-family: "Noto Serif SC", serif;
+  font-size: 13px;
+}
+
+.leaflet-popup-content-wrapper {
+  background: #FFFFFF;
+  border: 1px solid #F5D5DD;
+  border-radius: 12px;
+  box-shadow: 0 6px 20px -4px rgba(74, 59, 71, 0.18);
+  color: #4A3B47;
+}
+
+.leaflet-popup-content {
+  margin: 12px 14px;
+  line-height: 1.6;
+}
+
+.leaflet-popup-tip {
+  background: #FFFFFF;
+  border: 1px solid #F5D5DD;
+}
+
+.leaflet-bar a,
+.leaflet-control-attribution {
+  background: #FFFFFF !important;
+  color: #8A7A85 !important;
+  border-color: #F5D5DD !important;
+}
+
+.leaflet-bar a:hover {
+  background: #FFF0F3 !important;
+}
+
+.leaflet-control-zoom {
+  border: 1px solid #F5D5DD !important;
+  border-radius: 8px !important;
+  overflow: hidden;
+}
+
+/* 自定义樱花粉标记 */
+.fp-marker {
+  background: #E8919F;
+  border: 2px solid #FFFFFF;
+  border-radius: 50%;
+  box-shadow: 0 2px 6px rgba(74, 59, 71, 0.3);
+}
+
+/* 滚动条克制 */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #F5D5DD;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #E8919F;
+}
+
+/* 选区樱花粉 */
+::selection {
+  background: rgba(232, 145, 159, 0.3);
+  color: #4A3B47;
+}

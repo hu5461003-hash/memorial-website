@@ -1,0 +1,137 @@
+import { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
+import { Map, BookOpen, Mail, Image, Feather, Video } from "lucide-react";
+import MusicButton from "@/components/MusicButton";
+import BottomNav from "@/components/BottomNav";
+import { useBanners } from "@/hooks/useBanners";
+import { useContent } from "@/hooks/useContent";
+import { cn } from "@/lib/utils";
+
+const ENTRIES = [
+  { to: "/map", title: "足迹地图", desc: "九座城市，一条暖色的河", Icon: Map },
+  { to: "/letter", title: "纪念长信", desc: "写给那段时光", Icon: BookOpen },
+  { to: "/messages", title: "温暖留言", desc: "留下一张便签", Icon: Mail },
+  { to: "/gallery", title: "私密相册", desc: "需要一把小钥匙", Icon: Image },
+] as const;
+
+export default function Home() {
+  const { banners } = useBanners();
+  const { getValue } = useContent();
+  const [activeIdx, setActiveIdx] = useState(0);
+  const timerRef = useRef<number | null>(null);
+
+  // Banner 自动轮播（5s）
+  useEffect(() => {
+    if (banners.length <= 1) return;
+    timerRef.current = window.setInterval(() => {
+      setActiveIdx((i) => (i + 1) % banners.length);
+    }, 5000);
+    return () => {
+      if (timerRef.current) window.clearInterval(timerRef.current);
+    };
+  }, [banners.length]);
+
+  const banner = banners[activeIdx] ?? banners[0];
+  const bannerTitle = getValue("home.banner_title");
+  const bannerSubtitle = getValue("home.banner_subtitle");
+  const footerText = getValue("home.footer");
+
+  return (
+    <div className="page-shell animate-fade-in">
+      {/* 右上角音乐控制 */}
+      <div className="flex justify-end pb-3">
+        <MusicButton />
+      </div>
+
+      {/* Banner 区 */}
+      <section className="relative overflow-hidden rounded-card border border-coffee-line/70 shadow-paper">
+        <div className="relative aspect-[16/10] w-full bg-gold/10">
+          {banner && (
+            <img
+              src={banner.image_url}
+              alt={banner.title ?? "banner"}
+              className="absolute inset-0 h-full w-full object-cover transition-opacity duration-700"
+            />
+          )}
+          {/* 粉色渐变蒙层，确保整体粉色基调 */}
+          <div className="absolute inset-0 bg-gradient-to-t from-gold-deep/40 via-gold/10 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-br from-pink-200/30 to-transparent" />
+
+          {/* 标题与副标题 */}
+          <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-6">
+            <div className="mb-3 flex items-center gap-2 text-cream-50/90 animate-fade-up">
+              <span className="h-px w-8 bg-cream-50/60" />
+              <Feather className="h-4 w-4" strokeWidth={1.6} />
+              <span className="h-px w-8 bg-cream-50/60" />
+            </div>
+            {bannerTitle && (
+              <h1
+                className="font-hand text-4xl text-cream-50 tracking-wider drop-shadow-[0_2px_8px_rgba(74,59,71,0.4)] animate-fade-up"
+                style={{ animationDelay: "0.1s" }}
+              >
+                {bannerTitle}
+              </h1>
+            )}
+            {bannerSubtitle && (
+              <p
+                className="mt-3 max-w-[16rem] text-sm leading-relaxed text-cream-50/95 drop-shadow-[0_1px_4px_rgba(74,59,71,0.4)] animate-fade-up"
+                style={{ animationDelay: "0.25s" }}
+              >
+                {bannerSubtitle}
+              </p>
+            )}
+          </div>
+
+          {/* 轮播指示点 */}
+          {banners.length > 1 && (
+            <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-1.5">
+              {banners.map((_, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  aria-label={`第 ${i + 1} 张`}
+                  onClick={() => setActiveIdx(i)}
+                  className={cn(
+                    "h-1.5 rounded-full transition-all",
+                    i === activeIdx
+                      ? "w-5 bg-cream-50"
+                      : "w-1.5 bg-cream-50/50",
+                  )}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* 入口卡片网格 */}
+      <section className="mt-6 grid grid-cols-2 gap-3 pb-8">
+        {ENTRIES.map(({ to, title, desc, Icon }, idx) => (
+          <Link
+            key={to}
+            to={to}
+            className="group flex flex-col items-start gap-2 rounded-card border border-coffee-line/70 bg-cream-200 p-4 shadow-paper transition-all hover:-translate-y-0.5 hover:border-gold/50 hover:shadow-[0_6px_18px_-4px_rgba(74,59,71,0.12)] active:scale-[0.98] animate-fade-up"
+            style={{ animationDelay: `${0.2 + idx * 0.08}s` }}
+          >
+            <span className="inline-flex h-9 w-9 items-center justify-center rounded-soft bg-gold/10 text-coffee transition-colors group-hover:bg-gold/20">
+              <Icon className="h-4.5 w-4.5" strokeWidth={1.7} />
+            </span>
+            <div>
+              <h3 className="font-hand text-lg text-ink">{title}</h3>
+              <p className="mt-0.5 text-xs text-ink-mute">{desc}</p>
+            </div>
+          </Link>
+        ))}
+      </section>
+
+      {/* 底部留白与署名 */}
+      {footerText && (
+        <p className="pt-2 text-center text-[11px] tracking-widest text-ink-mute/70">
+          {footerText}
+        </p>
+      )}
+
+      <BottomNav />
+    </div>
+  );
+}
