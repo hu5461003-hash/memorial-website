@@ -81,3 +81,69 @@ export type Video = {
   duration: string | null;
   created_at: string;
 };
+
+// ============ 动态组件 / 自由排版 ============
+
+export type SectionType =
+  | "marquee"       // 无限滚动相册
+  | "timeline"      // 恋爱时间轴
+  | "custom_html"   // 自定义代码块
+  | "heading"       // 标题文字
+  | "spacer";       // 留白间隔
+
+export type PageSection = {
+  id: string;
+  page_name: string;
+  section_type: SectionType;
+  content_data: Record<string, unknown>;
+  sort_order: number;
+  active: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+// ============ 全局主题设置 ============
+
+export type ThemeSettings = {
+  bg_color: string;
+  text_color: string;
+  primary_color: string;
+  card_color: string;
+  border_color: string;
+  base_font_size: string;
+  heading_font_size: string;
+  font_family: string;
+};
+
+export const DEFAULT_THEME: ThemeSettings = {
+  bg_color: "#FFF5F7",
+  text_color: "#4A3B47",
+  primary_color: "#E8919F",
+  card_color: "#FFF0F3",
+  border_color: "#F5D5DD",
+  base_font_size: "16px",
+  heading_font_size: "24px",
+  font_family: "Noto Serif SC",
+};
+
+// ============ SEO / 站点元数据 ============
+
+export type SiteMeta = {
+  id: string;
+  meta_key: string;
+  meta_value: string | null;
+  updated_at: string;
+};
+
+export const DEFAULT_SITE_META: Record<string, string> = {
+  site_title: "记录",
+  site_description: "一段跨越九座城市的旅程记录",
+  favicon_url: "/favicon.svg",
+  og_title: "记录",
+  og_description: "走过的地方 都值得留下",
+  og_image: "",
+  keywords: "纪念,旅程,记录,足迹",
+  author: "",
+  lang: "zh-CN",
+  robots: "index, follow",
+};

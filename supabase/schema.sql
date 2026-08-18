@@ -242,3 +242,87 @@ insert into public.site_content (content_key, page, label, type, content_value, 
 ('gallery.subtitle',     'gallery',  '相册页副标题',       'text',     '一些被暖光留下的瞬间', null, 1)
 on conflict (content_key) do nothing;
 
+
+-- ============================================================
+-- 11. page_sections 表：动态组件 / 自由排版系统
+-- ============================================================
+create table if not exists public.page_sections (
+  id uuid primary key default gen_random_uuid(),
+  page_name text not null default 'home',
+  section_type text not null default 'custom_html',
+  content_data jsonb not null default '{}'::jsonb,
+  sort_order integer not null default 0,
+  active boolean not null default true,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+create index if not exists idx_page_sections_page on public.page_sections(page_name, sort_order);
+alter table public.page_sections enable row level security;
+drop policy if exists "page_sections_public_read" on public.page_sections;
+drop policy if exists "page_sections_admin_write" on public.page_sections;
+create policy "page_sections_public_read" on public.page_sections
+  for select using (true);
+create policy "page_sections_admin_write" on public.page_sections
+  for all
+  using (auth.uid() = '<ADMIN_UID>')
+  with check (auth.uid() = '<ADMIN_UID>');
+
+
+-- ============================================================
+-- 12. theme_settings 表：全局主题样式（单行 JSONB）
+-- ============================================================
+create table if not exists public.theme_settings (
+  id uuid primary key default gen_random_uuid(),
+  settings jsonb not null default '{}'::jsonb,
+  updated_at timestamptz not null default now()
+);
+alter table public.theme_settings enable row level security;
+drop policy if exists "theme_settings_public_read" on public.theme_settings;
+drop policy if exists "theme_settings_admin_write" on public.theme_settings;
+create policy "theme_settings_public_read" on public.theme_settings
+  for select using (true);
+create policy "theme_settings_admin_write" on public.theme_settings
+  for all
+  using (auth.uid() = '<ADMIN_UID>')
+  with check (auth.uid() = '<ADMIN_UID>');
+
+-- 初始化默认主题（单行）
+insert into public.theme_settings (id, settings) values (
+  '00000000-0000-0000-0000-000000000001',
+  '{"bg_color":"#FFF5F7","text_color":"#4A3B47","primary_color":"#E8919F","card_color":"#FFF0F3","border_color":"#F5D5DD","base_font_size":"16px","heading_font_size":"24px","font_family":"Noto Serif SC"}'::jsonb
+) on conflict (id) do nothing;
+
+
+-- ============================================================
+-- 13. site_meta 表：SEO / 网站标题 / 图标 / 社交分享
+-- ============================================================
+create table if not exists public.site_meta (
+  id uuid primary key default gen_random_uuid(),
+  meta_key text not null unique,
+  meta_value text,
+  updated_at timestamptz not null default now()
+);
+alter table public.site_meta enable row level security;
+drop policy if exists "site_meta_public_read" on public.site_meta;
+drop policy if exists "site_meta_admin_write" on public.site_meta;
+create policy "site_meta_public_read" on public.site_meta
+  for select using (true);
+create policy "site_meta_admin_write" on public.site_meta
+  for all
+  using (auth.uid() = '<ADMIN_UID>')
+  with check (auth.uid() = '<ADMIN_UID>');
+
+-- 初始化默认 SEO 元数据
+insert into public.site_meta (meta_key, meta_value) values
+('site_title',       '记录'),
+('site_description', '一段跨越九座城市的旅程记录'),
+('favicon_url',      '/favicon.svg'),
+('og_title',         '记录'),
+('og_description',   '走过的地方 都值得留下'),
+('og_image',         ''),
+('keywords',         '纪念,旅程,记录,足迹'),
+('author',           ''),
+('lang',             'zh-CN'),
+('robots',           'index, follow')
+on conflict (meta_key) do nothing;
+

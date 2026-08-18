@@ -1,5 +1,18 @@
 import { useEffect, useState } from "react";
-import { LogOut, Lock, Mail, AlertCircle, MapPinned, Image as ImageIcon, ImagePlus, FileText, Film } from "lucide-react";
+import {
+  LogOut,
+  Lock,
+  Mail,
+  AlertCircle,
+  MapPinned,
+  Image as ImageIcon,
+  ImagePlus,
+  FileText,
+  Film,
+  LayoutGrid,
+  Palette,
+  Search,
+} from "lucide-react";
 import PageHeader from "@/components/PageHeader";
 import Layout from "@/components/Layout";
 import Loading from "@/components/Loading";
@@ -8,15 +21,29 @@ import PhotoManager from "@/components/admin/PhotoManager";
 import BannerManager from "@/components/admin/BannerManager";
 import ContentManager from "@/components/admin/ContentManager";
 import VideoManager from "@/components/admin/VideoManager";
+import SectionManager from "@/components/admin/SectionManager";
+import ThemeManager from "@/components/admin/ThemeManager";
+import SeoManager from "@/components/admin/SeoManager";
 import { supabase, supabaseReady } from "@/lib/supabase";
 import { useStore } from "@/store/useStore";
 import { cn } from "@/lib/utils";
 
-type Tab = "footprint" | "photo" | "banner" | "content" | "video";
+type Tab =
+  | "footprint"
+  | "photo"
+  | "banner"
+  | "content"
+  | "video"
+  | "sections"
+  | "theme"
+  | "seo";
 
 const TABS: { key: Tab; label: string; Icon: typeof MapPinned }[] = [
   { key: "banner", label: "Banner", Icon: ImagePlus },
   { key: "content", label: "内容", Icon: FileText },
+  { key: "sections", label: "排版", Icon: LayoutGrid },
+  { key: "theme", label: "主题", Icon: Palette },
+  { key: "seo", label: "SEO", Icon: Search },
   { key: "footprint", label: "足迹", Icon: MapPinned },
   { key: "photo", label: "相册", Icon: ImageIcon },
   { key: "video", label: "视频", Icon: Film },
@@ -165,6 +192,9 @@ export default function Admin() {
 
       {tab === "banner" && <BannerManager />}
       {tab === "content" && <ContentManager />}
+      {tab === "sections" && <SectionManager />}
+      {tab === "theme" && <ThemeManager />}
+      {tab === "seo" && <SeoManager />}
       {tab === "footprint" && <FootprintManager />}
       {tab === "photo" && <PhotoManager />}
       {tab === "video" && <VideoManager />}
