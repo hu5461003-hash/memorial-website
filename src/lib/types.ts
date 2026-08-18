@@ -147,6 +147,43 @@ export type SiteMeta = {
   updated_at: string;
 };
 
+// ============ 帖子系统 ============
+
+export type Post = {
+  id: string;
+  title: string;
+  content: string;
+  cover_url: string | null;
+  featured: boolean;
+  is_admin: boolean;
+  nickname: string | null;
+  ip_address: string | null;  // 仅后台可见
+  like_count: number;
+  comment_count: number;
+  share_count: number;
+  created_at: string;
+};
+
+export type PostImage = {
+  id: string;
+  post_id: string;
+  storage_path: string;
+  public_url: string;
+  sort_order: number;
+  created_at: string;
+};
+
+export type PostComment = {
+  id: string;
+  post_id: string;
+  nickname: string | null;
+  content: string;
+  ip_address: string | null;  // 仅后台可见
+  created_at: string;
+};
+
+// ================================================================
+
 export const DEFAULT_SITE_META: Record<string, string> = {
   site_title: "记录",
   site_description: "一段跨越九座城市的旅程记录",

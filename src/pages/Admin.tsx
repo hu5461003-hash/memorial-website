@@ -17,6 +17,7 @@ import {
   Loader2,
   FolderOpen,
   Contact,
+  PenSquare,
 } from "lucide-react";
 import PageHeader from "@/components/PageHeader";
 import Layout from "@/components/Layout";
@@ -31,6 +32,7 @@ import ThemeManager from "@/components/admin/ThemeManager";
 import SeoManager from "@/components/admin/SeoManager";
 import MediaLibrary from "@/components/admin/MediaLibrary";
 import ContactManager from "@/components/admin/ContactManager";
+import PostManager from "@/components/admin/PostManager";
 import { supabase, supabaseReady } from "@/lib/supabase";
 import { useStore } from "@/store/useStore";
 import { cn } from "@/lib/utils";
@@ -46,7 +48,8 @@ type Tab =
   | "theme"
   | "seo"
   | "media"
-  | "contact";
+  | "contact"
+  | "post";
 
 type CardDef = {
   key: Exclude<Tab, "dashboard">;
@@ -138,6 +141,14 @@ const CARDS: CardDef[] = [
     gradient: "from-lime-50 to-emerald-100",
     iconBg: "bg-lime-100 text-lime-600",
   },
+  {
+    key: "post",
+    label: "帖子",
+    desc: "发帖/管理/推荐到首页",
+    Icon: PenSquare,
+    gradient: "from-pink-50 to-rose-100",
+    iconBg: "bg-pink-100 text-pink-500",
+  },
 ];
 
 export default function Admin() {
@@ -158,7 +169,7 @@ export default function Admin() {
 
   const loadCounts = useCallback(async () => {
     if (!supabase) return;
-    const [banners, photos, footprints, videos, sections, content, media] = await Promise.all([
+    const [banners, photos, footprints, videos, sections, content, media, posts] = await Promise.all([
       supabase.from("banners").select("id", { count: "exact", head: true }),
       supabase.from("photos").select("id", { count: "exact", head: true }),
       supabase.from("footprints").select("id", { count: "exact", head: true }),
@@ -166,6 +177,7 @@ export default function Admin() {
       supabase.from("page_sections").select("id", { count: "exact", head: true }),
       supabase.from("site_content").select("id", { count: "exact", head: true }),
       supabase.from("media_library").select("id", { count: "exact", head: true }),
+      supabase.from("posts").select("id", { count: "exact", head: true }),
     ]);
     setCounts({
       banner: banners.count ?? 0,
@@ -175,6 +187,7 @@ export default function Admin() {
       sections: sections.count ?? 0,
       content: content.count ?? 0,
       media: media.count ?? 0,
+      post: posts.count ?? 0,
     });
   }, []);
 
@@ -382,6 +395,7 @@ export default function Admin() {
           {tab === "video" && <VideoManager />}
           {tab === "media" && <MediaLibrary />}
           {tab === "contact" && <ContactManager />}
+          {tab === "post" && <PostManager />}
         </div>
       )}
     </Layout>

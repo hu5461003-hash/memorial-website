@@ -1,13 +1,15 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { Map, BookOpen, Mail, Image, Feather, Video } from "lucide-react";
+import { Map, BookOpen, Mail, Image, Feather, Video, PenSquare, ChevronRight } from "lucide-react";
 import Layout from "@/components/Layout";
-import StoriesBar from "@/components/StoriesBar";
+import PostGrid from "@/components/PostGrid";
+import { usePosts } from "@/hooks/usePosts";
 import { useBanners } from "@/hooks/useBanners";
 import { useContent } from "@/hooks/useContent";
 import { cn } from "@/lib/utils";
 import SectionRenderer from "@/components/SectionRenderer";
 import ContactCard from "@/components/ContactCard";
+import Loading from "@/components/Loading";
 
 const ENTRIES = [
   { to: "/map", title: "足迹地图", desc: "九座城市，一条暖色的河", Icon: Map },
@@ -21,6 +23,11 @@ export default function Home() {
   const { getValue } = useContent();
   const [activeIdx, setActiveIdx] = useState(0);
   const timerRef = useRef<number | null>(null);
+
+  // 首页推荐帖子（仅 featured=true，不涉及私密相册任何数据）
+  const { posts: featuredPosts, loading: featuredLoading } = usePosts({
+    onlyFeatured: true,
+  });
 
   // Banner 自动轮播（5s）
   useEffect(() => {
@@ -40,8 +47,33 @@ export default function Home() {
 
   return (
     <Layout>
-      {/* Stories 横滚头像区（Ins 风） */}
-      <StoriesBar />
+      {/* 推荐帖子（取代原 Stories 横滚头像区） */}
+      <section className="mb-4 mt-1">
+        <div className="mb-2 flex items-center justify-between">
+          <h2 className="flex items-center gap-1.5 text-sm font-bold text-ink">
+            <PenSquare className="h-4 w-4 text-gold" strokeWidth={2} />
+            推荐帖子
+          </h2>
+          <Link
+            to="/posts"
+            className="inline-flex items-center gap-0.5 text-xs text-ink-soft transition-colors hover:text-coffee"
+          >
+            全部
+            <ChevronRight className="h-3.5 w-3.5" strokeWidth={2} />
+          </Link>
+        </div>
+        {featuredLoading ? (
+          <div className="py-6">
+            <Loading tip="" />
+          </div>
+        ) : featuredPosts.length === 0 ? (
+          <div className="rounded-card border border-dashed border-cream-300 bg-cream-200/50 py-6 text-center text-xs text-ink-mute">
+            暂无推荐帖子
+          </div>
+        ) : (
+          <PostGrid posts={featuredPosts} compact showEmpty={false} />
+        )}
+      </section>
 
       {/* Banner 区 */}
       <section className="relative overflow-hidden rounded-card border border-cream-300 shadow-paper">

@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom";
-import { Home, Map, Mail, Image, BookOpen } from "lucide-react";
+import { Home, Map, Mail, Image, BookOpen, PenSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
@@ -7,6 +7,7 @@ const NAV_ITEMS = [
   { to: "/map", label: "足迹", Icon: Map },
   { to: "/letter", label: "长信", Icon: BookOpen },
   { to: "/messages", label: "留言", Icon: Mail },
+  { to: "/posts", label: "帖子", Icon: PenSquare },
   { to: "/gallery", label: "相册", Icon: Image },
 ] as const;
 
