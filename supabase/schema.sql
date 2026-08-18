@@ -326,3 +326,48 @@ insert into public.site_meta (meta_key, meta_value) values
 ('robots',           'index, follow')
 on conflict (meta_key) do nothing;
 
+-- ============================================================
+-- 14. media_library 表：媒体素材库（照片/视频统一管理）
+-- ============================================================
+create table if not exists public.media_library (
+  id uuid primary key default gen_random_uuid(),
+  file_name text not null,
+  media_type text not null default 'image', -- image | video
+  storage_path text not null,
+  public_url text not null,
+  file_size bigint default 0,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists idx_media_type on public.media_library(media_type);
+create index if not exists idx_media_created on public.media_library(created_at desc);
+
+alter table public.media_library enable row level security;
+drop policy if exists "media_public_read" on public.media_library;
+drop policy if exists "media_admin_write" on public.media_library;
+create policy "media_public_read" on public.media_library
+  for select using (true);
+create policy "media_admin_write" on public.media_library
+  for all
+  using (auth.uid() = 'cb05839f-9e99-4db0-b590-ff0501cb8855')
+  with check (auth.uid() = 'cb05839f-9e99-4db0-b590-ff0501cb8855');
+
+-- ============================================================
+-- 15. media 存储桶（公开读取，管理员上传/删除）
+-- ============================================================
+insert into storage.buckets (id, name, public) values
+  ('media', 'media', true)
+on conflict (name) do nothing;
+
+drop policy if exists "media_bucket_public_read" on storage.objects;
+drop policy if exists "media_bucket_admin_upload" on storage.objects;
+drop policy if exists "media_bucket_admin_delete" on storage.objects;
+create policy "media_bucket_public_read" on storage.objects
+  for select using (bucket_id = 'media');
+create policy "media_bucket_admin_upload" on storage.objects
+  for insert
+  with check (bucket_id = 'media' and auth.uid() = 'cb05839f-9e99-4db0-b590-ff0501cb8855');
+create policy "media_bucket_admin_delete" on storage.objects
+  for delete
+  using (bucket_id = 'media' and auth.uid() = 'cb05839f-9e99-4db0-b590-ff0501cb8855');
+

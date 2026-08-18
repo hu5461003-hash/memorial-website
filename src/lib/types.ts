@@ -126,6 +126,18 @@ export const DEFAULT_THEME: ThemeSettings = {
   font_family: "Noto Serif SC",
 };
 
+// ============ 媒体素材库 ============
+
+export type MediaItem = {
+  id: string;
+  file_name: string;
+  media_type: "image" | "video";
+  storage_path: string;
+  public_url: string;
+  file_size: number;
+  created_at: string;
+};
+
 // ============ SEO / 站点元数据 ============
 
 export type SiteMeta = {

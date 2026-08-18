@@ -15,6 +15,7 @@ import {
   ChevronLeft,
   LayoutDashboard,
   Loader2,
+  FolderOpen,
 } from "lucide-react";
 import PageHeader from "@/components/PageHeader";
 import Layout from "@/components/Layout";
@@ -27,6 +28,7 @@ import VideoManager from "@/components/admin/VideoManager";
 import SectionManager from "@/components/admin/SectionManager";
 import ThemeManager from "@/components/admin/ThemeManager";
 import SeoManager from "@/components/admin/SeoManager";
+import MediaLibrary from "@/components/admin/MediaLibrary";
 import { supabase, supabaseReady } from "@/lib/supabase";
 import { useStore } from "@/store/useStore";
 import { cn } from "@/lib/utils";
@@ -40,7 +42,8 @@ type Tab =
   | "video"
   | "sections"
   | "theme"
-  | "seo";
+  | "seo"
+  | "media";
 
 type CardDef = {
   key: Exclude<Tab, "dashboard">;
@@ -116,6 +119,14 @@ const CARDS: CardDef[] = [
     gradient: "from-indigo-50 to-blue-100",
     iconBg: "bg-indigo-100 text-indigo-500",
   },
+  {
+    key: "media",
+    label: "素材库",
+    desc: "照片视频素材与链接",
+    Icon: FolderOpen,
+    gradient: "from-teal-50 to-cyan-100",
+    iconBg: "bg-teal-100 text-teal-600",
+  },
 ];
 
 export default function Admin() {
@@ -136,13 +147,14 @@ export default function Admin() {
 
   const loadCounts = useCallback(async () => {
     if (!supabase) return;
-    const [banners, photos, footprints, videos, sections, content] = await Promise.all([
+    const [banners, photos, footprints, videos, sections, content, media] = await Promise.all([
       supabase.from("banners").select("id", { count: "exact", head: true }),
       supabase.from("photos").select("id", { count: "exact", head: true }),
       supabase.from("footprints").select("id", { count: "exact", head: true }),
       supabase.from("videos").select("id", { count: "exact", head: true }),
       supabase.from("page_sections").select("id", { count: "exact", head: true }),
       supabase.from("site_content").select("id", { count: "exact", head: true }),
+      supabase.from("media_library").select("id", { count: "exact", head: true }),
     ]);
     setCounts({
       banner: banners.count ?? 0,
@@ -151,6 +163,7 @@ export default function Admin() {
       video: videos.count ?? 0,
       sections: sections.count ?? 0,
       content: content.count ?? 0,
+      media: media.count ?? 0,
     });
   }, []);
 
@@ -356,6 +369,7 @@ export default function Admin() {
           {tab === "footprint" && <FootprintManager />}
           {tab === "photo" && <PhotoManager />}
           {tab === "video" && <VideoManager />}
+          {tab === "media" && <MediaLibrary />}
         </>
       )}
     </Layout>
