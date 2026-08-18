@@ -43,11 +43,13 @@ export default function MediaLibrary() {
     setHint(null);
     let ok = 0;
     let fail = 0;
+    let firstError: string | null = null;
     for (const file of Array.from(files)) {
       const isImage = file.type.startsWith("image/");
       const isVideo = file.type.startsWith("video/");
       if (!isImage && !isVideo) {
         fail++;
+        if (!firstError) firstError = `文件「${file.name}」不是图片或视频`;
         continue;
       }
       const ext = file.name.split(".").pop() || (isImage ? "jpg" : "mp4");
@@ -57,6 +59,7 @@ export default function MediaLibrary() {
         .upload(path, file, { cacheControl: "3600", upsert: false });
       if (upErr) {
         fail++;
+        if (!firstError) firstError = `[存储上传失败] ${file.name}: ${upErr.message}${upErr.code ? " (code:" + upErr.code + ")" : ""}`;
         continue;
       }
       const { data: pub } = supabase.storage.from("media").getPublicUrl(path);
@@ -69,18 +72,21 @@ export default function MediaLibrary() {
       });
       if (dbErr) {
         fail++;
+        if (!firstError) firstError = `[数据库写入失败] ${file.name}: ${dbErr.message}${dbErr.code ? " (code:" + dbErr.code + ")" : ""}`;
       } else {
         ok++;
       }
     }
     setUploading(false);
+    let msg = "";
     if (ok > 0 && fail === 0) {
-      setHint(`成功上传 ${ok} 个文件`);
+      msg = `成功上传 ${ok} 个文件`;
     } else if (ok > 0 && fail > 0) {
-      setHint(`上传 ${ok} 个成功，${fail} 个失败`);
+      msg = `上传 ${ok} 个成功，${fail} 个失败。` + (firstError ? `错误：${firstError}` : "");
     } else {
-      setHint(`上传失败 ${fail} 个`);
+      msg = `上传失败 ${fail} 个。` + (firstError ? `错误：${firstError}` : "");
     }
+    setHint(msg);
     load();
   }
 
