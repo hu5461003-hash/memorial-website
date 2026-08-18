@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import {
   LogOut,
   Lock,
@@ -12,6 +12,9 @@ import {
   LayoutGrid,
   Palette,
   Search,
+  ChevronLeft,
+  LayoutDashboard,
+  Loader2,
 } from "lucide-react";
 import PageHeader from "@/components/PageHeader";
 import Layout from "@/components/Layout";
@@ -29,6 +32,7 @@ import { useStore } from "@/store/useStore";
 import { cn } from "@/lib/utils";
 
 type Tab =
+  | "dashboard"
   | "footprint"
   | "photo"
   | "banner"
@@ -38,15 +42,80 @@ type Tab =
   | "theme"
   | "seo";
 
-const TABS: { key: Tab; label: string; Icon: typeof MapPinned }[] = [
-  { key: "banner", label: "Banner", Icon: ImagePlus },
-  { key: "content", label: "内容", Icon: FileText },
-  { key: "sections", label: "排版", Icon: LayoutGrid },
-  { key: "theme", label: "主题", Icon: Palette },
-  { key: "seo", label: "SEO", Icon: Search },
-  { key: "footprint", label: "足迹", Icon: MapPinned },
-  { key: "photo", label: "相册", Icon: ImageIcon },
-  { key: "video", label: "视频", Icon: Film },
+type CardDef = {
+  key: Exclude<Tab, "dashboard">;
+  label: string;
+  desc: string;
+  Icon: typeof MapPinned;
+  gradient: string;
+  iconBg: string;
+};
+
+const CARDS: CardDef[] = [
+  {
+    key: "banner",
+    label: "Banner",
+    desc: "首页轮播图管理",
+    Icon: ImagePlus,
+    gradient: "from-rose-50 to-pink-100",
+    iconBg: "bg-rose-100 text-rose-500",
+  },
+  {
+    key: "content",
+    label: "内容",
+    desc: "各页面文字与图片",
+    Icon: FileText,
+    gradient: "from-amber-50 to-orange-100",
+    iconBg: "bg-amber-100 text-amber-600",
+  },
+  {
+    key: "sections",
+    label: "排版",
+    desc: "动态组件与自由排版",
+    Icon: LayoutGrid,
+    gradient: "from-violet-50 to-purple-100",
+    iconBg: "bg-violet-100 text-violet-500",
+  },
+  {
+    key: "theme",
+    label: "主题",
+    desc: "全站配色与字体",
+    Icon: Palette,
+    gradient: "from-fuchsia-50 to-pink-100",
+    iconBg: "bg-fuchsia-100 text-fuchsia-500",
+  },
+  {
+    key: "seo",
+    label: "SEO",
+    desc: "网站标题与搜索引擎",
+    Icon: Search,
+    gradient: "from-sky-50 to-blue-100",
+    iconBg: "bg-sky-100 text-sky-500",
+  },
+  {
+    key: "footprint",
+    label: "足迹",
+    desc: "地图节点与故事",
+    Icon: MapPinned,
+    gradient: "from-emerald-50 to-teal-100",
+    iconBg: "bg-emerald-100 text-emerald-600",
+  },
+  {
+    key: "photo",
+    label: "相册",
+    desc: "照片上传与管理",
+    Icon: ImageIcon,
+    gradient: "from-orange-50 to-amber-100",
+    iconBg: "bg-orange-100 text-orange-500",
+  },
+  {
+    key: "video",
+    label: "视频",
+    desc: "视频上传与管理",
+    Icon: Film,
+    gradient: "from-indigo-50 to-blue-100",
+    iconBg: "bg-indigo-100 text-indigo-500",
+  },
 ];
 
 export default function Admin() {
@@ -55,13 +124,39 @@ export default function Admin() {
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
-  const [tab, setTab] = useState<Tab>("banner");
+  const [tab, setTab] = useState<Tab>("dashboard");
   const [checking, setChecking] = useState(true);
+  // 统计数据
+  const [counts, setCounts] = useState<Record<string, number>>({});
 
   useEffect(() => {
     const t = setTimeout(() => setChecking(false), 400);
     return () => clearTimeout(t);
   }, []);
+
+  const loadCounts = useCallback(async () => {
+    if (!supabase) return;
+    const [banners, photos, footprints, videos, sections, content] = await Promise.all([
+      supabase.from("banners").select("id", { count: "exact", head: true }),
+      supabase.from("photos").select("id", { count: "exact", head: true }),
+      supabase.from("footprints").select("id", { count: "exact", head: true }),
+      supabase.from("videos").select("id", { count: "exact", head: true }),
+      supabase.from("page_sections").select("id", { count: "exact", head: true }),
+      supabase.from("site_content").select("id", { count: "exact", head: true }),
+    ]);
+    setCounts({
+      banner: banners.count ?? 0,
+      photo: photos.count ?? 0,
+      footprint: footprints.count ?? 0,
+      video: videos.count ?? 0,
+      sections: sections.count ?? 0,
+      content: content.count ?? 0,
+    });
+  }, []);
+
+  useEffect(() => {
+    if (session) loadCounts();
+  }, [session, loadCounts]);
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
@@ -158,46 +253,111 @@ export default function Admin() {
     );
   }
 
+  const activeCard = CARDS.find((c) => c.key === tab);
+
   return (
     <Layout>
-      <PageHeader title="管理后台" subtitle={session.user.email} showBack={false} />
+      {tab === "dashboard" ? (
+        <>
+          <PageHeader title="管理后台" subtitle={session.user.email} showBack={false} />
 
-      <div className="mb-5 flex items-center justify-between gap-2">
-        {/* Tab 栏（横向滚动） */}
-        <div className="flex-1 overflow-x-auto">
-          <div className="inline-flex rounded-soft border border-coffee-line/70 bg-cream-200 p-0.5">
-            {TABS.map(({ key, label, Icon }) => (
-              <button
-                key={key}
-                type="button"
-                onClick={() => setTab(key)}
-                className={cn(
-                  "flex flex-none items-center gap-1.5 rounded-soft px-3 py-1.5 text-xs transition-colors",
-                  tab === key
-                    ? "bg-gold/20 text-coffee"
-                    : "text-ink-mute hover:text-ink-soft",
-                )}
-              >
-                <Icon className="h-3.5 w-3.5" strokeWidth={1.8} />
-                {label}
-              </button>
-            ))}
+          {/* 仪表盘头部 */}
+          <div className="mb-5 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="flex h-9 w-9 items-center justify-center rounded-soft bg-gold/15 text-gold">
+                <LayoutDashboard className="h-4 w-4" strokeWidth={1.8} />
+              </div>
+              <div>
+                <p className="font-hand text-sm text-ink">控制台</p>
+                <p className="text-[10px] text-ink-mute">{session.user.email}</p>
+              </div>
+            </div>
+            <button type="button" onClick={handleLogout} className="btn-ghost flex-none !px-3 !py-1.5 text-xs">
+              <LogOut className="h-3.5 w-3.5" strokeWidth={1.8} />
+              退出
+            </button>
           </div>
-        </div>
-        <button type="button" onClick={handleLogout} className="btn-ghost flex-none">
-          <LogOut className="h-3.5 w-3.5" strokeWidth={1.8} />
-          退出
-        </button>
-      </div>
 
-      {tab === "banner" && <BannerManager />}
-      {tab === "content" && <ContentManager />}
-      {tab === "sections" && <SectionManager />}
-      {tab === "theme" && <ThemeManager />}
-      {tab === "seo" && <SeoManager />}
-      {tab === "footprint" && <FootprintManager />}
-      {tab === "photo" && <PhotoManager />}
-      {tab === "video" && <VideoManager />}
+          {/* 卡片网格 */}
+          <div className="grid grid-cols-2 gap-3">
+            {CARDS.map(({ key, label, desc, Icon, iconBg }) => {
+              const count = counts[key] ?? null;
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => setTab(key)}
+                  className="group relative overflow-hidden rounded-card border border-coffee-line/70 bg-cream-200 p-3.5 text-left shadow-paper transition-all hover:shadow-polaroid hover:-translate-y-0.5 active:translate-y-0 animate-fade-up"
+                >
+                  {/* 图标 */}
+                  <div className={cn("mb-2.5 inline-flex h-9 w-9 items-center justify-center rounded-soft", iconBg)}>
+                    <Icon className="h-4 w-4" strokeWidth={1.8} />
+                  </div>
+                  {/* 文字 */}
+                  <p className="font-hand text-sm text-ink">{label}</p>
+                  <p className="mt-0.5 text-[10px] leading-snug text-ink-mute">{desc}</p>
+                  {/* 数量徽章 */}
+                  {count !== null && (
+                    <span className="absolute right-2 top-2 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-gold/15 px-1.5 text-[10px] font-medium text-coffee">
+                      {count}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* 快捷操作 */}
+          <div className="mt-4 flex items-center gap-2">
+            <a href="/#/" className="btn-ghost flex-1 !py-2 text-xs">
+              <ImageIcon className="h-3.5 w-3.5" strokeWidth={1.8} />
+              查看前台
+            </a>
+            <button
+              type="button"
+              onClick={() => setTab("theme")}
+              className="btn-gold flex-1 !py-2 text-xs"
+            >
+              <Palette className="h-3.5 w-3.5" strokeWidth={1.8} />
+              快捷换肤
+            </button>
+          </div>
+        </>
+      ) : (
+        <>
+          {/* 子页面顶栏 */}
+          <div className="mb-4 flex items-center justify-between gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setTab("dashboard");
+                loadCounts();
+              }}
+              className="flex items-center gap-1.5 rounded-soft px-2 py-1.5 text-xs text-ink-soft transition-colors hover:bg-cream-200 hover:text-ink"
+            >
+              <ChevronLeft className="h-4 w-4" strokeWidth={1.8} />
+              返回
+            </button>
+            <div className="flex items-center gap-1.5">
+              {activeCard && (
+                <div className={cn("inline-flex h-6 w-6 items-center justify-center rounded-soft", activeCard.iconBg)}>
+                  <activeCard.Icon className="h-3.5 w-3.5" strokeWidth={1.8} />
+                </div>
+              )}
+              <span className="font-hand text-sm text-ink">{activeCard?.label}</span>
+            </div>
+          </div>
+
+          {tab === "banner" && <BannerManager />}
+          {tab === "content" && <ContentManager />}
+          {tab === "sections" && <SectionManager />}
+          {tab === "theme" && <ThemeManager />}
+          {tab === "seo" && <SeoManager />}
+          {tab === "footprint" && <FootprintManager />}
+          {tab === "photo" && <PhotoManager />}
+          {tab === "video" && <VideoManager />}
+        </>
+      )}
     </Layout>
   );
 }

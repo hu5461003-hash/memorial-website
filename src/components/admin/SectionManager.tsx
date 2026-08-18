@@ -43,9 +43,10 @@ export default function SectionManager() {
   const [page, setPage] = useState("home");
   const [busy, setBusy] = useState(false);
   const [hint, setHint] = useState<string | null>(null);
-  // 编辑态
+  // 编辑态：可视化对象编辑
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editData, setEditData] = useState("");
+  const [editObj, setEditObj] = useState<Record<string, unknown>>({});
+  const [editType, setEditType] = useState<SectionType>("custom_html");
 
   async function load() {
     const { data } = await supabase
@@ -115,27 +116,61 @@ export default function SectionManager() {
 
   function startEdit(s: PageSection) {
     setEditingId(s.id);
-    setEditData(JSON.stringify(s.content_data, null, 2));
+    setEditType(s.section_type);
+    setEditObj(s.content_data ?? {});
   }
 
   async function saveEdit(s: PageSection) {
     setBusy(true);
-    try {
-      const parsed = JSON.parse(editData);
-      const { error } = await supabase
-        .from("page_sections")
-        .update({ content_data: parsed, updated_at: new Date().toISOString() })
-        .eq("id", s.id);
-      if (error) setHint(`保存失败：${error.message}`);
-      else {
-        setHint(null);
-        setEditingId(null);
-        load();
-      }
-    } catch {
-      setHint("JSON 格式错误，请检查");
+    const { error } = await supabase
+      .from("page_sections")
+      .update({ content_data: editObj, updated_at: new Date().toISOString() })
+      .eq("id", s.id);
+    if (error) {
+      setHint(`保存失败：${error.message}`);
+    } else {
+      setHint(null);
+      setEditingId(null);
+      load();
     }
     setBusy(false);
+  }
+
+  // 编辑器辅助
+  function setField(key: string, val: unknown) {
+    setEditObj((o) => ({ ...o, [key]: val }));
+  }
+
+  function getImageList(): string[] {
+    const arr = editObj.images as string[] | undefined;
+    return Array.isArray(arr) ? arr : [];
+  }
+  function addImage(url: string) {
+    if (!url.trim()) return;
+    const list = getImageList();
+    setField("images", [...list, url.trim()]);
+  }
+  function removeImage(idx: number) {
+    const list = getImageList();
+    setField("images", list.filter((_, i) => i !== idx));
+  }
+
+  function getTimelineItems(): { date: string; text: string }[] {
+    const arr = editObj.items as { date: string; text: string }[] | undefined;
+    return Array.isArray(arr) ? arr : [];
+  }
+  function addTimelineItem() {
+    const items = getTimelineItems();
+    setField("items", [...items, { date: "", text: "" }]);
+  }
+  function updateTimelineItem(idx: number, field: "date" | "text", val: string) {
+    const items = getTimelineItems();
+    items[idx] = { ...items[idx], [field]: val };
+    setField("items", items);
+  }
+  function removeTimelineItem(idx: number) {
+    const items = getTimelineItems();
+    setField("items", items.filter((_, i) => i !== idx));
   }
 
   return (
@@ -245,36 +280,249 @@ export default function SectionManager() {
                   </div>
                 </div>
 
-                {/* 编辑区 */}
+                {/* 可视化编辑区 */}
                 {editingId === s.id ? (
-                  <div className="mt-2">
-                    {s.section_type === "custom_html" ? (
-                      <textarea
-                        value={editData.includes('"html"')
-                          ? (() => { try { return JSON.parse(editData).html ?? ""; } catch { return ""; } })()
-                          : editData}
-                        onChange={(e) => {
-                          try {
-                            const obj = JSON.parse(editData);
-                            obj.html = e.target.value;
-                            setEditData(JSON.stringify(obj, null, 2));
-                          } catch {
-                            setEditData(JSON.stringify({ html: e.target.value }, null, 2));
-                          }
-                        }}
-                        rows={8}
-                        placeholder="<div>自定义 HTML / CSS / JS</div>"
-                        className="w-full resize-y rounded-soft border border-coffee-line/70 bg-cream-50 px-3 py-2 font-mono text-xs focus:border-gold focus:outline-none"
-                      />
-                    ) : (
-                      <textarea
-                        value={editData}
-                        onChange={(e) => setEditData(e.target.value)}
-                        rows={8}
-                        className="w-full resize-y rounded-soft border border-coffee-line/70 bg-cream-50 px-3 py-2 font-mono text-xs focus:border-gold focus:outline-none"
-                      />
+                  <div className="mt-2.5 rounded-soft border border-gold/30 bg-cream-50/80 p-3">
+                    {/* === 标题文字 === */}
+                    {editType === "heading" && (
+                      <div className="space-y-2.5">
+                        <div>
+                          <label className="field-label">标题文字</label>
+                          <input
+                            value={(editObj.text as string) ?? ""}
+                            onChange={(e) => setField("text", e.target.value)}
+                            placeholder="输入标题内容"
+                            className="input-line"
+                          />
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <label className="field-label">标题级别</label>
+                            <div className="flex gap-1">
+                              {(["h2", "h3", "h4"] as const).map((lv) => (
+                                <button
+                                  key={lv}
+                                  type="button"
+                                  onClick={() => setField("level", lv)}
+                                  className={cn(
+                                    "flex-1 rounded-soft border py-1.5 text-xs transition-colors",
+                                    (editObj.level as string) === lv
+                                      ? "border-gold bg-gold/15 text-coffee"
+                                      : "border-coffee-line/50 text-ink-mute hover:text-ink",
+                                  )}
+                                >
+                                  {lv.toUpperCase()}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                          <div>
+                            <label className="field-label">对齐方式</label>
+                            <div className="flex gap-1">
+                              {(["left", "center", "right"] as const).map((al) => (
+                                <button
+                                  key={al}
+                                  type="button"
+                                  onClick={() => setField("align", al)}
+                                  className={cn(
+                                    "flex-1 rounded-soft border py-1.5 text-xs transition-colors",
+                                    (editObj.align as string) === al
+                                      ? "border-gold bg-gold/15 text-coffee"
+                                      : "border-coffee-line/50 text-ink-mute hover:text-ink",
+                                  )}
+                                >
+                                  {{ left: "左", center: "中", right: "右" }[al]}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
                     )}
-                    <div className="mt-1.5 flex gap-2">
+
+                    {/* === 留白间隔 === */}
+                    {editType === "spacer" && (
+                      <div className="space-y-2.5">
+                        <div>
+                          <label className="field-label">
+                            高度：{(editObj.height as number) ?? 32}px
+                          </label>
+                          <input
+                            type="range"
+                            min={8}
+                            max={128}
+                            step={4}
+                            value={(editObj.height as number) ?? 32}
+                            onChange={(e) => setField("height", Number(e.target.value))}
+                            className="w-full accent-gold"
+                          />
+                        </div>
+                        {/* 可视化预览 */}
+                        <div className="rounded-soft border border-coffee-line/50 bg-cream-200">
+                          <div
+                            className="flex items-center justify-center text-[10px] text-ink-mute"
+                            style={{ height: `${(editObj.height as number) ?? 32}px` }}
+                          >
+                            间隔预览
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* === 自定义代码块 === */}
+                    {editType === "custom_html" && (
+                      <div className="space-y-2">
+                        <label className="field-label">HTML / CSS / JS 代码</label>
+                        <textarea
+                          value={(editObj.html as string) ?? ""}
+                          onChange={(e) => setField("html", e.target.value)}
+                          rows={8}
+                          placeholder={'<div style="text-align:center;color:#E8919F;">自定义内容</div>'}
+                          className="w-full resize-y rounded-soft border border-coffee-line/70 bg-cream-50 px-3 py-2 font-mono text-xs focus:border-gold focus:outline-none"
+                        />
+                        {/* 实时预览 */}
+                        <div className="rounded-soft border border-coffee-line/50 bg-white p-2">
+                          <p className="mb-1 text-[10px] text-ink-mute">预览</p>
+                          <div
+                            className="overflow-hidden text-xs"
+                            dangerouslySetInnerHTML={{
+                              __html: (editObj.html as string) ?? "",
+                            }}
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    {/* === 无限滚动相册 === */}
+                    {editType === "marquee" && (
+                      <div className="space-y-2.5">
+                        <div>
+                          <label className="field-label">
+                            滚动速度：{(editObj.speed as number) ?? 30}
+                          </label>
+                          <input
+                            type="range"
+                            min={10}
+                            max={80}
+                            step={5}
+                            value={(editObj.speed as number) ?? 30}
+                            onChange={(e) => setField("speed", Number(e.target.value))}
+                            className="w-full accent-gold"
+                          />
+                        </div>
+                        <div>
+                          <label className="field-label">图片列表</label>
+                          <div className="space-y-1.5">
+                            {getImageList().map((url, i) => (
+                              <div key={i} className="flex items-center gap-1.5">
+                                <img
+                                  src={url}
+                                  alt=""
+                                  className="h-8 w-8 flex-none rounded object-cover"
+                                />
+                                <input
+                                  value={url}
+                                  onChange={(e) => {
+                                    const list = getImageList();
+                                    list[i] = e.target.value;
+                                    setField("images", list);
+                                  }}
+                                  className="input-line flex-1 text-xs"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => removeImage(i)}
+                                  className="flex-none rounded p-1 text-rust/70 hover:bg-rust/10 hover:text-rust"
+                                >
+                                  <Trash2 className="h-3 w-3" strokeWidth={1.8} />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                          <div className="mt-1.5 flex gap-1.5">
+                            <input
+                              id={`add-img-${s.id}`}
+                              placeholder="粘贴图片 URL"
+                              className="input-line flex-1 text-xs"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const el = document.getElementById(`add-img-${s.id}`) as HTMLInputElement;
+                                if (el) {
+                                  addImage(el.value);
+                                  el.value = "";
+                                }
+                              }}
+                              className="btn-ghost flex-none !px-2 !py-1 text-[11px]"
+                            >
+                              <Plus className="h-3 w-3" strokeWidth={1.8} />
+                              添加
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* === 恋爱时间轴 === */}
+                    {editType === "timeline" && (
+                      <div className="space-y-2.5">
+                        <div>
+                          <label className="field-label">时间轴标题</label>
+                          <input
+                            value={(editObj.title as string) ?? ""}
+                            onChange={(e) => setField("title", e.target.value)}
+                            placeholder="如 我们的旅程"
+                            className="input-line"
+                          />
+                        </div>
+                        <div>
+                          <div className="mb-1 flex items-center justify-between">
+                            <label className="field-label mb-0">事件列表</label>
+                            <button
+                              type="button"
+                              onClick={addTimelineItem}
+                              className="text-[11px] text-gold hover:underline"
+                            >
+                              + 添加事件
+                            </button>
+                          </div>
+                          <div className="space-y-1.5">
+                            {getTimelineItems().map((item, i) => (
+                              <div key={i} className="flex items-start gap-1.5">
+                                <input
+                                  type="date"
+                                  value={item.date}
+                                  onChange={(e) => updateTimelineItem(i, "date", e.target.value)}
+                                  className="flex-none rounded-soft border border-coffee-line/50 bg-cream-50 px-2 py-1 text-[11px] focus:border-gold focus:outline-none"
+                                />
+                                <input
+                                  value={item.text}
+                                  onChange={(e) => updateTimelineItem(i, "text", e.target.value)}
+                                  placeholder="事件描述"
+                                  className="input-line flex-1 text-xs"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => removeTimelineItem(i)}
+                                  className="flex-none rounded p-1 text-rust/70 hover:bg-rust/10 hover:text-rust"
+                                >
+                                  <Trash2 className="h-3 w-3" strokeWidth={1.8} />
+                                </button>
+                              </div>
+                            ))}
+                            {getTimelineItems().length === 0 && (
+                              <p className="py-2 text-center text-[11px] text-ink-mute">
+                                点击「添加事件」创建第一个
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* 操作按钮 */}
+                    <div className="mt-3 flex gap-2">
                       <button
                         type="button"
                         onClick={() => saveEdit(s)}
