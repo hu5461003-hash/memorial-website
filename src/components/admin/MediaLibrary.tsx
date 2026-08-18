@@ -59,7 +59,8 @@ export default function MediaLibrary() {
         .upload(path, file, { cacheControl: "3600", upsert: false });
       if (upErr) {
         fail++;
-        if (!firstError) firstError = `[存储上传失败] ${file.name}: ${upErr.message}${upErr.code ? " (code:" + upErr.code + ")" : ""}`;
+        const errCode = "code" in upErr ? (upErr as { code?: string }).code : undefined;
+        if (!firstError) firstError = `[存储上传失败] ${file.name}: ${upErr.message}${errCode ? " (code:" + errCode + ")" : ""}`;
         continue;
       }
       const { data: pub } = supabase.storage.from("media").getPublicUrl(path);
