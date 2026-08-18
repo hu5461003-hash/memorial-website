@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { Map, BookOpen, Mail, Image, Feather, Video } from "lucide-react";
 import Layout from "@/components/Layout";
+import StoriesBar from "@/components/StoriesBar";
 import { useBanners } from "@/hooks/useBanners";
 import { useContent } from "@/hooks/useContent";
 import { cn } from "@/lib/utils";
@@ -39,9 +40,12 @@ export default function Home() {
 
   return (
     <Layout>
+      {/* Stories 横滚头像区（Ins 风） */}
+      <StoriesBar />
+
       {/* Banner 区 */}
-      <section className="relative overflow-hidden rounded-card border border-coffee-line/70 shadow-paper">
-        <div className="relative aspect-[16/10] w-full bg-gold/10">
+      <section className="relative overflow-hidden rounded-card border border-cream-300 shadow-paper">
+        <div className="relative aspect-[16/10] w-full bg-cream-100">
           {banner && (
             <img
               src={banner.image_url}
@@ -49,9 +53,9 @@ export default function Home() {
               className="absolute inset-0 h-full w-full object-cover transition-opacity duration-700"
             />
           )}
-          {/* 粉色渐变蒙层，确保整体粉色基调 */}
-          <div className="absolute inset-0 bg-gradient-to-t from-gold-deep/40 via-gold/10 to-transparent" />
-          <div className="absolute inset-0 bg-gradient-to-br from-pink-200/30 to-transparent" />
+          {/* Ins 风渐变蒙层：底部黑色渐变 + 角落 ins 渐变叠加 */}
+          <div className="absolute inset-0 bg-gradient-to-t from-ink/70 via-ink/20 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-br from-gold/15 via-transparent to-coffee/15 mix-blend-overlay" />
 
           {/* 标题与副标题 */}
           <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-6">
@@ -62,7 +66,7 @@ export default function Home() {
             </div>
             {bannerTitle && (
               <h1
-                className="font-hand text-4xl text-cream-50 tracking-wider drop-shadow-[0_2px_8px_rgba(74,59,71,0.4)] animate-fade-up"
+                className="text-3xl font-bold text-cream-50 tracking-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.5)] animate-fade-up"
                 style={{ animationDelay: "0.1s" }}
               >
                 {bannerTitle}
@@ -70,7 +74,7 @@ export default function Home() {
             )}
             {bannerSubtitle && (
               <p
-                className="mt-3 max-w-[16rem] text-sm leading-relaxed text-cream-50/95 drop-shadow-[0_1px_4px_rgba(74,59,71,0.4)] animate-fade-up"
+                className="mt-3 max-w-[16rem] text-sm leading-relaxed text-cream-50/95 drop-shadow-[0_1px_4px_rgba(0,0,0,0.5)] animate-fade-up"
                 style={{ animationDelay: "0.25s" }}
               >
                 {bannerSubtitle}
@@ -106,15 +110,15 @@ export default function Home() {
           <Link
             key={to}
             to={to}
-            className="group flex flex-col items-start gap-2 rounded-card border border-coffee-line/70 bg-cream-200 p-4 shadow-paper transition-all hover:-translate-y-0.5 hover:border-gold/50 hover:shadow-[0_6px_18px_-4px_rgba(74,59,71,0.12)] active:scale-[0.98] animate-fade-up"
+            className="group flex flex-col items-start gap-2 rounded-card border border-cream-300 bg-cream-200 p-4 shadow-paper transition-all hover:-translate-y-0.5 hover:border-gold/50 hover:shadow-ins active:scale-[0.98] animate-fade-up"
             style={{ animationDelay: `${0.2 + idx * 0.08}s` }}
           >
-            <span className="inline-flex h-9 w-9 items-center justify-center rounded-soft bg-gold/10 text-coffee transition-colors group-hover:bg-gold/20">
-              <Icon className="h-4.5 w-4.5" strokeWidth={1.7} />
+            <span className="inline-flex h-9 w-9 items-center justify-center rounded-soft ins-gradient-soft text-white transition-opacity group-hover:opacity-90">
+              <Icon className="h-4 w-4" strokeWidth={2} />
             </span>
             <div>
-              <h3 className="font-hand text-lg text-ink">{title}</h3>
-              <p className="mt-0.5 text-xs text-ink-mute">{desc}</p>
+              <h3 className="text-base font-bold text-ink">{title}</h3>
+              <p className="mt-0.5 text-xs text-ink-soft">{desc}</p>
             </div>
           </Link>
         ))}

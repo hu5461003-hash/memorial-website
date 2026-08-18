@@ -28,8 +28,8 @@ export default function MusicButton({ className }: { className?: string }) {
         onClick={togglePlay}
         aria-label={isPlaying ? "暂停背景音乐" : "播放背景音乐"}
         className={cn(
-          "fixed bottom-20 right-4 z-50 inline-flex h-11 w-11 items-center justify-center rounded-full border border-coffee-line bg-cream-50/85 shadow-paper backdrop-blur-md transition-all hover:shadow-polaroid active:scale-95",
-          isPlaying && "border-gold/60 bg-gold/20 text-coffee",
+          "fixed bottom-6 right-4 z-50 inline-flex h-11 w-11 items-center justify-center rounded-full border border-cream-300 bg-cream-200/90 shadow-ins backdrop-blur-md transition-all hover:shadow-polaroid active:scale-95",
+          isPlaying && "border-gold/60 bg-gold/15 text-gold",
           className,
         )}
       >

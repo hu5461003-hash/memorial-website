@@ -9,59 +9,68 @@ export default {
     },
     extend: {
       colors: {
-        // 马卡龙色系：粉色为主，辅以薄荷/淡蓝/奶黄
+        // ============ Ins 风配色 ============
+        // 重新定义原有 token 名，颜色值改为 Ins 风
+        // cream 系：背景/卡片
         cream: {
-          50: "#FFF5F7",   // 淡粉奶油背景
-          100: "#FCEAEE",  // 略深粉
-          200: "#FFF0F3",  // 淡粉卡片
-          300: "#F5D5DD",  // 粉描边
+          50: "#FFFFFF",   // 主背景白
+          100: "#FAFAFA",  // 浅灰背景
+          200: "#FFFFFF",  // 卡片白
+          300: "#DBDBDB",  // Ins 标志性浅灰边框
         },
+        // ink 系：文字
         ink: {
-          DEFAULT: "#4A3B47",  // 深紫灰文字
-          soft: "#8A7A85",     // 次级文字
-          mute: "#B5A5B0",     // 弱化文字
+          DEFAULT: "#262626",  // Ins 主黑
+          soft: "#8E8E8E",     // Ins 次灰
+          mute: "#C7C7C7",     // Ins 弱灰
         },
+        // gold 系：强调色（保留 token 名，改为 Ins 红粉渐变色阶）
         gold: {
-          DEFAULT: "#E8919F",  // 樱花粉强调色（token 名保留）
-          deep: "#D67385",     // 深粉，虚线连接色
-          soft: "#F4C2CC",     // 浅粉
-          tint: "#FCEAEE",     // 极浅粉底
+          DEFAULT: "#E1306C",  // Ins 主红粉
+          deep: "#C13584",    // Ins 深紫红
+          soft: "#F5853F",    // Ins 橙
+          tint: "#FCAF45",    // Ins 黄
         },
+        // coffee 系：辅助强调（改为 Ins 紫）
         coffee: {
-          DEFAULT: "#C77B8A",  // 暖粉
-          line: "#F5D5DD",     // 粉描边
+          DEFAULT: "#833AB4",  // Ins 紫
+          line: "#DBDBDB",     // Ins 浅灰边框（与 cream-300 一致）
         },
+        // note 系：便签色（柔和 ins 风）
         note: {
-          yellow: "#FFF4D6",   // 马卡龙奶黄便签
-          pink: "#FCE0E6",     // 马卡龙粉便签
-          blue: "#D6E6F2",     // 马卡龙蓝便签
+          yellow: "#FFF4D6",
+          pink: "#FCE0E6",
+          blue: "#D6E6F2",
         },
         rust: {
-          DEFAULT: "#D8788A",  // 暖红删除
+          DEFAULT: "#ED4956",  // Ins 危险红
         },
       },
       fontFamily: {
-        // 标题：手写感衬线；正文：温润衬线
-        hand: ['"LXGW WenKai TC"', '"LXGW WenKai"', '"Noto Serif SC"', 'serif'],
-        serif: ['"Noto Serif SC"', 'Georgia', 'serif'],
-        sans: ['-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Helvetica', 'Arial', 'sans-serif'],
+        // 全部统一为 Ins 现代无衬线
+        hand: ['-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', '"Helvetica Neue"', 'Helvetica', 'Arial', 'sans-serif'],
+        serif: ['-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', '"Helvetica Neue"', 'Helvetica', 'Arial', 'sans-serif'],
+        sans: ['-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', '"Helvetica Neue"', 'Helvetica', 'Arial', 'sans-serif'],
       },
       borderRadius: {
         soft: '8px',
         card: '12px',
       },
       boxShadow: {
-        paper: '0 2px 12px -2px rgba(74, 59, 71, 0.08), 0 1px 3px -1px rgba(74, 59, 71, 0.06)',
-        polaroid: '0 6px 20px -4px rgba(74, 59, 71, 0.18), 0 2px 6px -2px rgba(74, 59, 71, 0.12)',
-        note: '0 3px 10px -2px rgba(74, 59, 71, 0.12)',
-        soft: '0 1px 4px rgba(74, 59, 71, 0.06)',
+        paper: '0 1px 0 rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.05)',
+        polaroid: '0 2px 12px rgba(0,0,0,0.08)',
+        note: '0 1px 4px rgba(0,0,0,0.04)',
+        soft: '0 1px 2px rgba(0,0,0,0.04)',
+        ins: '0 8px 24px rgba(0,0,0,0.12)',
       },
       backgroundImage: {
-        'paper-noise': "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.55 0 0 0 0 0.5 0 0 0 0 0.45 0 0 0 0.04 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")",
+        // Ins 经典渐变（紫→粉→橙黄）
+        'ins-gradient': 'linear-gradient(45deg, #F5853F 0%, #FCAF45 25%, #E1306C 50%, #C13584 75%, #833AB4 100%)',
+        'ins-gradient-soft': 'linear-gradient(45deg, #FCAF45, #E1306C, #833AB4)',
       },
       keyframes: {
         'fade-up': {
-          '0%': { opacity: '0', transform: 'translateY(12px)' },
+          '0%': { opacity: '0', transform: 'translateY(8px)' },
           '100%': { opacity: '1', transform: 'translateY(0)' },
         },
         'fade-in': {
@@ -74,8 +83,8 @@ export default {
         },
       },
       animation: {
-        'fade-up': 'fade-up 0.7s ease-out both',
-        'fade-in': 'fade-in 0.6s ease-out both',
+        'fade-up': 'fade-up 0.4s ease-out both',
+        'fade-in': 'fade-in 0.3s ease-out both',
         'soft-pulse': 'soft-pulse 2.4s ease-in-out infinite',
       },
     },

@@ -3,11 +3,11 @@
 @tailwind utilities;
 
 :root {
-  font-family: "Noto Serif SC", Georgia, serif;
-  line-height: 1.7;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  line-height: 1.5;
   font-weight: 400;
-  color: #4A3B47;
-  background-color: #FFF5F7;
+  color: #262626;
+  background-color: #FAFAFA;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -28,21 +28,10 @@ body {
 }
 
 body {
-  /* 淡粉奶油底 + 极淡纸纹噪点 */
-  background-color: #FFF5F7;
+  /* Ins 风浅灰背景 */
+  background-color: #FAFAFA;
   position: relative;
   overflow-x: hidden;
-}
-
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.78 0 0 0 0 0.6 0 0 0 0 0.65 0 0 0 0.04 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  opacity: 0.6;
-  mix-blend-mode: multiply;
 }
 
 #root {
@@ -53,88 +42,125 @@ body::before {
 }
 
 @layer components {
+  /* 移动端：窄屏居中 */
   .page-shell {
-    @apply mx-auto w-full max-w-[480px] px-5 pt-6 pb-20;
+    @apply mx-auto w-full max-w-[470px] px-4 pt-20 pb-8;
   }
 
   /* 宽屏布局：管理后台等桌面端使用 */
   .page-shell-wide {
-    @apply mx-auto w-full max-w-[480px] sm:max-w-2xl md:max-w-3xl lg:max-w-5xl xl:max-w-6xl px-5 pt-6 pb-20;
+    @apply mx-auto w-full max-w-[470px] sm:max-w-2xl md:max-w-3xl lg:max-w-5xl xl:max-w-6xl px-4 pt-20 pb-8;
   }
 
   .page-title {
-    @apply font-hand text-2xl text-ink tracking-wide;
+    @apply text-xl font-bold text-ink tracking-tight;
   }
 
   .card {
-    @apply bg-cream-200 rounded-card border border-coffee-line/70 shadow-paper;
+    @apply bg-cream-200 rounded-card border border-cream-300 shadow-paper;
   }
 
+  /* Ins 风按钮：填充型主按钮 */
   .btn-gold {
-    @apply inline-flex items-center justify-center gap-1.5 rounded-soft border border-gold/60 bg-gold/10 px-4 py-2 text-sm font-medium text-coffee transition-all hover:bg-gold/20 hover:border-gold active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply inline-flex items-center justify-center gap-1.5 rounded-soft bg-gold px-4 py-2 text-sm font-semibold text-white transition-all hover:opacity-90 hover:bg-gold active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed;
   }
 
+  /* Ins 风次按钮：白底+边框 */
   .btn-ghost {
-    @apply inline-flex items-center justify-center gap-1.5 rounded-soft border border-coffee-line px-4 py-2 text-sm text-ink-soft transition-all hover:bg-cream-200 hover:text-ink active:scale-[0.98];
+    @apply inline-flex items-center justify-center gap-1.5 rounded-soft border border-cream-300 bg-cream-200 px-4 py-2 text-sm font-medium text-ink-soft transition-all hover:bg-cream-100 hover:text-ink active:scale-[0.98];
   }
 
+  /* 输入框：Ins 风极简底线 */
   .input-line {
-    @apply w-full bg-transparent border-0 border-b border-coffee-line px-0 py-2 text-ink placeholder:text-ink-mute focus:outline-none focus:border-gold transition-colors;
+    @apply w-full bg-cream-100 border-0 border-b border-cream-300 px-0 py-2.5 text-sm text-ink placeholder:text-ink-mute focus:outline-none focus:border-ink-soft transition-colors;
   }
 
   .field-label {
-    @apply text-xs text-ink-mute tracking-wide mb-1;
+    @apply text-xs text-ink-soft tracking-wide mb-1;
   }
 }
 
-/* Leaflet 马卡龙粉定制 */
+/* ============ Ins 渐变工具类 ============ */
+.ins-gradient {
+  background-image: linear-gradient(45deg, #F5853F 0%, #FCAF45 25%, #E1306C 50%, #C13584 75%, #833AB4 100%);
+}
+
+.ins-gradient-soft {
+  background-image: linear-gradient(45deg, #FCAF45, #E1306C, #833AB4);
+}
+
+/* 渐变文字（用于 logo） */
+.ins-gradient-text {
+  background: linear-gradient(45deg, #F5853F 0%, #FCAF45 25%, #E1306C 50%, #C13584 75%, #833AB4 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Stories 头像渐变 ring */
+.ins-ring {
+  background: linear-gradient(45deg, #F5853F 0%, #FCAF45 25%, #E1306C 50%, #C13584 75%, #833AB4 100%);
+  padding: 2px;
+}
+
+/* 隐藏滚动条（Stories 横滚用） */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Leaflet 风格调整为 Ins 简洁 */
 .leaflet-container {
-  background: #FFF0F3;
-  font-family: "Noto Serif SC", serif;
+  background: #FAFAFA;
+  font-family: -apple-system, "Segoe UI", "Helvetica Neue", sans-serif;
   font-size: 13px;
 }
 
 .leaflet-popup-content-wrapper {
   background: #FFFFFF;
-  border: 1px solid #F5D5DD;
+  border: 1px solid #DBDBDB;
   border-radius: 12px;
-  box-shadow: 0 6px 20px -4px rgba(74, 59, 71, 0.18);
-  color: #4A3B47;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  color: #262626;
 }
 
 .leaflet-popup-content {
   margin: 12px 14px;
-  line-height: 1.6;
+  line-height: 1.5;
 }
 
 .leaflet-popup-tip {
   background: #FFFFFF;
-  border: 1px solid #F5D5DD;
+  border: 1px solid #DBDBDB;
 }
 
 .leaflet-bar a,
 .leaflet-control-attribution {
   background: #FFFFFF !important;
-  color: #8A7A85 !important;
-  border-color: #F5D5DD !important;
+  color: #8E8E8E !important;
+  border-color: #DBDBDB !important;
 }
 
 .leaflet-bar a:hover {
-  background: #FFF0F3 !important;
+  background: #FAFAFA !important;
 }
 
 .leaflet-control-zoom {
-  border: 1px solid #F5D5DD !important;
+  border: 1px solid #DBDBDB !important;
   border-radius: 8px !important;
   overflow: hidden;
 }
 
-/* 自定义樱花粉标记 */
+/* 自定义 Ins 风标记 */
 .fp-marker {
-  background: #E8919F;
+  background: linear-gradient(45deg, #FCAF45, #E1306C);
   border: 2px solid #FFFFFF;
   border-radius: 50%;
-  box-shadow: 0 2px 6px rgba(74, 59, 71, 0.3);
+  box-shadow: 0 2px 8px rgba(225, 48, 108, 0.4);
 }
 
 /* 滚动条克制 */
@@ -146,15 +172,15 @@ body::before {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #F5D5DD;
+  background: #DBDBDB;
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #E8919F;
+  background: #C7C7C7;
 }
 
-/* 选区樱花粉 */
+/* 选区 Ins 粉 */
 ::selection {
-  background: rgba(232, 145, 159, 0.3);
-  color: #4A3B47;
+  background: rgba(225, 48, 108, 0.2);
+  color: #262626;
 }
