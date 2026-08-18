@@ -8,6 +8,7 @@ import Loading from "@/components/Loading";
 import { supabase, supabaseReady } from "@/lib/supabase";
 import { FALLBACK_FOOTPRINTS } from "@/lib/config";
 import { useContent } from "@/hooks/useContent";
+import SectionRenderer from "@/components/SectionRenderer";
 import type { Footprint, Photo } from "@/lib/types";
 
 // 樱花粉圆形标记（divIcon）
@@ -239,6 +240,9 @@ export default function MapPage() {
               })}
             </ol>
           </section>
+
+          {/* 动态组件区 */}
+          <SectionRenderer pageName="map" />
         </>
       )}
 

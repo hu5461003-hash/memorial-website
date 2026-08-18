@@ -6,6 +6,7 @@ import BottomNav from "@/components/BottomNav";
 import { useBanners } from "@/hooks/useBanners";
 import { useContent } from "@/hooks/useContent";
 import { cn } from "@/lib/utils";
+import SectionRenderer from "@/components/SectionRenderer";
 
 const ENTRIES = [
   { to: "/map", title: "足迹地图", desc: "九座城市，一条暖色的河", Icon: Map },
@@ -123,6 +124,9 @@ export default function Home() {
           </Link>
         ))}
       </section>
+
+      {/* 动态组件区 */}
+      <SectionRenderer pageName="home" />
 
       {/* 底部留白与署名 */}
       {footerText && (

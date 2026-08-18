@@ -5,7 +5,7 @@
 
 -- 重要：执行前请先在 Supabase Dashboard → Authentication → Users
 -- 创建一个管理员邮箱账户（用于 /admin 登录）。
--- 然后将其 user_id 替换下方所有的 '<ADMIN_UID>' 占位符。
+-- 然后将其 user_id 替换下方所有的 'cb05839f-9e99-4db0-b590-ff0501cb8855' 占位符。
 -- 查询 user_id：select auth.uid(); （登录后执行）或
 --   select id, email from auth.users;
 
@@ -71,8 +71,8 @@ create policy "footprints_public_read" on public.footprints
   for select using (true);
 create policy "footprints_admin_write" on public.footprints
   for all
-  using (auth.uid() = '<ADMIN_UID>')
-  with check (auth.uid() = '<ADMIN_UID>');
+  using (auth.uid() = 'cb05839f-9e99-4db0-b590-ff0501cb8855')
+  with check (auth.uid() = 'cb05839f-9e99-4db0-b590-ff0501cb8855');
 
 -- messages 策略：公开读 + 公开插入（匿名可留言），仅管理员删
 create policy "messages_public_read" on public.messages
@@ -80,15 +80,15 @@ create policy "messages_public_read" on public.messages
 create policy "messages_public_insert" on public.messages
   for insert with check (true);
 create policy "messages_admin_modify" on public.messages
-  for delete using (auth.uid() = '<ADMIN_UID>');
+  for delete using (auth.uid() = 'cb05839f-9e99-4db0-b590-ff0501cb8855');
 
 -- photos 策略：公开读，仅管理员写
 create policy "photos_public_read" on public.photos
   for select using (true);
 create policy "photos_admin_write" on public.photos
   for all
-  using (auth.uid() = '<ADMIN_UID>')
-  with check (auth.uid() = '<ADMIN_UID>');
+  using (auth.uid() = 'cb05839f-9e99-4db0-b590-ff0501cb8855')
+  with check (auth.uid() = 'cb05839f-9e99-4db0-b590-ff0501cb8855');
 
 
 -- 4. Storage 桶：gallery（相册图）与 covers（足迹封面图）
@@ -107,10 +107,10 @@ create policy "gallery_public_read" on storage.objects
   for select using (bucket_id in ('gallery', 'covers'));
 create policy "gallery_admin_upload" on storage.objects
   for insert
-  with check (bucket_id in ('gallery', 'covers') and auth.uid() = '<ADMIN_UID>');
+  with check (bucket_id in ('gallery', 'covers') and auth.uid() = 'cb05839f-9e99-4db0-b590-ff0501cb8855');
 create policy "gallery_admin_delete" on storage.objects
   for delete
-  using (bucket_id in ('gallery', 'covers') and auth.uid() = '<ADMIN_UID>');
+  using (bucket_id in ('gallery', 'covers') and auth.uid() = 'cb05839f-9e99-4db0-b590-ff0501cb8855');
 
 
 -- 5. 初始足迹数据（九座城市，可由管理员在后台修改/删除）
@@ -145,8 +145,8 @@ drop policy if exists "banners_public_read" on public.banners;
 drop policy if exists "banners_admin_write" on public.banners;
 create policy "banners_public_read" on public.banners for select using (true);
 create policy "banners_admin_write" on public.banners for all
-  using (auth.uid() = '<ADMIN_UID>')
-  with check (auth.uid() = '<ADMIN_UID>');
+  using (auth.uid() = 'cb05839f-9e99-4db0-b590-ff0501cb8855')
+  with check (auth.uid() = 'cb05839f-9e99-4db0-b590-ff0501cb8855');
 
 
 -- ============================================================
@@ -168,8 +168,8 @@ drop policy if exists "site_content_public_read" on public.site_content;
 drop policy if exists "site_content_admin_write" on public.site_content;
 create policy "site_content_public_read" on public.site_content for select using (true);
 create policy "site_content_admin_write" on public.site_content for all
-  using (auth.uid() = '<ADMIN_UID>')
-  with check (auth.uid() = '<ADMIN_UID>');
+  using (auth.uid() = 'cb05839f-9e99-4db0-b590-ff0501cb8855')
+  with check (auth.uid() = 'cb05839f-9e99-4db0-b590-ff0501cb8855');
 
 
 -- ============================================================
@@ -191,8 +191,8 @@ drop policy if exists "videos_public_read" on public.videos;
 drop policy if exists "videos_admin_write" on public.videos;
 create policy "videos_public_read" on public.videos for select using (true);
 create policy "videos_admin_write" on public.videos for all
-  using (auth.uid() = '<ADMIN_UID>')
-  with check (auth.uid() = '<ADMIN_UID>');
+  using (auth.uid() = 'cb05839f-9e99-4db0-b590-ff0501cb8855')
+  with check (auth.uid() = 'cb05839f-9e99-4db0-b590-ff0501cb8855');
 
 
 -- ============================================================
@@ -211,10 +211,10 @@ create policy "gallery_public_read" on storage.objects
   for select using (bucket_id in ('gallery', 'covers', 'videos'));
 create policy "gallery_admin_upload" on storage.objects
   for insert
-  with check (bucket_id in ('gallery', 'covers', 'videos') and auth.uid() = '<ADMIN_UID>');
+  with check (bucket_id in ('gallery', 'covers', 'videos') and auth.uid() = 'cb05839f-9e99-4db0-b590-ff0501cb8855');
 create policy "gallery_admin_delete" on storage.objects
   for delete
-  using (bucket_id in ('gallery', 'covers', 'videos') and auth.uid() = '<ADMIN_UID>');
+  using (bucket_id in ('gallery', 'covers', 'videos') and auth.uid() = 'cb05839f-9e99-4db0-b590-ff0501cb8855');
 
 
 -- ============================================================
@@ -264,8 +264,8 @@ create policy "page_sections_public_read" on public.page_sections
   for select using (true);
 create policy "page_sections_admin_write" on public.page_sections
   for all
-  using (auth.uid() = '<ADMIN_UID>')
-  with check (auth.uid() = '<ADMIN_UID>');
+  using (auth.uid() = 'cb05839f-9e99-4db0-b590-ff0501cb8855')
+  with check (auth.uid() = 'cb05839f-9e99-4db0-b590-ff0501cb8855');
 
 
 -- ============================================================
@@ -283,8 +283,8 @@ create policy "theme_settings_public_read" on public.theme_settings
   for select using (true);
 create policy "theme_settings_admin_write" on public.theme_settings
   for all
-  using (auth.uid() = '<ADMIN_UID>')
-  with check (auth.uid() = '<ADMIN_UID>');
+  using (auth.uid() = 'cb05839f-9e99-4db0-b590-ff0501cb8855')
+  with check (auth.uid() = 'cb05839f-9e99-4db0-b590-ff0501cb8855');
 
 -- 初始化默认主题（单行）
 insert into public.theme_settings (id, settings) values (
@@ -309,8 +309,8 @@ create policy "site_meta_public_read" on public.site_meta
   for select using (true);
 create policy "site_meta_admin_write" on public.site_meta
   for all
-  using (auth.uid() = '<ADMIN_UID>')
-  with check (auth.uid() = '<ADMIN_UID>');
+  using (auth.uid() = 'cb05839f-9e99-4db0-b590-ff0501cb8855')
+  with check (auth.uid() = 'cb05839f-9e99-4db0-b590-ff0501cb8855');
 
 -- 初始化默认 SEO 元数据
 insert into public.site_meta (meta_key, meta_value) values

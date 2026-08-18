@@ -7,6 +7,7 @@ import { supabase, supabaseReady } from "@/lib/supabase";
 import { GALLERY_PASSWORD } from "@/lib/config";
 import { useStore } from "@/store/useStore";
 import { useContent } from "@/hooks/useContent";
+import SectionRenderer from "@/components/SectionRenderer";
 import type { Photo, Video } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -213,6 +214,9 @@ export default function Gallery() {
               <p className="mt-1 text-xs text-ink-mute">管理员可以在后台添加</p>
             </div>
           )}
+
+          {/* 动态组件区 */}
+          <SectionRenderer pageName="gallery" />
         </>
       )}
 

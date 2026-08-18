@@ -3,6 +3,7 @@ import PageHeader from "@/components/PageHeader";
 import Layout from "@/components/Layout";
 import { useContent } from "@/hooks/useContent";
 import { LETTER_DATE } from "@/lib/config";
+import SectionRenderer from "@/components/SectionRenderer";
 
 export default function Letter() {
   const { getParagraphs, getValue } = useContent();
@@ -53,6 +54,9 @@ export default function Letter() {
       <p className="mt-6 text-center text-[11px] tracking-widest text-ink-mute/70">
         — 此信 长存于此 —
       </p>
+
+      {/* 动态组件区 */}
+      <SectionRenderer pageName="letter" />
     </Layout>
   );
 }

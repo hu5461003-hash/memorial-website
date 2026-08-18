@@ -8,6 +8,7 @@ import { randomNoteColor } from "@/lib/types";
 import type { MessageNote, NoteColor } from "@/lib/types";
 import { useContent } from "@/hooks/useContent";
 import { cn } from "@/lib/utils";
+import SectionRenderer from "@/components/SectionRenderer";
 
 const NOTE_BG: Record<NoteColor, string> = {
   yellow: "bg-note-yellow",
@@ -207,6 +208,9 @@ export default function Messages() {
           ))}
         </div>
       )}
+
+      {/* 动态组件区 */}
+      <SectionRenderer pageName="messages" />
     </Layout>
   );
 }

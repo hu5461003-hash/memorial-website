@@ -88,30 +88,47 @@ export default function SectionManager() {
     const a = list[index];
     const b = list[target];
     setBusy(true);
-    await supabase
+    const { error: e1 } = await supabase
       .from("page_sections")
       .update({ sort_order: b.sort_order, updated_at: new Date().toISOString() })
       .eq("id", a.id);
-    await supabase
+    const { error: e2 } = await supabase
       .from("page_sections")
       .update({ sort_order: a.sort_order, updated_at: new Date().toISOString() })
       .eq("id", b.id);
     setBusy(false);
-    load();
+    if (e1 || e2) {
+      setHint(`排序失败：${e1?.message ?? e2?.message}`);
+    } else {
+      setHint(null);
+      load();
+    }
   }
 
   async function toggleActive(s: PageSection) {
-    await supabase
+    const { error } = await supabase
       .from("page_sections")
       .update({ active: !s.active, updated_at: new Date().toISOString() })
       .eq("id", s.id);
-    load();
+    if (error) {
+      setHint(`操作失败：${error.message}`);
+    } else {
+      setHint(null);
+      load();
+    }
   }
 
   async function handleDelete(s: PageSection) {
     if (!confirm(`确认删除此「${sectionLabel(s.section_type)}」组件？`)) return;
-    await supabase.from("page_sections").delete().eq("id", s.id);
-    load();
+    setBusy(true);
+    const { error } = await supabase.from("page_sections").delete().eq("id", s.id);
+    setBusy(false);
+    if (error) {
+      setHint(`删除失败：${error.message}`);
+    } else {
+      setHint(null);
+      load();
+    }
   }
 
   function startEdit(s: PageSection) {
