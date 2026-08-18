@@ -5,9 +5,10 @@ import { BG_MUSIC_URL } from "@/lib/config";
 import { cn } from "@/lib/utils";
 
 /**
- * 背景音乐播放控制
+ * 背景音乐播放控制 · 右下角悬浮
  * - 全局隐藏 <audio> 元素，由 store 持有引用并控制播放
- * - 按钮样式：右上角小圆按钮，播放时暖金脉冲
+ * - fixed 定位，悬浮于右下角，避开底部导航栏
+ * - 播放时暖金脉冲
  */
 export default function MusicButton({ className }: { className?: string }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -27,8 +28,8 @@ export default function MusicButton({ className }: { className?: string }) {
         onClick={togglePlay}
         aria-label={isPlaying ? "暂停背景音乐" : "播放背景音乐"}
         className={cn(
-          "inline-flex h-9 w-9 items-center justify-center rounded-full border border-coffee-line bg-cream-50/80 backdrop-blur-sm transition-all active:scale-95",
-          isPlaying && "border-gold/60 bg-gold/15 text-coffee",
+          "fixed bottom-20 right-4 z-50 inline-flex h-11 w-11 items-center justify-center rounded-full border border-coffee-line bg-cream-50/85 shadow-paper backdrop-blur-md transition-all hover:shadow-polaroid active:scale-95",
+          isPlaying && "border-gold/60 bg-gold/20 text-coffee",
           className,
         )}
       >
@@ -39,11 +40,15 @@ export default function MusicButton({ className }: { className?: string }) {
         )}
         <Music
           className={cn(
-            "ml-1 h-3 w-3",
+            "ml-0.5 h-3 w-3",
             isPlaying && "animate-soft-pulse text-gold",
           )}
           strokeWidth={1.6}
         />
+        {/* 播放时环绕的脉冲圈 */}
+        {isPlaying && (
+          <span className="absolute inset-0 -z-10 rounded-full bg-gold/30 animate-ping" />
+        )}
       </button>
     </>
   );

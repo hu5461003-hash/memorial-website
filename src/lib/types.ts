@@ -158,4 +158,23 @@ export const DEFAULT_SITE_META: Record<string, string> = {
   author: "",
   lang: "zh-CN",
   robots: "index, follow",
+  // 管理员联系方式
+  admin_nickname: "管理员",
+  admin_qq: "",
+  admin_wechat: "",
+  admin_phone: "",
+  admin_email: "",
+  admin_avatar_url: "", // 自定义头像 URL，为空时使用 QQ 头像
 };
+
+/**
+ * 根据联系方式配置生成头像 URL
+ * 优先级：自定义头像 > QQ 头像 > 空字符串
+ */
+export function getAdminAvatar(meta: Record<string, string>): string {
+  const custom = meta.admin_avatar_url?.trim();
+  if (custom) return custom;
+  const qq = meta.admin_qq?.trim();
+  if (qq) return `https://q.qlogo.cn/g?b=qq&nk=${encodeURIComponent(qq)}&s=100`;
+  return "";
+}

@@ -1,6 +1,5 @@
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft } from "lucide-react";
-import MusicButton from "./MusicButton";
 
 type PageHeaderProps = {
   title: string;
@@ -12,7 +11,7 @@ type PageHeaderProps = {
  * 页面顶部头部
  * - 左侧返回按钮（可选）
  * - 中间标题与副标题
- * - 右侧背景音乐控制
+ * - 背景音乐控制已迁移为右下角悬浮按钮（见 Layout）
  */
 export default function PageHeader({
   title,
@@ -42,7 +41,6 @@ export default function PageHeader({
           )}
         </div>
       </div>
-      <MusicButton className="mt-0.5" />
     </header>
   );
 }

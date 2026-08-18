@@ -16,6 +16,7 @@ import {
   LayoutDashboard,
   Loader2,
   FolderOpen,
+  Contact,
 } from "lucide-react";
 import PageHeader from "@/components/PageHeader";
 import Layout from "@/components/Layout";
@@ -29,6 +30,7 @@ import SectionManager from "@/components/admin/SectionManager";
 import ThemeManager from "@/components/admin/ThemeManager";
 import SeoManager from "@/components/admin/SeoManager";
 import MediaLibrary from "@/components/admin/MediaLibrary";
+import ContactManager from "@/components/admin/ContactManager";
 import { supabase, supabaseReady } from "@/lib/supabase";
 import { useStore } from "@/store/useStore";
 import { cn } from "@/lib/utils";
@@ -43,7 +45,8 @@ type Tab =
   | "sections"
   | "theme"
   | "seo"
-  | "media";
+  | "media"
+  | "contact";
 
 type CardDef = {
   key: Exclude<Tab, "dashboard">;
@@ -127,6 +130,14 @@ const CARDS: CardDef[] = [
     gradient: "from-teal-50 to-cyan-100",
     iconBg: "bg-teal-100 text-teal-600",
   },
+  {
+    key: "contact",
+    label: "联系方式",
+    desc: "管理员QQ/微信/头像",
+    Icon: Contact,
+    gradient: "from-lime-50 to-emerald-100",
+    iconBg: "bg-lime-100 text-lime-600",
+  },
 ];
 
 export default function Admin() {
@@ -198,7 +209,7 @@ export default function Admin() {
 
   if (checking) {
     return (
-      <Layout>
+      <Layout wide>
         <PageHeader title="管理后台" showBack={false} />
         <Loading tip="正在确认身份…" />
       </Layout>
@@ -207,7 +218,7 @@ export default function Admin() {
 
   if (!session) {
     return (
-      <Layout>
+      <Layout wide>
         <PageHeader title="管理后台" subtitle="仅限管理员" showBack={false} />
         <div className="flex flex-col items-center justify-center py-12">
           <div className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-gold/40 bg-gold/10 text-gold">
@@ -269,7 +280,7 @@ export default function Admin() {
   const activeCard = CARDS.find((c) => c.key === tab);
 
   return (
-    <Layout>
+    <Layout wide>
       {tab === "dashboard" ? (
         <>
           <PageHeader title="管理后台" subtitle={session.user.email} showBack={false} />
@@ -292,7 +303,7 @@ export default function Admin() {
           </div>
 
           {/* 卡片网格 */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
             {CARDS.map(({ key, label, desc, Icon, iconBg }) => {
               const count = counts[key] ?? null;
               return (
@@ -337,7 +348,7 @@ export default function Admin() {
           </div>
         </>
       ) : (
-        <>
+        <div className="mx-auto w-full max-w-3xl">
           {/* 子页面顶栏 */}
           <div className="mb-4 flex items-center justify-between gap-2">
             <button
@@ -370,7 +381,8 @@ export default function Admin() {
           {tab === "photo" && <PhotoManager />}
           {tab === "video" && <VideoManager />}
           {tab === "media" && <MediaLibrary />}
-        </>
+          {tab === "contact" && <ContactManager />}
+        </div>
       )}
     </Layout>
   );

@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { Map, BookOpen, Mail, Image, Feather, Video } from "lucide-react";
-import MusicButton from "@/components/MusicButton";
-import BottomNav from "@/components/BottomNav";
+import Layout from "@/components/Layout";
 import { useBanners } from "@/hooks/useBanners";
 import { useContent } from "@/hooks/useContent";
 import { cn } from "@/lib/utils";
 import SectionRenderer from "@/components/SectionRenderer";
+import ContactCard from "@/components/ContactCard";
 
 const ENTRIES = [
   { to: "/map", title: "足迹地图", desc: "九座城市，一条暖色的河", Icon: Map },
@@ -38,12 +38,7 @@ export default function Home() {
   const footerText = getValue("home.footer");
 
   return (
-    <div className="page-shell animate-fade-in">
-      {/* 右上角音乐控制 */}
-      <div className="flex justify-end pb-3">
-        <MusicButton />
-      </div>
-
+    <Layout>
       {/* Banner 区 */}
       <section className="relative overflow-hidden rounded-card border border-coffee-line/70 shadow-paper">
         <div className="relative aspect-[16/10] w-full bg-gold/10">
@@ -128,14 +123,15 @@ export default function Home() {
       {/* 动态组件区 */}
       <SectionRenderer pageName="home" />
 
+      {/* 管理员联系方式卡片 */}
+      <ContactCard />
+
       {/* 底部留白与署名 */}
       {footerText && (
         <p className="pt-2 text-center text-[11px] tracking-widest text-ink-mute/70">
           {footerText}
         </p>
       )}
-
-      <BottomNav />
-    </div>
+    </Layout>
   );
 }
