@@ -161,6 +161,11 @@ create table if not exists public.site_content (
   content_value text,
   image_url text,
   sort_order integer not null default 0,
+  font_size text,
+  font_weight text,
+  text_color text,
+  letter_spacing text,
+  text_align text,
   updated_at timestamptz not null default now()
 );
 alter table public.site_content enable row level security;
@@ -253,6 +258,10 @@ create table if not exists public.page_sections (
   content_data jsonb not null default '{}'::jsonb,
   sort_order integer not null default 0,
   active boolean not null default true,
+  bg_color text,
+  text_color text,
+  border_color text,
+  accent_color text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -383,6 +392,8 @@ create table if not exists public.posts (
   is_admin boolean not null default false,  -- 是否管理员发布
   nickname text,                   -- 匿名发帖者昵称
   ip_address text,                 -- 仅后台可见，用于记录匿名用户IP
+  ip_location text,                -- IP 归属地，仅后台可见
+  user_location text,              -- 用户位置，仅后台可见
   like_count integer not null default 0,
   comment_count integer not null default 0,
   share_count integer not null default 0,
@@ -464,6 +475,7 @@ create table if not exists public.post_comments (
   nickname text,
   content text not null,
   ip_address text,
+  ip_location text,
   created_at timestamptz not null default now()
 );
 
