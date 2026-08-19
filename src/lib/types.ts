@@ -41,19 +41,6 @@ export function randomNoteColor(): NoteColor {
   return NOTE_COLORS[Math.floor(Math.random() * NOTE_COLORS.length)];
 }
 
-// ============ 首页 Banner ============
-
-export type Banner = {
-  id: string;
-  image_url: string;
-  title: string | null;
-  subtitle: string | null;
-  link: string | null;
-  sort_order: number;
-  active: boolean;
-  created_at: string;
-};
-
 // ============ 页面内容（文字 / 图片 增删改查） ============
 
 export type ContentType = "text" | "longtext" | "image";
@@ -89,7 +76,6 @@ export type Video = {
 // ============ 动态组件 / 自由排版 ============
 
 export type SectionType =
-  | "banner"        // Banner 轮播图
   | "marquee"       // 无限滚动相册
   | "timeline"      // 恋爱时间轴
   | "custom_html"   // 自定义代码块
@@ -162,7 +148,9 @@ export type Post = {
   featured: boolean;
   is_admin: boolean;
   nickname: string | null;
-  ip_address: string | null;  // 仅后台可见
+  ip_address: string | null;  // IPv4，仅后台可见
+  ip_location: string | null;  // IP 归属地，仅后台可见
+  user_location: string | null;  // 用户位置，仅后台可见
   like_count: number;
   comment_count: number;
   share_count: number;
@@ -184,6 +172,7 @@ export type PostComment = {
   nickname: string | null;
   content: string;
   ip_address: string | null;  // 仅后台可见
+  ip_location: string | null;  // IP 归属地，仅后台可见
   created_at: string;
 };
 

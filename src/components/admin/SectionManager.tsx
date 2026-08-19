@@ -37,7 +37,6 @@ const SECTION_TYPES: {
   Icon: typeof Code;
   desc: string;
 }[] = [
-  { type: "banner", label: "Banner 轮播图", Icon: ImageIcon, desc: "首页大图轮播，可多张" },
   { type: "marquee", label: "无限滚动相册", Icon: ImageIcon, desc: "横向自动滚动的照片条" },
   { type: "timeline", label: "恋爱时间轴", Icon: Clock, desc: "垂直时间线展示重要日期" },
   { type: "custom_html", label: "自定义代码块", Icon: Code, desc: "注入 HTML/CSS/JS" },
@@ -260,22 +259,6 @@ export default function SectionManager() {
     setField("images", getImageList().filter((_, i) => i !== idx));
   }
 
-  function getBannerSlides(): { image: string; title: string; subtitle: string }[] {
-    const arr = editObj.slides as { image: string; title: string; subtitle: string }[] | undefined;
-    return Array.isArray(arr) ? arr : [];
-  }
-  function addBannerSlide() {
-    setField("slides", [...getBannerSlides(), { image: "", title: "", subtitle: "" }]);
-  }
-  function updateSlide(idx: number, field: "image" | "title" | "subtitle", val: string) {
-    const slides = getBannerSlides();
-    slides[idx] = { ...slides[idx], [field]: val };
-    setField("slides", slides);
-  }
-  function removeSlide(idx: number) {
-    setField("slides", getBannerSlides().filter((_, i) => i !== idx));
-  }
-
   function getTimelineItems(): { date: string; text: string }[] {
     const arr = editObj.items as { date: string; text: string }[] | undefined;
     return Array.isArray(arr) ? arr : [];
@@ -474,75 +457,6 @@ export default function SectionManager() {
                 {/* 可视化编辑区 */}
                 {editingId === s.id ? (
                   <div className="mt-2.5 rounded-soft border border-gold/30 bg-cream-50/80 p-3">
-                    {/* === Banner 轮播图 === */}
-                    {editType === "banner" && (
-                      <div className="space-y-3">
-                        <div>
-                          <label className="field-label">轮播速度：{(editObj.speed as number) ?? 5000}ms</label>
-                          <input
-                            type="range"
-                            min={2000}
-                            max={10000}
-                            step={500}
-                            value={(editObj.speed as number) ?? 5000}
-                            onChange={(e) => setField("speed", Number(e.target.value))}
-                            className="w-full accent-gold"
-                          />
-                        </div>
-                        <div>
-                          <div className="mb-1.5 flex items-center justify-between">
-                            <label className="field-label mb-0">轮播图列表</label>
-                            <button type="button" onClick={addBannerSlide} className="text-[11px] text-gold hover:underline">
-                              + 添加幻灯片
-                            </button>
-                          </div>
-                          <div className="space-y-2">
-                            {getBannerSlides().map((slide, i) => (
-                              <div key={i} className="rounded-soft border border-cream-300 bg-cream-50 p-2">
-                                <div className="flex items-center gap-2">
-                                  <span className="text-[10px] text-ink-mute">#{i + 1}</span>
-                                  <span className="flex-1" />
-                                  <button
-                                    type="button"
-                                    onClick={() => removeSlide(i)}
-                                    className="rounded p-1 text-rust/70 hover:bg-rust/10 hover:text-rust"
-                                  >
-                                    <Trash2 className="h-3 w-3" />
-                                  </button>
-                                </div>
-                                <div className="mt-1.5">
-                                  <MediaPicker
-                                    value={slide.image}
-                                    onChange={(url) => updateSlide(i, "image", url)}
-                                    label="图片"
-                                    accept="image/*"
-                                    mediaType="image"
-                                  />
-                                </div>
-                                <div className="mt-2 grid grid-cols-2 gap-2">
-                                  <input
-                                    value={slide.title}
-                                    onChange={(e) => updateSlide(i, "title", e.target.value)}
-                                    placeholder="标题"
-                                    className="input-line text-xs"
-                                  />
-                                  <input
-                                    value={slide.subtitle}
-                                    onChange={(e) => updateSlide(i, "subtitle", e.target.value)}
-                                    placeholder="副标题"
-                                    className="input-line text-xs"
-                                  />
-                                </div>
-                              </div>
-                            ))}
-                            {getBannerSlides().length === 0 && (
-                              <p className="py-2 text-center text-[11px] text-ink-mute">点击「添加幻灯片」创建第一个</p>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
                     {/* === 标题文字 === */}
                     {editType === "heading" && (
                       <div className="space-y-2.5">
@@ -792,7 +706,6 @@ export default function SectionManager() {
 
 function sectionLabel(type: SectionType): string {
   const map: Record<SectionType, string> = {
-    banner: "Banner 轮播图",
     marquee: "无限滚动相册",
     timeline: "恋爱时间轴",
     custom_html: "自定义代码块",
@@ -804,8 +717,6 @@ function sectionLabel(type: SectionType): string {
 
 function getDefaultData(type: SectionType): Record<string, unknown> {
   switch (type) {
-    case "banner":
-      return { slides: [], speed: 5000 };
     case "marquee":
       return { images: [], speed: 30 };
     case "timeline":

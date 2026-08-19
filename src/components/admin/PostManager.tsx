@@ -473,13 +473,21 @@ export default function PostManager() {
                 {isOpen && (
                   <div className="border-t border-cream-300 bg-cream-100/50 p-3 space-y-3">
                     {/* IP & 访客信息 */}
-                    <div className="rounded-soft bg-cream-50 p-2.5 text-[11px]">
+                    <div className="rounded-soft bg-cream-50 p-2.5 text-[11px] space-y-1">
                       <p>
-                        <strong className="text-ink">发帖IP：</strong>
+                        <strong className="text-ink">IPv4：</strong>
                         <span className="font-mono text-ink-soft">{p.ip_address ?? "(无)"}</span>
                       </p>
+                      <p>
+                        <strong className="text-ink">IP归属地：</strong>
+                        <span className="text-ink-soft">{p.ip_location ?? "(未知)"}</span>
+                      </p>
+                      <p>
+                        <strong className="text-ink">用户位置：</strong>
+                        <span className="text-ink-soft">{p.user_location ?? "(未知)"}</span>
+                      </p>
                       {p.nickname && (
-                        <p className="mt-1">
+                        <p>
                           <strong className="text-ink">访客昵称：</strong>
                           <span className="text-ink-soft">{p.nickname}</span>
                         </p>
@@ -525,6 +533,11 @@ export default function PostManager() {
                                   <span className="font-mono text-[9px] text-ink-mute">
                                     IP:{c.ip_address ?? "-"}
                                   </span>
+                                  {c.ip_location && (
+                                    <span className="text-[9px] text-ink-mute">
+                                      · {c.ip_location}
+                                    </span>
+                                  )}
                                   <span className="text-[9px] text-ink-mute">
                                     {formatTime(c.created_at)}
                                   </span>

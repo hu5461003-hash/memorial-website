@@ -54,10 +54,6 @@ export type ContentDefault = {
   sort_order: number;
 };
 
-/** 首页 Banner 默认图（粉色系） */
-export const DEFAULT_BANNER_IMAGE =
-  "https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=soft%20macaron%20pink%20watercolor%20background%2C%20dreamy%20cherry%20blossom%20petals%2C%20warm%20gradient%20pastel%20pink%20cream%2C%20minimal%20aesthetic%2C%20gentle%20light&image_size=landscape_16_9";
-
 /**
  * 默认内容清单：作为 useContent 的兜底值，也用于后台「内容管理」初始化。
  * 后台可新增任意 key，未在下面列出的 key 也会被读取。
@@ -69,8 +65,6 @@ export const CONTENT_DEFAULTS: ContentDefault[] = [
   { content_key: "global.footer_text", page: "global", label: "页脚文字", type: "text", content_value: "— 愿你在的那个地方 也有一盏灯 —", image_url: null, sort_order: 3 },
   { content_key: "global.logo_text", page: "global", label: "Logo 文字", type: "text", content_value: "记录", image_url: null, sort_order: 4 },
   // 首页
-  { content_key: "home.banner_title", page: "home", label: "首页 Banner 标题", type: "text", content_value: "记录", image_url: null, sort_order: 1 },
-  { content_key: "home.banner_subtitle", page: "home", label: "首页 Banner 副标题", type: "text", content_value: "走过的地方 都值得留下", image_url: null, sort_order: 2 },
   { content_key: "home.footer", page: "home", label: "首页底部文字", type: "text", content_value: "— 愿你在的那个地方 也有一盏灯 —", image_url: null, sort_order: 3 },
   { content_key: "map.subtitle", page: "map", label: "地图页副标题", type: "text", content_value: "九座城市，一条暖色的河", image_url: null, sort_order: 1 },
   { content_key: "map.list_title", page: "map", label: "地图旅程列表标题", type: "text", content_value: "旅程顺序", image_url: null, sort_order: 2 },

@@ -6,7 +6,6 @@ import {
   AlertCircle,
   MapPinned,
   Image as ImageIcon,
-  ImagePlus,
   FileText,
   Film,
   LayoutGrid,
@@ -24,7 +23,6 @@ import Layout from "@/components/Layout";
 import Loading from "@/components/Loading";
 import FootprintManager from "@/components/admin/FootprintManager";
 import PhotoManager from "@/components/admin/PhotoManager";
-import BannerManager from "@/components/admin/BannerManager";
 import ContentManager from "@/components/admin/ContentManager";
 import VideoManager from "@/components/admin/VideoManager";
 import SectionManager from "@/components/admin/SectionManager";
@@ -41,7 +39,6 @@ type Tab =
   | "dashboard"
   | "footprint"
   | "photo"
-  | "banner"
   | "content"
   | "video"
   | "sections"
@@ -62,14 +59,6 @@ type CardDef = {
 
 const CARDS: CardDef[] = [
   {
-    key: "banner",
-    label: "Banner",
-    desc: "首页轮播图（可在排版内管理）",
-    Icon: ImagePlus,
-    gradient: "from-rose-50 to-pink-100",
-    iconBg: "bg-rose-100 text-rose-500",
-  },
-  {
     key: "content",
     label: "内容",
     desc: "页眉页脚、全局标题、各页文字",
@@ -80,7 +69,7 @@ const CARDS: CardDef[] = [
   {
     key: "sections",
     label: "排版",
-    desc: "页面管理、Banner、分区增删改查",
+    desc: "页面管理、分区增删改查",
     Icon: LayoutGrid,
     gradient: "from-violet-50 to-purple-100",
     iconBg: "bg-violet-100 text-violet-500",
@@ -169,8 +158,7 @@ export default function Admin() {
 
   const loadCounts = useCallback(async () => {
     if (!supabase) return;
-    const [banners, photos, footprints, videos, sections, content, media, posts] = await Promise.all([
-      supabase.from("banners").select("id", { count: "exact", head: true }),
+    const [photos, footprints, videos, sections, content, media, posts] = await Promise.all([
       supabase.from("photos").select("id", { count: "exact", head: true }),
       supabase.from("footprints").select("id", { count: "exact", head: true }),
       supabase.from("videos").select("id", { count: "exact", head: true }),
@@ -180,7 +168,6 @@ export default function Admin() {
       supabase.from("posts").select("id", { count: "exact", head: true }),
     ]);
     setCounts({
-      banner: banners.count ?? 0,
       photo: photos.count ?? 0,
       footprint: footprints.count ?? 0,
       video: videos.count ?? 0,
@@ -385,7 +372,6 @@ export default function Admin() {
             </div>
           </div>
 
-          {tab === "banner" && <BannerManager />}
           {tab === "content" && <ContentManager />}
           {tab === "sections" && <SectionManager />}
           {tab === "theme" && <ThemeManager />}

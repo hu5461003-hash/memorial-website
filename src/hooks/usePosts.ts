@@ -12,16 +12,78 @@ import type { Post, PostComment, PostImage } from "@/lib/types";
  * - 单帖详情 + 图片列表
  */
 
-async function getMyIp(): Promise<string> {
-  // 优先：如果 Supabase 里有 edge functions，可以返回公网 IP
-  // 这里用简单方式：localStorage 里随机生成一个 fake-ip 作为唯一标识（浏览器端拿不到真实 IP）
-  const KEY = "post_visitor_ip";
-  let v = localStorage.getItem(KEY);
-  if (!v) {
-    v = `client-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
-    localStorage.setItem(KEY, v);
+/**
+ * 获取访客真实 IPv4 + IP 归属地 + 用户位置
+ * - 优先调 https://ipapi.co/json/ 一次拿到 IP 与城市/省份/国家
+ * - 失败回退 https://api.ipify.org 仅拿 IP（归属地未知）
+ * - 最终回退 localStorage 生成唯一标识（保证点赞去重仍可用）
+ * 结果缓存到 localStorage，避免每次发帖/评论都触发外部接口限速
+ */
+export type IpInfo = { ip: string; ipLocation: string; userLocation: string };
+
+async function getMyIpInfo(): Promise<IpInfo> {
+  const KEY = "post_visitor_ip_info";
+  const cached = localStorage.getItem(KEY);
+  if (cached) {
+    try {
+      const info = JSON.parse(cached) as IpInfo;
+      if (info?.ip) return info;
+    } catch {
+      /* ignore */
+    }
   }
-  return v;
+  let ip = "";
+  let ipLocation = "(未知)";
+  let userLocation = "(未知)";
+  try {
+    const res = await fetch("https://ipapi.co/json/");
+    if (res.ok) {
+      const d = (await res.json()) as {
+        ip?: string;
+        city?: string;
+        region?: string;
+        country_name?: string;
+      };
+      ip = d.ip ?? "";
+      const parts = [d.country_name, d.region, d.city].filter(Boolean);
+      ipLocation = parts.length > 0 ? parts.join(" ") : "(未知)";
+      userLocation = d.city || d.region || ipLocation;
+    }
+  } catch {
+    /* 网络错误走回退 */
+  }
+  if (!ip) {
+    try {
+      const res = await fetch("https://api.ipify.org?format=json");
+      if (res.ok) {
+        const d = (await res.json()) as { ip?: string };
+        ip = d.ip ?? "";
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+  if (!ip) {
+    // 最终回退：localStorage 生成稳定 fake id（保证点赞去重可用）
+    let v = localStorage.getItem("post_visitor_ip_fallback");
+    if (!v) {
+      v = `client-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+      localStorage.setItem("post_visitor_ip_fallback", v);
+    }
+    ip = v;
+  }
+  const info: IpInfo = { ip, ipLocation, userLocation };
+  try {
+    localStorage.setItem(KEY, JSON.stringify(info));
+  } catch {
+    /* ignore */
+  }
+  return info;
+}
+
+/** 仅取 IP 字符串（点赞去重等场景使用） */
+async function getMyIp(): Promise<string> {
+  return (await getMyIpInfo()).ip;
 }
 
 export function usePosts({ onlyFeatured = false }: { onlyFeatured?: boolean } = {}) {
@@ -141,7 +203,7 @@ export function usePostActions() {
       const content = payload.content.trim();
       if (!title && !content) return { ok: false, error: "标题或正文至少填一项" };
 
-      const ip = await getMyIp();
+      const ipInfo = await getMyIpInfo();
       let cover_url: string | null = null;
 
       // 如果用户选了图，先上传到 posts 桶（匿名图片上传通过管理员的 RLS 是不行的——帖子存储桶只有管理员能上传）
@@ -153,19 +215,25 @@ export function usePostActions() {
         };
       }
 
-      const { data, error } = await supabase
+      // 带新字段插入；若表尚无 ip_location/user_location 列，回退为不带这些字段
+      const baseInsert = {
+        title,
+        content,
+        cover_url,
+        nickname: payload.nickname?.trim() || null,
+        ip_address: ipInfo.ip,
+        is_admin: false,
+        featured: false,
+      };
+      let res = await supabase
         .from("posts")
-        .insert({
-          title,
-          content,
-          cover_url,
-          nickname: payload.nickname?.trim() || null,
-          ip_address: ip,
-          is_admin: false,
-          featured: false,
-        })
+        .insert({ ...baseInsert, ip_location: ipInfo.ipLocation, user_location: ipInfo.userLocation })
         .select("id")
         .single();
+      if (res.error && /ip_location|user_location/i.test(res.error.message)) {
+        res = await supabase.from("posts").insert(baseInsert).select("id").single();
+      }
+      const { data, error } = res;
       if (error) return { ok: false, error: error.message };
       return { ok: true, id: (data as { id: string }).id };
     },
@@ -209,13 +277,20 @@ export function usePostActions() {
       if (!supabase) return { ok: false, error: "未连接到服务器" };
       const content = payload.content.trim();
       if (!content) return { ok: false, error: "评论内容不能为空" };
-      const ip = await getMyIp();
-      const { error } = await supabase.from("post_comments").insert({
+      const ipInfo = await getMyIpInfo();
+      const baseInsert = {
         post_id: postId,
         nickname: payload.nickname?.trim() || null,
         content,
-        ip_address: ip,
-      });
+        ip_address: ipInfo.ip,
+      };
+      let res = await supabase
+        .from("post_comments")
+        .insert({ ...baseInsert, ip_location: ipInfo.ipLocation });
+      if (res.error && /ip_location/i.test(res.error.message)) {
+        res = await supabase.from("post_comments").insert(baseInsert);
+      }
+      const { error } = res;
       if (error) return { ok: false, error: error.message };
       // 刷新 comment_count
       const { count, error: cntErr } = await supabase
