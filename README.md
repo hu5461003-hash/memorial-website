@@ -1,4 +1,4 @@
-# 致皮希平 · 纪念网站
+#  纪念网站
 
 部署在 GitHub Pages 上的全栈纪念网站。React + Vite + Tailwind + Leaflet + Supabase，温馨怀旧米白奶油色调，移动优先。
 
@@ -6,7 +6,7 @@
 
 - `/` 首页：故事标题、简述、背景音乐控制、入口卡片
 - `/map` 足迹地图：Leaflet 暖色虚线连结九座城市，点击弹窗展示故事与封面图
-- `/letter` 纪念长信：《寄皮希平》正文
+- `/letter` 纪念长信
 - `/messages` 温暖留言板：便签纸卡片瀑布流，访客留言写入 Supabase
 - `/gallery` 私密相册：密码 `0111` 解锁，拍立得网格照片墙（图片来自 Supabase Storage）
 - `/admin` 管理后台：Supabase Auth 登录后上传照片、新增/删除足迹节点
