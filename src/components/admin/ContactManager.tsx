@@ -9,7 +9,7 @@ import type { AdminProfile } from "@/lib/types";
 type FieldKey = "nickname" | "qq" | "wechat" | "phone" | "email_display" | "avatar_url";
 
 const FIELDS: { key: FieldKey; label: string; desc: string; placeholder: string }[] = [
-  { key: "nickname",       label: "昵称",     desc: "首页联系方式卡片中显示的称呼",                 placeholder: "如：皮希平" },
+  { key: "nickname",       label: "昵称",     desc: "首页联系方式卡片中显示的称呼",                 placeholder: "如：P" },
   { key: "qq",             label: "QQ 号",    desc: "未上传自定义头像时，自动使用该 QQ 的头像",     placeholder: "如：10001" },
   { key: "wechat",         label: "微信号",   desc: "可选，留空则不显示",                           placeholder: "如：wechat_id" },
   { key: "phone",          label: "电话",     desc: "可选，留空则不显示",                           placeholder: "如：13800138000" },

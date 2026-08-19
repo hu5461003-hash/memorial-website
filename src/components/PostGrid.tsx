@@ -39,7 +39,7 @@ export default function PostGrid({
         "grid",
         compact
           ? "grid-cols-3 gap-0.5 sm:gap-1"
-          : "grid-cols-3 gap-2 sm:grid-cols-3 sm:gap-2",
+          : "grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-2",
       )}
     >
       {list.map((p) => (

@@ -1,4 +1,4 @@
-#  纪念网站
+# 纪念网站
 
 部署在 GitHub Pages 上的全栈纪念网站。React + Vite + Tailwind + Leaflet + Supabase，温馨怀旧米白奶油色调，移动优先。
 

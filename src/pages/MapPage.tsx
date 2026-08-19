@@ -76,22 +76,8 @@ export default function MapPage() {
         supabase.from("photos").select("*").order("photo_date", { ascending: false }),
       ]);
       if (!active) return;
-      if (fpRes.error || !fpRes.data || fpRes.data.length === 0) {
-        const fallback: Footprint[] = FALLBACK_FOOTPRINTS.map((f, i) => ({
-          id: `fallback-${i}`,
-          name: f.name,
-          lat: f.lat,
-          lng: f.lng,
-          visit_date: f.visit_date,
-          story: f.story,
-          cover_url: f.cover_url,
-          sort_order: f.sort_order,
-          created_at: f.visit_date,
-        }));
-        setFootprints(fallback);
-      } else {
-        setFootprints(fpRes.data as Footprint[]);
-      }
+      // 数据库为准：后台删掉的节点就不再显示（空则显示空状态，不再回退演示数据）
+      setFootprints((fpRes.data as Footprint[] | null) ?? []);
       setPhotos((photoRes.data as Photo[] | null) ?? []);
       setLoading(false);
     }
@@ -134,6 +120,12 @@ export default function MapPage() {
           blocks={{
             map_view: (
               <div className="overflow-hidden rounded-card border border-coffee-line/70 shadow-paper">
+                {footprints.length === 0 && (
+                  <div className="flex items-center justify-center gap-1.5 border-b border-coffee-line/50 bg-cream-100/60 py-3 text-xs text-ink-mute">
+                    <MapPin className="h-3.5 w-3.5" strokeWidth={1.6} />
+                    还没有足迹节点，请在后台上传
+                  </div>
+                )}
                 <MapContainer
                   center={[28.5, 113]}
                   zoom={5}

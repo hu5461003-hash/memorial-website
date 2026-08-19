@@ -12,7 +12,7 @@ export default function TopBar() {
   const { getValue, getImage } = useContent();
   const { theme } = useTheme();
   const logoImage = getImage("global.logo_image");
-  const logoText = getValue("global.logo_text") || "记录";
+  const logoText = getValue("global.logo_text") || "P";
 
   return (
     <header
@@ -28,7 +28,7 @@ export default function TopBar() {
             <img
               src={logoImage}
               alt="Logo"
-              className="h-8 object-contain"
+              className="h-9 w-9 rounded-full border border-cream-300 object-cover"
             />
           ) : (
             <span

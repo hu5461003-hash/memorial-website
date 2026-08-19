@@ -36,12 +36,12 @@ export function useContent() {
     load();
   }, [load]);
 
-  /** 读取某 key 的文本内容，回退到默认值 */
+  /** 读取某 key 的文本内容：行存在则以数据库为准（清空即空），行不存在才回退默认值 */
   const getValue = useCallback(
     (key: string): string => {
       const row = content[key];
-      if (row && row.content_value != null && row.content_value !== "") {
-        return row.content_value;
+      if (row) {
+        return row.content_value ?? "";
       }
       return CONTENT_DEFAULT_MAP[key] ?? "";
     },

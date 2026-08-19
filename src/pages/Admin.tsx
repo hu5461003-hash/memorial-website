@@ -20,6 +20,7 @@ import {
   X,
   ExternalLink,
   LogIn,
+  StickyNote,
 } from "lucide-react";
 import Loading from "@/components/Loading";
 import FootprintManager from "@/components/admin/FootprintManager";
@@ -32,6 +33,7 @@ import SeoManager from "@/components/admin/SeoManager";
 import MediaLibrary from "@/components/admin/MediaLibrary";
 import ContactManager from "@/components/admin/ContactManager";
 import PostManager from "@/components/admin/PostManager";
+import MessageManager from "@/components/admin/MessageManager";
 import { supabase, supabaseReady } from "@/lib/supabase";
 import { useStore } from "@/store/useStore";
 import { cn } from "@/lib/utils";
@@ -47,7 +49,8 @@ type Tab =
   | "seo"
   | "media"
   | "contact"
-  | "post";
+  | "post"
+  | "message";
 
 type NavItemDef = {
   key: Exclude<Tab, "dashboard">;
@@ -64,6 +67,7 @@ const NAV_GROUPS: { title: string; items: NavItemDef[] }[] = [
       { key: "content", label: "内容", desc: "各页面文字、图片与 Logo", Icon: FileText },
       { key: "sections", label: "排版", desc: "页面组件显隐与排序", Icon: LayoutGrid },
       { key: "post", label: "帖子", desc: "帖子管理与推荐到首页", Icon: PenSquare },
+      { key: "message", label: "留言", desc: "访客留言查看与管理", Icon: StickyNote },
     ],
   },
   {
@@ -120,7 +124,7 @@ export default function Admin() {
 
   const loadCounts = useCallback(async () => {
     if (!supabase) return;
-    const [photos, footprints, videos, sections, content, media, posts] = await Promise.all([
+    const [photos, footprints, videos, sections, content, media, posts, messages] = await Promise.all([
       supabase.from("photos").select("id", { count: "exact", head: true }),
       supabase.from("footprints").select("id", { count: "exact", head: true }),
       supabase.from("videos").select("id", { count: "exact", head: true }),
@@ -128,6 +132,7 @@ export default function Admin() {
       supabase.from("site_content").select("id", { count: "exact", head: true }),
       supabase.from("media_library").select("id", { count: "exact", head: true }),
       supabase.from("posts").select("id", { count: "exact", head: true }),
+      supabase.from("messages").select("id", { count: "exact", head: true }),
     ]);
     setCounts({
       photo: photos.count ?? 0,
@@ -137,6 +142,7 @@ export default function Admin() {
       content: content.count ?? 0,
       media: media.count ?? 0,
       post: posts.count ?? 0,
+      message: messages.count ?? 0,
     });
   }, []);
 
@@ -426,6 +432,7 @@ export default function Admin() {
                 {tab === "media" && <MediaLibrary />}
                 {tab === "contact" && <ContactManager />}
                 {tab === "post" && <PostManager />}
+                {tab === "message" && <MessageManager />}
               </div>
             )}
           </main>

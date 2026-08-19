@@ -1,5 +1,5 @@
 -- ============================================================
--- 致皮希平 · 纪念网站 Supabase 初始化脚本
+-- 致 P · 纪念网站 Supabase 初始化脚本
 -- 在 Supabase Dashboard → SQL Editor 中执行此脚本
 -- ============================================================
 
@@ -226,7 +226,7 @@ insert into public.site_content (content_key, page, label, type, content_value, 
 ('home.footer',          'home',     '首页底部文字',       'text',     '— 愿你在的那个地方 也有一盏灯 —', null, 3),
 ('map.subtitle',         'map',      '地图页副标题',       'text',     '九座城市，一条暖色的河', null, 1),
 ('map.list_title',       'map',      '地图旅程列表标题',   'text',     '旅程顺序', null, 2),
-('letter.body',          'letter',   '长信正文（段落用空行分隔）', 'longtext', '皮希平：
+('letter.body',          'letter',   '长信正文（段落用空行分隔）', 'longtext', 'P：
 
 你走后的第三个秋天，我终于把那些散落的车票、照片和便签收进了抽屉的最深处。抽屉合上的那一刻，我才意识到，原来思念并不会因为收起凭证而停止——它只是从指尖挪到了更深的某个地方，安静地待着。
 

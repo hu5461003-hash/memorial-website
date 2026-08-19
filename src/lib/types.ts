@@ -204,10 +204,10 @@ export type PostComment = {
 // ================================================================
 
 export const DEFAULT_SITE_META: Record<string, string> = {
-  site_title: "记录",
+  site_title: "P",
   site_description: "一段跨越九座城市的旅程记录",
   favicon_url: "/favicon.svg",
-  og_title: "记录",
+  og_title: "P",
   og_description: "走过的地方 都值得留下",
   og_image: "",
   keywords: "纪念,旅程,记录,足迹",

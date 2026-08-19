@@ -1,6 +1,22 @@
-import { useState, useEffect } from "react";
-import { Loader2, Save, Search, Globe, Image as ImageIcon } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Loader2, Save, Search, Globe, Image as ImageIcon, Upload, X } from "lucide-react";
+import { supabase } from "@/lib/supabase";
 import { useSiteMeta } from "@/hooks/useSiteMeta";
+
+/** 支持本地上传的图片字段 */
+const UPLOAD_KEYS = ["favicon_url", "og_image"];
+
+/** 上传图片到 covers 桶，返回公开 URL */
+async function uploadImage(file: File): Promise<string> {
+  const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+  const path = `seo-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+  const { error } = await supabase.storage
+    .from("covers")
+    .upload(path, file, { cacheControl: "3600", upsert: false });
+  if (error) throw error;
+  const { data: pub } = supabase.storage.from("covers").getPublicUrl(path);
+  return pub.publicUrl;
+}
 
 const FIELDS: { key: string; label: string; type: "text" | "longtext"; desc: string }[] = [
   { key: "site_title", label: "网站标题", type: "text", desc: "浏览器标签页显示的标题" },
@@ -20,6 +36,9 @@ export default function SeoManager() {
   const [form, setForm] = useState<Record<string, string>>(meta);
   const [busy, setBusy] = useState(false);
   const [hint, setHint] = useState<string | null>(null);
+  const [uploadKey, setUploadKey] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const pendingUploadKey = useRef<string | null>(null);
 
   // hook 加载完成后同步表单
   useEffect(() => {
@@ -28,6 +47,28 @@ export default function SeoManager() {
 
   function update(key: string, value: string) {
     setForm((f) => ({ ...f, [key]: value }));
+  }
+
+  /** 本地上传：先传存储，再把 URL 填入对应字段（需再点「保存」生效） */
+  function handlePickFile(key: string, files: FileList | null) {
+    const f = files?.[0];
+    if (fileInputRef.current) fileInputRef.current.value = "";
+    if (!f) return;
+    if (!f.type.startsWith("image/")) {
+      setHint("请选择图片文件");
+      return;
+    }
+    setUploadKey(key);
+    setHint(null);
+    uploadImage(f)
+      .then((url) => {
+        update(key, url);
+        setHint("✓ 上传成功，点「保存 SEO 设置」生效");
+      })
+      .catch((err) => {
+        setHint(`上传失败：${(err as Error).message}`);
+      })
+      .finally(() => setUploadKey(null));
   }
 
   async function handleSave() {
@@ -58,7 +99,44 @@ export default function SeoManager() {
           {FIELDS.map(({ key, label, type, desc }) => (
             <div key={key}>
               <label className="field-label">{label}</label>
-              {type === "longtext" ? (
+              {UPLOAD_KEYS.includes(key) ? (
+                <div className="mt-1 flex items-center gap-1.5">
+                  <input
+                    value={form[key] ?? ""}
+                    onChange={(e) => update(key, e.target.value)}
+                    placeholder="粘贴图片 URL，或点右侧上传"
+                    className="input-line flex-1 !py-1.5 text-xs"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setUploadKey(key);
+                      // 先记录目标字段，再触发隐藏 input
+                      pendingUploadKey.current = key;
+                      fileInputRef.current?.click();
+                    }}
+                    disabled={uploadKey === key}
+                    className="btn-ghost flex-none !px-2.5 !py-1.5 text-[11px]"
+                  >
+                    {uploadKey === key ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Upload className="h-3.5 w-3.5" strokeWidth={1.8} />
+                    )}
+                    上传
+                  </button>
+                  {(form[key] ?? "") !== "" && (
+                    <button
+                      type="button"
+                      onClick={() => update(key, "")}
+                      aria-label="清除"
+                      className="flex-none rounded p-1.5 text-rust/70 hover:bg-rust/10 hover:text-rust"
+                    >
+                      <X className="h-3.5 w-3.5" strokeWidth={1.8} />
+                    </button>
+                  )}
+                </div>
+              ) : type === "longtext" ? (
                 <textarea
                   value={form[key] ?? ""}
                   onChange={(e) => update(key, e.target.value)}
@@ -78,6 +156,19 @@ export default function SeoManager() {
             </div>
           ))}
         </div>
+
+        {/* 隐藏的文件选择（上传目标字段由 pendingUploadKey 记录） */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={(e) => {
+            const target = pendingUploadKey.current;
+            if (target) handlePickFile(target, e.target.files);
+            pendingUploadKey.current = null;
+          }}
+        />
       </div>
 
       {/* 图标预览 */}

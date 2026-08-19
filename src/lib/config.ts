@@ -26,15 +26,15 @@ export const FALLBACK_FOOTPRINTS = [
   { name: "岳阳", lat: 29.3556, lng: 113.1289, visit_date: "2022-12-15", story: "洞庭天下水，岳阳天下楼。", cover_url: null, sort_order: 9 },
 ] as const;
 
-/** 《寄皮希平》信件正文（默认值，可被后台 site_content.letter.body 覆盖） */
+/** 长信正文默认值（可被后台 site_content.letter.body 覆盖） */
 export const LETTER_CONTENT = [
-  "皮希平：",
+  "P：",
   "你走后的第三个秋天，我终于把那些散落的车票、照片和便签收进了抽屉的最深处。抽屉合上的那一刻，我才意识到，原来思念并不会因为收起凭证而停止——它只是从指尖挪到了更深的某个地方，安静地待着。",
   "平江的清晨，汨罗江的水还带着幕阜山的凉意。你在江边回头冲我笑，说「以后我们要走很多很多地方」。那时我并未当真，只觉得你说什么都是对的。",
   "后来真的走了很多地方。南宁的邕江湿热，柳州的螺蛳粉酸得你皱眉，永州的潇湘夜雨打湿了柳子街的青石板。长沙太平街的烟火里，你举着一串糖油粑粑说「这一口值了」。",
   "开封的清明上河园灯火通明，你说像走进了北宋的旧梦；郑州黄河岸边的风吹乱了你的头发，你没去管，只是看着河水出神。南京秦淮河的桨声里，你轻声念「烟笼寒水月笼沙」；岳阳楼前，你望着洞庭湖，久久不语。",
   "九座城市，九段故事。我把它们一一画在地图上，用暖色的线连起来，像一条慢慢延伸的、属于我们的河。",
-  "皮希平，我没有更多的地方可以和你一起走了。但我会把这些走过的路，一座一座地记下来，让它们替我记住你笑着的模样。",
+  "P，我没有更多的地方可以和你一起走了。但我会把这些走过的路，一座一座地记下来，让它们替我记住你笑着的模样。",
   "愿你在的那个地方，也有一江春水，有一盏为你亮着的灯。",
   "我，仍在这里。",
 ];
@@ -60,10 +60,10 @@ export type ContentDefault = {
  */
 export const CONTENT_DEFAULTS: ContentDefault[] = [
   // 全局
-  { content_key: "global.site_title", page: "global", label: "网站全局标题（浏览器标签）", type: "text", content_value: "记录", image_url: null, sort_order: 1 },
+  { content_key: "global.site_title", page: "global", label: "网站全局标题（浏览器标签）", type: "text", content_value: "P", image_url: null, sort_order: 1 },
   { content_key: "global.header_text", page: "global", label: "页眉文字", type: "text", content_value: "", image_url: null, sort_order: 2 },
   { content_key: "global.footer_text", page: "global", label: "页脚文字", type: "text", content_value: "— 愿你在的那个地方 也有一盏灯 —", image_url: null, sort_order: 3 },
-  { content_key: "global.logo_text", page: "global", label: "Logo 文字（无图片时显示）", type: "text", content_value: "记录", image_url: null, sort_order: 4 },
+  { content_key: "global.logo_text", page: "global", label: "Logo 文字（无图片时显示）", type: "text", content_value: "P", image_url: null, sort_order: 4 },
   { content_key: "global.logo_image", page: "global", label: "Logo 图片（优先显示）", type: "image", content_value: null, image_url: null, sort_order: 5 },
   // 首页
   { content_key: "home.featured_title", page: "home", label: "推荐帖区块标题", type: "text", content_value: "推荐帖子", image_url: null, sort_order: 1 },

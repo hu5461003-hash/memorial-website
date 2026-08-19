@@ -176,8 +176,16 @@ export default function ContentManager() {
   }
 
   async function handleDelete(c: SiteContent) {
-    if (!confirm(`确认删除「${c.label}」？`)) return;
-    await supabase.from("site_content").delete().eq("id", c.id);
+    if (!confirm(`确认删除「${c.label}」的内容？删除后前台该处将显示为空。`)) return;
+    // 保留记录行、仅清空内容：前台"以数据库为准"，避免回退默认值导致删除不生效
+    await supabase
+      .from("site_content")
+      .update({
+        content_value: null,
+        image_url: null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", c.id);
     load();
   }
 

@@ -5,8 +5,9 @@ import type { PageSection } from "@/lib/types";
 
 /**
  * 页面完整区块流：数据库动态组件 + 内置区块，统一按 sort_order 排序。
- * - 内置区块（section_type = "builtin"）无数据库记录时按注册顺序合成，默认显示
- * - 数据库中 active=false 的内置区块会被过滤（即后台隐藏）
+ * - 拉取该页全部区块（含 active=false），内置区块以数据库记录为准：
+ *   记录存在则尊重其显隐/排序，记录不存在才按注册顺序合成（默认显示）
+ * - 数据库中 active=false 的区块（含内置）会被过滤（即后台隐藏）
  * - Supabase 未配置时仅返回合成的内置区块
  */
 export function usePageBlocks(pageName: string) {
@@ -39,9 +40,9 @@ export function usePageBlocks(pageName: string) {
       .from("page_sections")
       .select("*")
       .eq("page_name", pageName)
-      .eq("active", true)
       .order("sort_order", { ascending: true });
     const rows = (data as PageSection[]) ?? [];
+    // 数据库已有记录的内置区块（无论显隐）都不再合成，避免隐藏后被"复活"
     const seen = new Set<string>();
     for (const r of rows) {
       if (r.section_type === "builtin") {
@@ -50,7 +51,7 @@ export function usePageBlocks(pageName: string) {
     }
     const merged = [...rows, ...synthesize(pageName, seen)];
     merged.sort((a, b) => a.sort_order - b.sort_order);
-    setSections(merged);
+    setSections(merged.filter((s) => s.active));
     setLoading(false);
   }, [pageName, synthesize]);
 

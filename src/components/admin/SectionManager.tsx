@@ -12,10 +12,12 @@ import {
   Minus,
   Eye,
   EyeOff,
-  LayoutDashboard,
   FilePlus,
   Pencil,
   Pin,
+  Save,
+  Undo2,
+  Check,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { BUILTIN_BLOCKS, BUILTIN_LABELS } from "@/lib/config";
@@ -46,10 +48,30 @@ const SECTION_TYPES: {
   { type: "spacer", label: "留白间隔", Icon: Minus, desc: "插入垂直空白" },
 ];
 
+/** 参与变更对比的字段 */
+function fingerprint(s: PageSection) {
+  return JSON.stringify([
+    s.sort_order,
+    s.active,
+    s.content_data,
+    s.bg_color ?? null,
+    s.text_color ?? null,
+    s.border_color ?? null,
+    s.accent_color ?? null,
+  ]);
+}
+
 export default function SectionManager() {
+  /** 草稿列表（数组顺序即页面渲染顺序） */
   const [list, setList] = useState<PageSection[]>([]);
+  /** 加载时的原始快照（id → 行），用于对比变更 */
+  const [snapshot, setSnapshot] = useState<Map<string, string>>(new Map());
+  /** 草稿中删除的已有记录 id（保存时才真正删除） */
+  const [deletedIds, setDeletedIds] = useState<string[]>([]);
+  const [dirty, setDirty] = useState(false);
   const [page, setPage] = useState("home");
   const [busy, setBusy] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [hint, setHint] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editObj, setEditObj] = useState<Record<string, unknown>>({});
@@ -87,7 +109,6 @@ export default function SectionManager() {
   /**
    * 内置区块落库：首次进入某页时，为注册表中尚无数据库记录的内置区块补插记录，
    * 使内置区块与动态组件统一用 sort_order 排序、active 显隐。
-   * 内置区块占据 1..N，动态组件整体后移。
    */
   async function materializeBuiltins(pageName: string) {
     const builtins = BUILTIN_BLOCKS[pageName] ?? [];
@@ -139,18 +160,26 @@ export default function SectionManager() {
     }
   }
 
-  async function load() {
-    await materializeBuiltins(page);
+  /** 从数据库加载 → 草稿（丢弃未保存修改） */
+  const load = useCallback(async (pageName: string) => {
+    await materializeBuiltins(pageName);
     const { data } = await supabase
       .from("page_sections")
       .select("*")
-      .eq("page_name", page)
+      .eq("page_name", pageName)
       .order("sort_order", { ascending: true });
-    setList((data as PageSection[]) ?? []);
-  }
+    const rows = ((data as PageSection[]) ?? []).slice().sort((a, b) => a.sort_order - b.sort_order);
+    setList(rows);
+    const snap = new Map<string, string>();
+    for (const r of rows) snap.set(r.id, fingerprint(r));
+    setSnapshot(snap);
+    setDeletedIds([]);
+    setDirty(false);
+    setHint(null);
+  }, []);
 
   useEffect(() => {
-    load();
+    load(page);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page]);
 
@@ -158,94 +187,154 @@ export default function SectionManager() {
     loadCustomPages();
   }, [loadCustomPages]);
 
-  async function addSection(type: SectionType) {
-    setBusy(true);
+  /** 切换页面前检查未保存草稿 */
+  function switchPage(name: string) {
+    if (name === page) return;
+    if (dirty && !confirm("当前页面有未保存的修改，切换后将丢失，确定切换？")) return;
+    setPage(name);
+  }
+
+  function markDirty() {
+    setDirty(true);
+  }
+
+  /* ============ 草稿操作（本地，不写库） ============ */
+
+  function addSection(type: SectionType) {
     const maxOrder = list.length > 0 ? Math.max(...list.map((s) => s.sort_order)) : 0;
-    const defaultData = getDefaultData(type);
-    const { error } = await supabase.from("page_sections").insert({
+    const item: PageSection = {
+      id: `tmp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       page_name: page,
       section_type: type,
-      content_data: defaultData,
+      content_data: getDefaultData(type),
       sort_order: maxOrder + 10,
       active: true,
-    });
-    setBusy(false);
-    if (error) {
-      setHint(`添加失败：${error.message}`);
-    } else {
-      setHint(null);
-      load();
-    }
+      created_at: "",
+      updated_at: "",
+    };
+    setList((l) => [...l, item]);
+    markDirty();
+    setHint("已加入草稿，记得点「保存并生效」");
   }
 
-  async function moveSection(index: number, dir: -1 | 1) {
+  function moveSection(index: number, dir: -1 | 1) {
     const target = index + dir;
     if (target < 0 || target >= list.length) return;
-    const a = list[index];
-    const b = list[target];
-    setBusy(true);
-    await supabase
-      .from("page_sections")
-      .update({ sort_order: b.sort_order, updated_at: new Date().toISOString() })
-      .eq("id", a.id);
-    await supabase
-      .from("page_sections")
-      .update({ sort_order: a.sort_order, updated_at: new Date().toISOString() })
-      .eq("id", b.id);
-    setBusy(false);
-    load();
+    setList((l) => {
+      const arr = [...l];
+      const [item] = arr.splice(index, 1);
+      arr.splice(target, 0, item);
+      return arr;
+    });
+    markDirty();
   }
 
-  async function toggleActive(s: PageSection) {
-    await supabase
-      .from("page_sections")
-      .update({ active: !s.active, updated_at: new Date().toISOString() })
-      .eq("id", s.id);
-    load();
+  function toggleActive(s: PageSection) {
+    setList((l) => l.map((x) => (x.id === s.id ? { ...x, active: !x.active } : x)));
+    markDirty();
   }
 
-  async function handleDelete(s: PageSection) {
+  function handleDelete(s: PageSection) {
     if (s.section_type === "builtin") {
       setHint("内置区块不可删除，可用眼睛图标隐藏（随时可恢复）");
       return;
     }
-    if (!confirm(`确认删除此「${sectionLabel(s.section_type)}」组件？`)) return;
-    setBusy(true);
-    await supabase.from("page_sections").delete().eq("id", s.id);
-    setBusy(false);
-    load();
+    if (!confirm(`确认从草稿移除此「${sectionLabel(s.section_type)}」组件？保存后生效。`)) return;
+    setList((l) => l.filter((x) => x.id !== s.id));
+    if (!s.id.startsWith("tmp-")) {
+      setDeletedIds((d) => [...d, s.id]);
+    }
+    markDirty();
   }
 
   function startEdit(s: PageSection) {
     setEditingId(s.id);
     setEditType(s.section_type);
-    setEditObj(s.content_data ?? {});
+    setEditObj({ ...(s.content_data ?? {}) });
   }
 
-  async function saveEdit(s: PageSection) {
-    setBusy(true);
-    const { error } = await supabase
-      .from("page_sections")
-      .update({
-        content_data: editObj,
-        bg_color: s.bg_color || null,
-        text_color: s.text_color || null,
-        border_color: s.border_color || null,
-        accent_color: s.accent_color || null,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", s.id);
-    if (error) {
-      setHint(`保存失败：${error.message}`);
-    } else {
-      setHint(null);
-      setEditingId(null);
-      load();
+  /** 编辑内容应用到草稿 */
+  function applyEdit(s: PageSection) {
+    setList((l) =>
+      l.map((x) =>
+        x.id === s.id
+          ? {
+              ...x,
+              content_data: editObj,
+              bg_color: (editObj.bg_color as string) || null,
+              text_color: (editObj.text_color as string) || null,
+              border_color: (editObj.border_color as string) || null,
+              accent_color: (editObj.accent_color as string) || null,
+            }
+          : x,
+      ),
+    );
+    setEditingId(null);
+    markDirty();
+  }
+
+  /* ============ 保存 / 放弃 ============ */
+
+  async function handleSave() {
+    setSaving(true);
+    setHint(null);
+    try {
+      // 1. 按草稿顺序重排 sort_order（1..N），避免乱序/冲突
+      const ordered = list.map((s, i) => ({ ...s, sort_order: i + 1 }));
+      // 2. 删除草稿中移除的已有记录
+      for (const id of deletedIds) {
+        await supabase.from("page_sections").delete().eq("id", id);
+      }
+      // 3. 新增 / 更新
+      for (const s of ordered) {
+        const colors = {
+          bg_color: s.bg_color || null,
+          text_color: s.text_color || null,
+          border_color: s.border_color || null,
+          accent_color: s.accent_color || null,
+        };
+        if (s.id.startsWith("tmp-")) {
+          const { error } = await supabase.from("page_sections").insert({
+            page_name: page,
+            section_type: s.section_type,
+            content_data: s.content_data,
+            sort_order: s.sort_order,
+            active: s.active,
+            ...colors,
+          });
+          if (error) throw error;
+        } else {
+          const origin = snapshot.get(s.id);
+          if (origin !== undefined && origin !== fingerprint(s)) {
+            const { error } = await supabase
+              .from("page_sections")
+              .update({
+                content_data: s.content_data,
+                sort_order: s.sort_order,
+                active: s.active,
+                ...colors,
+                updated_at: new Date().toISOString(),
+              })
+              .eq("id", s.id);
+            if (error) throw error;
+          }
+        }
+      }
+      await load(page);
+      await loadCustomPages();
+      setHint("✓ 已保存，前台刷新即可看到效果");
+    } catch (err) {
+      setHint(`保存失败：${(err as Error).message}，请重试`);
     }
-    setBusy(false);
+    setSaving(false);
   }
 
-  // ============ 页面 CRUD ============
+  async function handleDiscard() {
+    if (!confirm("放弃当前页面的全部未保存修改？")) return;
+    await load(page);
+  }
+
+  /* ============ 页面 CRUD（立即生效） ============ */
 
   async function createPage() {
     const name = newPageName.trim().toLowerCase().replace(/\s+/g, "_");
@@ -258,7 +347,6 @@ export default function SectionManager() {
       setHint("页面标识已存在");
       return;
     }
-    // 创建一个空的 spacer 占位，确保页面名出现在 page_sections 里
     const { error } = await supabase.from("page_sections").insert({
       page_name: name,
       section_type: "spacer",
@@ -296,8 +384,6 @@ export default function SectionManager() {
     if (!renamingPage) return;
     const label = renameLabel.trim();
     if (!label) return;
-    // 自定义页面的 label 就是 name（简化处理：更新 page_name 为新的 label）
-    // 实际只是更新 UI 显示，不修改数据库中的 page_name（避免破坏引用）
     setCustomPages((prev) =>
       prev.map((p) => (p.name === renamingPage ? { ...p, label } : p)),
     );
@@ -345,7 +431,7 @@ export default function SectionManager() {
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 pb-16">
       {/* 页面选择 + 页面管理 */}
       <div className="rounded-card border border-coffee-line/70 bg-cream-200 p-4 shadow-paper">
         <div className="mb-3 flex items-center justify-between">
@@ -400,7 +486,7 @@ export default function SectionManager() {
             <div key={k} className="group relative flex items-center">
               <button
                 type="button"
-                onClick={() => setPage(k)}
+                onClick={() => switchPage(k)}
                 className={cn(
                   "flex-none rounded-soft px-3 py-1.5 text-xs transition-colors",
                   page === k ? "bg-gold/20 text-coffee" : "text-ink-mute hover:text-ink-soft",
@@ -445,7 +531,7 @@ export default function SectionManager() {
           </div>
         )}
 
-        {/* 添加组件 */}
+        {/* 添加组件（进草稿） */}
         <div className="grid grid-cols-2 gap-2">
           {SECTION_TYPES.map(({ type, label, Icon, desc }) => (
             <button
@@ -466,14 +552,21 @@ export default function SectionManager() {
         {hint && <p className="mt-3 text-xs text-coffee">{hint}</p>}
       </div>
 
-      {/* 组件列表 */}
+      {/* 组件列表（草稿） */}
       <div className="rounded-card border border-coffee-line/70 bg-cream-200/60 p-4">
-        <p className="mb-1 text-xs text-ink-soft">
-          {allPages[page] ?? page} · 共 {list.length} 个区块（按顺序渲染）
-        </p>
+        <div className="mb-1 flex items-center justify-between">
+          <p className="text-xs text-ink-soft">
+            {allPages[page] ?? page} · 共 {list.length} 个区块（按顺序渲染）
+          </p>
+          {dirty && (
+            <span className="rounded-full bg-gold/15 px-2 py-0.5 text-[10px] font-medium text-coffee">
+              未保存
+            </span>
+          )}
+        </div>
         <p className="mb-3 text-[10px] leading-relaxed text-ink-mute">
-          带「内置」标记的是页面原生区块：可隐藏（眼睛图标）/排序，删除即隐藏、随时可恢复；
-          其余为自定义组件：可编辑内容、可删除。
+          所有操作（添加/删除/隐藏/排序/编辑）先暂存草稿，点右下角「保存并生效」统一写入。
+          带「内置」标记的是页面原生区块：可隐藏/排序，不可删除。
         </p>
         <div className="space-y-2">
           {list.map((s, i) => {
@@ -498,6 +591,11 @@ export default function SectionManager() {
                     {isBuiltin
                       ? (BUILTIN_LABELS[blockKey] ?? "内置区块")
                       : sectionLabel(s.section_type)}
+                    {s.id.startsWith("tmp-") && (
+                      <span className="ml-1.5 rounded-full bg-emerald-100 px-1.5 py-0.5 text-[9px] font-medium text-emerald-700">
+                        新
+                      </span>
+                    )}
                   </span>
                   {isBuiltin && (
                     <span className="flex-none rounded-full bg-gold/15 px-1.5 py-0.5 text-[9px] font-medium text-coffee">
@@ -508,7 +606,7 @@ export default function SectionManager() {
                     <button
                       type="button"
                       onClick={() => moveSection(i, -1)}
-                      disabled={busy || i === 0}
+                      disabled={i === 0}
                       className="rounded p-1 text-ink-soft hover:bg-cream-200 hover:text-coffee disabled:opacity-30"
                     >
                       <ChevronUp className="h-3.5 w-3.5" />
@@ -516,7 +614,7 @@ export default function SectionManager() {
                     <button
                       type="button"
                       onClick={() => moveSection(i, 1)}
-                      disabled={busy || i === list.length - 1}
+                      disabled={i === list.length - 1}
                       className="rounded p-1 text-ink-soft hover:bg-cream-200 hover:text-coffee disabled:opacity-30"
                     >
                       <ChevronDown className="h-3.5 w-3.5" />
@@ -765,27 +863,20 @@ export default function SectionManager() {
                           ["border_color", "边框色"],
                           ["accent_color", "强调色"],
                         ] as const).map(([key, label]) => {
-                          const current = (s[key] as string | null) ?? "";
+                          const current = (editObj[key] as string | null) ?? "";
                           return (
                             <div key={key} className="flex items-center gap-1.5">
                               <label className="w-12 flex-none text-[10px] text-ink-mute">{label}</label>
                               <input
                                 type="color"
                                 value={current || "#FFFFFF"}
-                                onChange={(e) => {
-                                  setEditObj((o) => ({ ...o, [key]: e.target.value }));
-                                  // 同步写入 s 对象的 color 字段
-                                  s[key] = e.target.value;
-                                }}
+                                onChange={(e) => setEditObj((o) => ({ ...o, [key]: e.target.value }))}
                                 className="h-6 w-8 flex-none cursor-pointer rounded border border-coffee-line/50 bg-transparent"
                               />
                               {current && (
                                 <button
                                   type="button"
-                                  onClick={() => {
-                                    setEditObj((o) => ({ ...o, [key]: "" }));
-                                    s[key] = null;
-                                  }}
+                                  onClick={() => setEditObj((o) => ({ ...o, [key]: "" }))}
                                   className="text-[9px] text-ink-mute hover:text-rust"
                                 >
                                   清除
@@ -797,16 +888,15 @@ export default function SectionManager() {
                       </div>
                     </div>
 
-                    {/* 操作按钮 */}
+                    {/* 操作按钮：应用到草稿 */}
                     <div className="mt-3 flex gap-2">
                       <button
                         type="button"
-                        onClick={() => saveEdit(s)}
-                        disabled={busy}
+                        onClick={() => applyEdit(s)}
                         className="btn-gold !px-3 !py-1 text-[11px]"
                       >
-                        {busy ? <Loader2 className="h-3 w-3 animate-spin" /> : <Plus className="h-3 w-3" />}
-                        保存
+                        <Check className="h-3 w-3" strokeWidth={2} />
+                        确定
                       </button>
                       <button
                         type="button"
@@ -834,6 +924,39 @@ export default function SectionManager() {
           )}
         </div>
       </div>
+
+      {/* 底部保存栏（草稿模式） */}
+      {dirty && (
+        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-cream-300 bg-cream-200/95 px-4 py-3 backdrop-blur lg:left-60 animate-fade-up">
+          <div className="mx-auto flex max-w-5xl items-center gap-3">
+            <p className="flex-1 truncate text-xs text-ink-soft">
+              有未保存的排版修改（保存后前台生效）
+            </p>
+            <button
+              type="button"
+              onClick={handleDiscard}
+              disabled={saving}
+              className="btn-ghost !py-2 text-xs"
+            >
+              <Undo2 className="h-3.5 w-3.5" strokeWidth={1.8} />
+              放弃修改
+            </button>
+            <button
+              type="button"
+              onClick={handleSave}
+              disabled={saving}
+              className="btn-gold !py-2 text-xs"
+            >
+              {saving ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" strokeWidth={1.8} />
+              ) : (
+                <Save className="h-3.5 w-3.5" strokeWidth={1.8} />
+              )}
+              保存并生效
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
