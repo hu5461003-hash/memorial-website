@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import TopBar from "./TopBar";
 import BottomTab from "./BottomTab";
 import MusicButton from "./MusicButton";
 import { cn } from "@/lib/utils";
@@ -7,17 +8,19 @@ import { cn } from "@/lib/utils";
  * 页面外壳布局
  * - 默认移动优先（最大宽度 470px 居中，Ins Web 经典 935px 桌面端）
  * - wide 模式：桌面端展开宽屏（管理后台用）
- * - 底部固定 Tab 栏（纯图标 + 居中 Logo）
+ * - 顶部居中 Logo 栏 + 底部彩色图标导航栏
  * - 全站右下角悬浮背景音乐按钮
  */
 export default function Layout({
   children,
   wide = false,
   hideNav = false,
+  hideTopBar = false,
 }: {
   children: ReactNode;
   wide?: boolean;
   hideNav?: boolean;
+  hideTopBar?: boolean;
 }) {
   return (
     <div
@@ -26,6 +29,7 @@ export default function Layout({
         wide ? "page-shell-wide" : "page-shell",
       )}
     >
+      {!hideTopBar && <TopBar />}
       {children}
       {!hideNav && <BottomTab />}
       <MusicButton />

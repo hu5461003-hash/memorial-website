@@ -55,14 +55,14 @@ body {
 }
 
 @layer components {
-  /* 移动端：窄屏居中（底部导航栏预留空间） */
+  /* 移动端：窄屏居中（顶部Logo栏 + 底部导航栏预留空间） */
   .page-shell {
-    @apply mx-auto w-full max-w-[470px] px-4 pt-4 pb-24;
+    @apply mx-auto w-full max-w-[470px] px-4 pt-14 pb-24;
   }
 
   /* 宽屏布局：管理后台等桌面端使用 */
   .page-shell-wide {
-    @apply mx-auto w-full max-w-[470px] sm:max-w-2xl md:max-w-3xl lg:max-w-5xl xl:max-w-6xl px-4 pt-4 pb-24;
+    @apply mx-auto w-full max-w-[470px] sm:max-w-2xl md:max-w-3xl lg:max-w-5xl xl:max-w-6xl px-4 pt-14 pb-24;
   }
 
   .page-title {
