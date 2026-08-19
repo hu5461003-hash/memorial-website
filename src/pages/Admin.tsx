@@ -209,7 +209,7 @@ export default function Admin() {
 
   if (checking) {
     return (
-      <Layout wide>
+      <Layout wide hideNav>
         <PageHeader title="管理后台" showBack={false} />
         <Loading tip="正在确认身份…" />
       </Layout>
@@ -218,7 +218,7 @@ export default function Admin() {
 
   if (!session) {
     return (
-      <Layout wide>
+      <Layout wide hideNav>
         <PageHeader title="管理后台" subtitle="仅限管理员" showBack={false} />
         <div className="flex flex-col items-center justify-center py-12">
           <div className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-gold/40 bg-gold/10 text-gold">

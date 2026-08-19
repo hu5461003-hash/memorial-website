@@ -13,6 +13,11 @@ type Form = {
   content_value: string;
   image_url: string;
   sort_order: string;
+  font_size: string;
+  font_weight: string;
+  text_color: string;
+  letter_spacing: string;
+  text_align: "left" | "center" | "right" | "";
 };
 
 const EMPTY: Form = {
@@ -23,6 +28,11 @@ const EMPTY: Form = {
   content_value: "",
   image_url: "",
   sort_order: "",
+  font_size: "",
+  font_weight: "",
+  text_color: "",
+  letter_spacing: "",
+  text_align: "",
 };
 
 const PAGE_LABELS: Record<string, string> = {
@@ -103,6 +113,11 @@ export default function ContentManager() {
       content_value: form.content_value || null,
       image_url: imageUrl,
       sort_order: form.sort_order ? Number(form.sort_order) : 0,
+      font_size: form.font_size || null,
+      font_weight: form.font_weight || null,
+      text_color: form.text_color || null,
+      letter_spacing: form.letter_spacing || null,
+      text_align: form.text_align || null,
       updated_at: new Date().toISOString(),
     });
 
@@ -224,6 +239,78 @@ export default function ContentManager() {
               placeholder={form.type === "longtext" ? "段落之间用空行分隔" : "文本内容"}
               className="mt-1 w-full resize-none rounded-soft border border-coffee-line/70 bg-cream-50/60 px-3 py-2 text-sm focus:border-gold focus:outline-none"
             />
+            {/* 文字样式 */}
+            <div className="mt-3 rounded-soft border border-dashed border-coffee-line/50 bg-cream-100/50 p-2.5">
+              <p className="mb-2 text-[11px] font-medium text-ink-soft">文字样式（留空则跟随全局）</p>
+              <div className="grid grid-cols-3 gap-2">
+                <div>
+                  <label className="field-label">字号</label>
+                  <input
+                    value={form.font_size}
+                    onChange={(e) => setForm({ ...form, font_size: e.target.value })}
+                    placeholder="如 16px"
+                    className="input-line text-xs"
+                  />
+                </div>
+                <div>
+                  <label className="field-label">字重</label>
+                  <select
+                    value={form.font_weight}
+                    onChange={(e) => setForm({ ...form, font_weight: e.target.value })}
+                    className="input-line text-xs"
+                  >
+                    <option value="">默认</option>
+                    <option value="300">细 (300)</option>
+                    <option value="400">常规 (400)</option>
+                    <option value="500">中 (500)</option>
+                    <option value="600">半粗 (600)</option>
+                    <option value="700">粗 (700)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="field-label">颜色</label>
+                  <div className="flex items-center gap-1">
+                    <input
+                      type="color"
+                      value={form.text_color || "#000000"}
+                      onChange={(e) => setForm({ ...form, text_color: e.target.value })}
+                      className="h-7 w-8 flex-none cursor-pointer rounded border border-coffee-line/50 bg-transparent"
+                    />
+                    {form.text_color && (
+                      <button
+                        type="button"
+                        onClick={() => setForm({ ...form, text_color: "" })}
+                        className="text-[9px] text-ink-mute hover:text-rust"
+                      >
+                        清除
+                      </button>
+                    )}
+                  </div>
+                </div>
+                <div>
+                  <label className="field-label">字距</label>
+                  <input
+                    value={form.letter_spacing}
+                    onChange={(e) => setForm({ ...form, letter_spacing: e.target.value })}
+                    placeholder="如 1px"
+                    className="input-line text-xs"
+                  />
+                </div>
+                <div>
+                  <label className="field-label">对齐</label>
+                  <select
+                    value={form.text_align}
+                    onChange={(e) => setForm({ ...form, text_align: e.target.value as Form["text_align"] })}
+                    className="input-line text-xs"
+                  >
+                    <option value="">默认</option>
+                    <option value="left">左对齐</option>
+                    <option value="center">居中</option>
+                    <option value="right">右对齐</option>
+                  </select>
+                </div>
+              </div>
+            </div>
           </div>
         ) : (
           <div className="mt-3">

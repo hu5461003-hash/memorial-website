@@ -15,9 +15,15 @@ const FONT_OPTIONS = [
 const COLOR_FIELDS: { key: keyof ThemeSettings; label: string; desc: string }[] = [
   { key: "bg_color", label: "背景色", desc: "全站页面背景" },
   { key: "text_color", label: "文字颜色", desc: "正文文字" },
-  { key: "primary_color", label: "主色 / 强调色", desc: "按钮、链接、强调" },
+  { key: "primary_color", label: "主色 / 强调色", desc: "链接、强调" },
   { key: "card_color", label: "卡片背景色", desc: "卡片与区块底色" },
   { key: "border_color", label: "边框色", desc: "分隔线与边框" },
+  { key: "nav_bg_color", label: "导航栏背景", desc: "底部导航栏底色" },
+  { key: "nav_text_color", label: "导航文字", desc: "导航栏图标/文字" },
+  { key: "nav_active_color", label: "导航激活", desc: "当前选中项颜色" },
+  { key: "logo_text_color", label: "Logo 文字", desc: "Logo 文字颜色" },
+  { key: "button_bg_color", label: "按钮背景", desc: "全站按钮底色" },
+  { key: "button_text_color", label: "按钮文字", desc: "按钮文字颜色" },
 ];
 
 export default function ThemeManager() {

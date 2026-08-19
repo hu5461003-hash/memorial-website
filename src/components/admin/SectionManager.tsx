@@ -164,7 +164,14 @@ export default function SectionManager() {
     setBusy(true);
     const { error } = await supabase
       .from("page_sections")
-      .update({ content_data: editObj, updated_at: new Date().toISOString() })
+      .update({
+        content_data: editObj,
+        bg_color: s.bg_color || null,
+        text_color: s.text_color || null,
+        border_color: s.border_color || null,
+        accent_color: s.accent_color || null,
+        updated_at: new Date().toISOString(),
+      })
       .eq("id", s.id);
     if (error) {
       setHint(`保存失败：${error.message}`);
@@ -662,6 +669,48 @@ export default function SectionManager() {
                         </div>
                       </div>
                     )}
+
+                    {/* === 颜色覆盖（分区自定义） === */}
+                    <div className="mt-3 rounded-soft border border-dashed border-coffee-line/50 bg-cream-100/50 p-2.5">
+                      <p className="mb-2 text-[11px] font-medium text-ink-soft">分区颜色覆盖（留空则跟随全局主题）</p>
+                      <div className="grid grid-cols-2 gap-2">
+                        {([
+                          ["bg_color", "背景色"],
+                          ["text_color", "文字色"],
+                          ["border_color", "边框色"],
+                          ["accent_color", "强调色"],
+                        ] as const).map(([key, label]) => {
+                          const current = (s[key] as string | null) ?? "";
+                          return (
+                            <div key={key} className="flex items-center gap-1.5">
+                              <label className="w-12 flex-none text-[10px] text-ink-mute">{label}</label>
+                              <input
+                                type="color"
+                                value={current || "#FFFFFF"}
+                                onChange={(e) => {
+                                  setEditObj((o) => ({ ...o, [key]: e.target.value }));
+                                  // 同步写入 s 对象的 color 字段
+                                  s[key] = e.target.value;
+                                }}
+                                className="h-6 w-8 flex-none cursor-pointer rounded border border-coffee-line/50 bg-transparent"
+                              />
+                              {current && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setEditObj((o) => ({ ...o, [key]: "" }));
+                                    s[key] = null;
+                                  }}
+                                  className="text-[9px] text-ink-mute hover:text-rust"
+                                >
+                                  清除
+                                </button>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
 
                     {/* 操作按钮 */}
                     <div className="mt-3 flex gap-2">

@@ -63,7 +63,8 @@ export const CONTENT_DEFAULTS: ContentDefault[] = [
   { content_key: "global.site_title", page: "global", label: "网站全局标题（浏览器标签）", type: "text", content_value: "记录", image_url: null, sort_order: 1 },
   { content_key: "global.header_text", page: "global", label: "页眉文字", type: "text", content_value: "", image_url: null, sort_order: 2 },
   { content_key: "global.footer_text", page: "global", label: "页脚文字", type: "text", content_value: "— 愿你在的那个地方 也有一盏灯 —", image_url: null, sort_order: 3 },
-  { content_key: "global.logo_text", page: "global", label: "Logo 文字", type: "text", content_value: "记录", image_url: null, sort_order: 4 },
+  { content_key: "global.logo_text", page: "global", label: "Logo 文字（无图片时显示）", type: "text", content_value: "记录", image_url: null, sort_order: 4 },
+  { content_key: "global.logo_image", page: "global", label: "Logo 图片（优先显示）", type: "image", content_value: null, image_url: null, sort_order: 5 },
   // 首页
   { content_key: "home.footer", page: "home", label: "首页底部文字", type: "text", content_value: "— 愿你在的那个地方 也有一盏灯 —", image_url: null, sort_order: 3 },
   { content_key: "map.subtitle", page: "map", label: "地图页副标题", type: "text", content_value: "九座城市，一条暖色的河", image_url: null, sort_order: 1 },

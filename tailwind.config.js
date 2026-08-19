@@ -9,45 +9,43 @@ export default {
     },
     extend: {
       colors: {
-        // ============ Ins 风配色 ============
-        // 重新定义原有 token 名，颜色值改为 Ins 风
-        // cream 系：背景/卡片
+        // ============ 黑白灰阶主题 ============
+        // cream 系：背景/卡片（白/浅灰）
         cream: {
-          50: "#FFFFFF",   // 主背景白
+          50: "#FFFFFF",   // 纯白主背景
           100: "#FAFAFA",  // 浅灰背景
           200: "#FFFFFF",  // 卡片白
-          300: "#DBDBDB",  // Ins 标志性浅灰边框
+          300: "#E5E5E5",  // 浅灰边框
         },
-        // ink 系：文字
+        // ink 系：文字（黑/深灰）
         ink: {
-          DEFAULT: "#262626",  // Ins 主黑
-          soft: "#8E8E8E",     // Ins 次灰
-          mute: "#C7C7C7",     // Ins 弱灰
+          DEFAULT: "#1A1A1A",  // 主黑文字
+          soft: "#666666",     // 次灰文字
+          mute: "#999999",     // 弱灰文字
         },
-        // gold 系：强调色（保留 token 名，改为 Ins 红粉渐变色阶）
+        // gold 系：强调色（改为黑色/深灰，保留 token 名）
         gold: {
-          DEFAULT: "#E1306C",  // Ins 主红粉
-          deep: "#C13584",    // Ins 深紫红
-          soft: "#F5853F",    // Ins 橙
-          tint: "#FCAF45",    // Ins 黄
+          DEFAULT: "#1A1A1A",  // 主强调：黑色
+          deep: "#333333",    // 深灰
+          soft: "#555555",    // 中灰
+          tint: "#888888",    // 浅灰
         },
-        // coffee 系：辅助强调（改为 Ins 紫）
+        // coffee 系：辅助强调（深灰）
         coffee: {
-          DEFAULT: "#833AB4",  // Ins 紫
-          line: "#DBDBDB",     // Ins 浅灰边框（与 cream-300 一致）
+          DEFAULT: "#333333",  // 深灰辅助
+          line: "#E5E5E5",     // 边框色
         },
-        // note 系：便签色（柔和 ins 风）
+        // note 系：便签色（保留彩色，用户指定便签保留彩色）
         note: {
           yellow: "#FFF4D6",
           pink: "#FCE0E6",
           blue: "#D6E6F2",
         },
         rust: {
-          DEFAULT: "#ED4956",  // Ins 危险红
+          DEFAULT: "#D32F2F",  // 保留红色用于删除/警告
         },
       },
       fontFamily: {
-        // 全部统一为 Ins 现代无衬线
         hand: ['-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', '"Helvetica Neue"', 'Helvetica', 'Arial', 'sans-serif'],
         serif: ['-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', '"Helvetica Neue"', 'Helvetica', 'Arial', 'sans-serif'],
         sans: ['-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', '"Helvetica Neue"', 'Helvetica', 'Arial', 'sans-serif'],
@@ -64,9 +62,9 @@ export default {
         ins: '0 8px 24px rgba(0,0,0,0.12)',
       },
       backgroundImage: {
-        // Ins 经典渐变（紫→粉→橙黄）
-        'ins-gradient': 'linear-gradient(45deg, #F5853F 0%, #FCAF45 25%, #E1306C 50%, #C13584 75%, #833AB4 100%)',
-        'ins-gradient-soft': 'linear-gradient(45deg, #FCAF45, #E1306C, #833AB4)',
+        // 黑白渐变
+        'ins-gradient': 'linear-gradient(45deg, #1A1A1A 0%, #333333 50%, #666666 100%)',
+        'ins-gradient-soft': 'linear-gradient(45deg, #333333, #666666, #999999)',
       },
       keyframes: {
         'fade-up': {

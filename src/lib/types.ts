@@ -55,6 +55,12 @@ export type SiteContent = {
   image_url: string | null; // 图片 URL（type=image 时）
   sort_order: number;
   updated_at: string;
+  // 文字样式（可选，为空则跟随全局）
+  font_size?: string | null;
+  font_weight?: string | null;
+  text_color?: string | null;
+  letter_spacing?: string | null;
+  text_align?: "left" | "center" | "right" | null;
 };
 
 // ============ 视频 ============
@@ -91,6 +97,11 @@ export type PageSection = {
   active: boolean;
   created_at: string;
   updated_at: string;
+  // 分区颜色覆盖（可选，为空则跟随全局主题）
+  bg_color?: string | null;
+  text_color?: string | null;
+  border_color?: string | null;
+  accent_color?: string | null;
 };
 
 // ============ 全局主题设置 ============
@@ -104,17 +115,30 @@ export type ThemeSettings = {
   base_font_size: string;
   heading_font_size: string;
   font_family: string;
+  // 新增：全局配色
+  nav_bg_color: string;
+  nav_text_color: string;
+  nav_active_color: string;
+  logo_text_color: string;
+  button_bg_color: string;
+  button_text_color: string;
 };
 
 export const DEFAULT_THEME: ThemeSettings = {
-  bg_color: "#FFF5F7",
-  text_color: "#4A3B47",
-  primary_color: "#E8919F",
-  card_color: "#FFF0F3",
-  border_color: "#F5D5DD",
+  bg_color: "#FAFAFA",
+  text_color: "#1A1A1A",
+  primary_color: "#1A1A1A",
+  card_color: "#FFFFFF",
+  border_color: "#E5E5E5",
   base_font_size: "16px",
   heading_font_size: "24px",
-  font_family: "Noto Serif SC",
+  font_family: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+  nav_bg_color: "#FFFFFF",
+  nav_text_color: "#666666",
+  nav_active_color: "#1A1A1A",
+  logo_text_color: "#1A1A1A",
+  button_bg_color: "#1A1A1A",
+  button_text_color: "#FFFFFF",
 };
 
 // ============ 媒体素材库 ============
