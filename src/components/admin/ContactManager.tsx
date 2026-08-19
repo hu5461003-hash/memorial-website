@@ -1,41 +1,64 @@
-import { useState, useEffect } from "react";
-import { Loader2, Save, User, Upload, Link2, Check } from "lucide-react";
-import { useSiteMeta } from "@/hooks/useSiteMeta";
-import { getAdminAvatar } from "@/lib/types";
+import { useEffect, useState } from "react";
+import { Loader2, Save, User, Upload, Check } from "lucide-react";
+import { useStore } from "@/store/useStore";
 import { supabase } from "@/lib/supabase";
-import { cn } from "@/lib/utils";
+import { useAdminProfiles } from "@/hooks/useAdmin";
+import { getAdminAvatar } from "@/lib/types";
+import type { AdminProfile } from "@/lib/types";
 
-const FIELDS: { key: string; label: string; desc: string; placeholder: string }[] = [
-  { key: "admin_nickname", label: "昵称", desc: "首页联系方式卡片中显示的称呼", placeholder: "如：皮希平" },
-  { key: "admin_qq", label: "QQ 号", desc: "未上传自定义头像时，将自动使用该 QQ 的头像", placeholder: "如：10001" },
-  { key: "admin_wechat", label: "微信号", desc: "可选，留空则不显示", placeholder: "如：wechat_id" },
-  { key: "admin_phone", label: "电话", desc: "可选，留空则不显示", placeholder: "如：13800138000" },
-  { key: "admin_email", label: "邮箱", desc: "可选，留空则不显示", placeholder: "如：admin@example.com" },
-  { key: "admin_avatar_url", label: "自定义头像 URL", desc: "上传图片后会自动填入；为空时使用 QQ 头像", placeholder: "https://..." },
+type FieldKey = "nickname" | "qq" | "wechat" | "phone" | "email_display" | "avatar_url";
+
+const FIELDS: { key: FieldKey; label: string; desc: string; placeholder: string }[] = [
+  { key: "nickname",       label: "昵称",     desc: "首页联系方式卡片中显示的称呼",                 placeholder: "如：皮希平" },
+  { key: "qq",             label: "QQ 号",    desc: "未上传自定义头像时，自动使用该 QQ 的头像",     placeholder: "如：10001" },
+  { key: "wechat",         label: "微信号",   desc: "可选，留空则不显示",                           placeholder: "如：wechat_id" },
+  { key: "phone",          label: "电话",     desc: "可选，留空则不显示",                           placeholder: "如：13800138000" },
+  { key: "email_display",  label: "邮箱",     desc: "可选，留空则不显示",                           placeholder: "如：admin@example.com" },
+  { key: "avatar_url",     label: "自定义头像 URL", desc: "上传图片后自动填入；为空使用 QQ 头像",   placeholder: "https://..." },
 ];
 
+/**
+ * 联系方式管理（后台）。
+ * 每位管理员只能编辑自己那行 admin_profiles —— 与另一位管理员完全独立。
+ * 通过 RLS (admin_uid = auth.uid()) 做数据库级硬限制，前端无法越界写入。
+ */
 export default function ContactManager() {
-  const { meta, loading, saveAll } = useSiteMeta();
-  const [form, setForm] = useState<Record<string, string>>(meta);
+  const { session } = useStore();
+  const uid = session?.user?.id ?? null;
+  const email = session?.user?.email ?? "";
+  const { mine, loading, saveMine } = useAdminProfiles(uid);
+
+  const [form, setForm] = useState<Record<FieldKey, string>>({
+    nickname: "", qq: "", wechat: "", phone: "", email_display: "", avatar_url: "",
+  });
   const [busy, setBusy] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [hint, setHint] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
+  const [saved, setSaved] = useState(false);
 
   useEffect(() => {
-    if (!loading) setForm(meta);
-  }, [meta, loading]);
+    if (mine) {
+      setForm({
+        nickname: mine.nickname ?? "",
+        qq: mine.qq ?? "",
+        wechat: mine.wechat ?? "",
+        phone: mine.phone ?? "",
+        email_display: mine.email_display ?? "",
+        avatar_url: mine.avatar_url ?? "",
+      });
+    }
+  }, [mine]);
 
-  function update(key: string, value: string) {
-    setForm((f) => ({ ...f, [key]: value }));
+  function update(k: FieldKey, v: string) {
+    setForm((f) => ({ ...f, [k]: v }));
   }
 
   async function handleUpload(file: File | null) {
-    if (!file || !supabase) return;
+    if (!file || !supabase || !uid) return;
     setUploading(true);
     setHint(null);
     const ext = file.name.split(".").pop() || "png";
-    const path = `avatars/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+    const path = `avatars/${uid}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}.${ext}`;
     const { error: upErr } = await supabase.storage
       .from("media")
       .upload(path, file, { cacheControl: "3600", upsert: false });
@@ -46,28 +69,25 @@ export default function ContactManager() {
     }
     const { data: pub } = supabase.storage.from("media").getPublicUrl(path);
     setUploading(false);
-    update("admin_avatar_url", pub.publicUrl);
+    update("avatar_url", pub.publicUrl);
     setHint("头像已上传，记得点保存");
   }
 
   async function handleSave() {
+    if (!uid) return;
     setBusy(true);
     setHint(null);
-    const ok = await saveAll(form);
+    setSaved(false);
+    const patch: Partial<AdminProfile> = form;
+    const ok = await saveMine(patch);
     setBusy(false);
-    setHint(ok ? "联系方式已保存" : "保存失败");
-  }
-
-  function copyContact() {
-    const parts: string[] = [];
-    if (form.admin_nickname) parts.push(`昵称：${form.admin_nickname}`);
-    if (form.admin_qq) parts.push(`QQ：${form.admin_qq}`);
-    if (form.admin_wechat) parts.push(`微信：${form.admin_wechat}`);
-    if (form.admin_phone) parts.push(`电话：${form.admin_phone}`);
-    if (form.admin_email) parts.push(`邮箱：${form.admin_email}`);
-    navigator.clipboard.writeText(parts.join("\n"));
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    if (ok) {
+      setSaved(true);
+      setHint("✓ 已保存（仅影响您自己的联系方式）");
+      setTimeout(() => setSaved(false), 2000);
+    } else {
+      setHint("保存失败，请稍后重试");
+    }
   }
 
   if (loading) {
@@ -78,10 +98,21 @@ export default function ContactManager() {
     );
   }
 
-  const avatarUrl = getAdminAvatar(form);
+  const avatarUrl = getAdminAvatar(form as Partial<AdminProfile>);
 
   return (
     <div className="space-y-5">
+      {/* 当前登录账号提示 */}
+      <div className="rounded-card border border-coffee-line/70 bg-cream-200 p-3.5 shadow-paper">
+        <p className="flex items-center gap-1.5 text-[11px] text-ink-soft">
+          <User className="h-3.5 w-3.5 text-gold" strokeWidth={1.8} />
+          当前登录账号：<span className="font-semibold text-ink">{email || "未识别"}</span>
+          <span className="ml-auto rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] text-emerald-700">
+            仅编辑自己的联系方式
+          </span>
+        </p>
+      </div>
+
       {/* 头像预览 */}
       <div className="rounded-card border border-coffee-line/70 bg-cream-200 p-4 shadow-paper">
         <h3 className="mb-3 flex items-center gap-1.5 font-hand text-base text-ink">
@@ -89,9 +120,9 @@ export default function ContactManager() {
           头像预览
         </h3>
         <div className="flex items-center gap-4">
-          <div className="relative h-16 w-16 flex-none overflow-hidden rounded-full border border-coffee-line/70 bg-cream-50">
+          <div className="relative h-16 w-16 flex-none overflow-hidden rounded-full border-2 border-gold/30 bg-cream-50">
             {avatarUrl ? (
-              <img src={avatarUrl} alt="头像" className="h-full w-full object-cover" />
+              <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
             ) : (
               <div className="flex h-full w-full items-center justify-center text-[10px] text-ink-mute">
                 无
@@ -100,10 +131,10 @@ export default function ContactManager() {
           </div>
           <div className="flex-1">
             <p className="text-xs text-ink-soft">
-              {form.admin_avatar_url ? "使用自定义头像" : form.admin_qq ? "使用 QQ 头像" : "未设置"}
+              {form.avatar_url ? "使用自定义头像" : form.qq ? "使用 QQ 头像" : "未设置"}
             </p>
             <p className="mt-1 text-[10px] leading-relaxed text-ink-mute">
-              头像来源优先级：自定义头像 &gt; QQ 头像
+              优先级：自定义头像 &gt; QQ 头像
             </p>
             <label className="mt-2 inline-flex cursor-pointer items-center gap-1 rounded-soft border border-coffee-line/70 bg-cream-50 px-2.5 py-1 text-[11px] text-ink-soft transition-colors hover:border-gold/50 hover:text-coffee">
               {uploading ? (
@@ -127,14 +158,14 @@ export default function ContactManager() {
       <div className="rounded-card border border-coffee-line/70 bg-cream-200 p-4 shadow-paper">
         <h3 className="mb-3 flex items-center gap-1.5 font-hand text-base text-ink">
           <User className="h-4 w-4 text-gold" strokeWidth={1.8} />
-          联系方式
+          我的联系方式
         </h3>
         <div className="space-y-3">
           {FIELDS.map(({ key, label, desc, placeholder }) => (
             <div key={key}>
               <label className="field-label">{label}</label>
               <input
-                value={form[key] ?? ""}
+                value={form[key]}
                 onChange={(e) => update(key, e.target.value)}
                 placeholder={placeholder}
                 className="input-line"
@@ -145,34 +176,22 @@ export default function ContactManager() {
         </div>
       </div>
 
-      {/* 复制全部 */}
-      <button
-        type="button"
-        onClick={copyContact}
-        className="btn-ghost w-full"
-      >
-        {copied ? (
-          <Check className="h-3.5 w-3.5 text-emerald-600" strokeWidth={1.8} />
-        ) : (
-          <Link2 className="h-3.5 w-3.5" strokeWidth={1.8} />
-        )}
-        {copied ? "已复制联系方式" : "复制全部联系方式"}
-      </button>
-
-      {hint && <p className="text-xs text-coffee">{hint}</p>}
+      {hint && <p className={`text-xs ${saved ? "text-emerald-600" : "text-coffee"}`}>{hint}</p>}
 
       <button
         type="button"
         onClick={handleSave}
-        disabled={busy}
+        disabled={busy || !uid}
         className="btn-gold w-full"
       >
         {busy ? (
           <Loader2 className="h-3.5 w-3.5 animate-spin" strokeWidth={1.8} />
+        ) : saved ? (
+          <Check className="h-3.5 w-3.5" strokeWidth={1.8} />
         ) : (
           <Save className="h-3.5 w-3.5" strokeWidth={1.8} />
         )}
-        保存联系方式
+        保存我的联系方式
       </button>
     </div>
   );

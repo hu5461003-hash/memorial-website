@@ -25,7 +25,7 @@ export default function Home() {
   const timerRef = useRef<number | null>(null);
 
   // 首页推荐帖子（仅 featured=true，不涉及私密相册任何数据）
-  const { posts: featuredPosts, loading: featuredLoading } = usePosts({
+  const { posts: featuredPosts, loading: featuredLoading, error: featuredError } = usePosts({
     onlyFeatured: true,
   });
 
@@ -66,9 +66,14 @@ export default function Home() {
           <div className="py-6">
             <Loading tip="" />
           </div>
+        ) : featuredError ? (
+          <div className="rounded-card border border-rose-200 bg-rose-50/80 px-3 py-4 text-[11px] text-rose-600">
+            <div className="font-semibold">加载推荐帖子失败</div>
+            <div className="mt-1 break-all opacity-90">{featuredError}</div>
+          </div>
         ) : featuredPosts.length === 0 ? (
           <div className="rounded-card border border-dashed border-cream-300 bg-cream-200/50 py-6 text-center text-xs text-ink-mute">
-            暂无推荐帖子
+            暂无推荐帖子（请后台「帖子管理」打开某条帖的「推荐到首页」开关）
           </div>
         ) : (
           <PostGrid posts={featuredPosts} compact showEmpty={false} />

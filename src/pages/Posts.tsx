@@ -42,7 +42,7 @@ export default function Posts() {
 
 /* ===================== 列表视图 ===================== */
 function PostListView() {
-  const { posts, loading } = usePosts();
+  const { posts, loading, error, reload } = usePosts();
   const { createAnonymousPost } = usePostActions();
   const [showForm, setShowForm] = useState(false);
   const [title, setTitle] = useState("");
@@ -172,6 +172,18 @@ function PostListView() {
 
       {loading ? (
         <Loading tip="正在加载帖子…" />
+      ) : error ? (
+        <div className="rounded-card border border-rose-200 bg-rose-50/80 px-4 py-5 text-sm text-rose-600">
+          <div className="mb-1 font-semibold">加载帖子失败</div>
+          <div className="break-all text-xs opacity-90">{error}</div>
+          <button
+            type="button"
+            onClick={() => reload()}
+            className="btn-gold mt-3 !py-1.5 text-xs"
+          >
+            重新加载
+          </button>
+        </div>
       ) : (
         <PostGrid posts={posts} />
       )}
@@ -187,7 +199,7 @@ function PostDetailView({
   postId: string;
   onExit: () => void;
 }) {
-  const { post, images, comments, liked, loading, reload } = usePostDetail(postId);
+  const { post, images, comments, liked, loading, error, reload } = usePostDetail(postId);
   const { likePost, addComment, sharePost } = usePostActions();
   const navigate = useNavigate();
 
@@ -268,6 +280,25 @@ function PostDetailView({
       <>
         <PageHeader title="帖子详情" showBack={false} />
         <Loading tip="加载中…" />
+      </>
+    );
+  }
+
+  if (error) {
+    return (
+      <>
+        <PageHeader title="帖子详情" showBack={false} />
+        <div className="rounded-card border border-rose-200 bg-rose-50/80 px-4 py-5 text-sm text-rose-600">
+          <div className="mb-1 font-semibold">加载帖子详情失败</div>
+          <div className="break-all text-xs opacity-90">{error}</div>
+          <button
+            type="button"
+            onClick={() => reload()}
+            className="btn-gold mt-3 !py-1.5 text-xs"
+          >
+            重新加载
+          </button>
+        </div>
       </>
     );
   }

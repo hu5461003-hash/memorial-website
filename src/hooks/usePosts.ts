@@ -27,9 +27,11 @@ async function getMyIp(): Promise<string> {
 export function usePosts({ onlyFeatured = false }: { onlyFeatured?: boolean } = {}) {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
+    setError(null);
     if (!supabaseReady || !supabase) {
       setPosts([]);
       setLoading(false);
@@ -40,8 +42,16 @@ export function usePosts({ onlyFeatured = false }: { onlyFeatured?: boolean } = 
       .select("*")
       .order("created_at", { ascending: false });
     if (onlyFeatured) q = q.eq("featured", true);
-    const { data } = await q;
-    setPosts((data as Post[]) ?? []);
+    const { data, error: err } = await q;
+    if (err) {
+      const detail = [err.message, err.code, err.details, err.hint]
+        .filter(Boolean)
+        .join(" · ");
+      setError(detail || "加载帖子失败");
+      setPosts([]);
+    } else {
+      setPosts((data as Post[]) ?? []);
+    }
     setLoading(false);
   }, [onlyFeatured]);
 
@@ -49,7 +59,7 @@ export function usePosts({ onlyFeatured = false }: { onlyFeatured?: boolean } = 
     load();
   }, [load]);
 
-  return { posts, loading, reload: load };
+  return { posts, loading, error, reload: load };
 }
 
 export function usePostDetail(postId: string | null) {
@@ -58,16 +68,20 @@ export function usePostDetail(postId: string | null) {
   const [comments, setComments] = useState<PostComment[]>([]);
   const [liked, setLiked] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     if (!postId || !supabaseReady || !supabase) {
       setPost(null);
       setImages([]);
       setComments([]);
+      setLiked(false);
       setLoading(false);
+      setError(null);
       return;
     }
     setLoading(true);
+    setError(null);
     const [pRes, iRes, cRes] = await Promise.all([
       supabase.from("posts").select("*").eq("id", postId).single(),
       supabase
@@ -81,17 +95,26 @@ export function usePostDetail(postId: string | null) {
         .eq("post_id", postId)
         .order("created_at", { ascending: true }),
     ]);
+    const collectErr = [pRes.error, iRes.error, cRes.error]
+      .filter(Boolean)
+      .map((e) => [e!.message, e!.code, e!.details, e!.hint].filter(Boolean).join(" · "))
+      .join(" | ");
+    if (collectErr) setError(collectErr);
     setPost((pRes.data as Post) ?? null);
     setImages((iRes.data as PostImage[]) ?? []);
     setComments((cRes.data as PostComment[]) ?? []);
 
     // 我有没有点过赞
     const ip = await getMyIp();
-    const { count } = await supabase
+    const { count, error: likeErr } = await supabase
       .from("post_likes")
       .select("*", { count: "exact", head: true })
       .eq("post_id", postId)
       .eq("ip_address", ip);
+    if (likeErr) {
+      const s = [likeErr.message, likeErr.code].filter(Boolean).join(" · ");
+      setError((prev) => (prev ? prev + " | " + s : s));
+    }
     setLiked((count ?? 0) > 0);
 
     setLoading(false);
@@ -101,7 +124,7 @@ export function usePostDetail(postId: string | null) {
     load();
   }, [load]);
 
-  return { post, images, comments, liked, loading, reload: load };
+  return { post, images, comments, liked, loading, error, reload: load };
 }
 
 export function usePostActions() {

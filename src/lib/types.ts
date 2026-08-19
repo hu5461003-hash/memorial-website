@@ -24,7 +24,9 @@ export type Photo = {
   id: string;
   title: string;
   photo_date: string | null;
-  city: string | null; // 所属城市（中文名称，与 footprints.name 对应）
+  city: string | null; // 兼容旧字段，不再作为分组依据
+  album_id: string | null;  // 自定义文件夹
+  owner_admin_uid: string | null;
   storage_path: string;
   public_url: string;
   created_at: string;
@@ -74,6 +76,8 @@ export type Video = {
   id: string;
   title: string;
   city: string | null;
+  album_id: string | null;
+  owner_admin_uid: string | null;
   video_date: string | null;
   storage_path: string;
   public_url: string;
@@ -195,23 +199,57 @@ export const DEFAULT_SITE_META: Record<string, string> = {
   author: "",
   lang: "zh-CN",
   robots: "index, follow",
-  // 管理员联系方式
+  // 注意：admin 联系方式已于 v2 迁移到 admin_profiles 表（按管理员独立）
+  // 保留以下 key 仅为兼容老代码读取
   admin_nickname: "管理员",
   admin_qq: "",
   admin_wechat: "",
   admin_phone: "",
   admin_email: "",
-  admin_avatar_url: "", // 自定义头像 URL，为空时使用 QQ 头像
+  admin_avatar_url: "",
+};
+
+// ============ 管理员系统 ============
+export type AdminUser = {
+  uid: string;
+  email: string;
+  is_primary: boolean;
+  created_at: string;
+};
+
+export type AdminProfile = {
+  admin_uid: string;
+  nickname: string;
+  qq: string;
+  wechat: string;
+  phone: string;
+  email_display: string;
+  avatar_url: string;
+  updated_at: string;
+};
+
+// ============ 自定义相册文件夹 ============
+export type Album = {
+  id: string;
+  name: string;
+  description: string;
+  cover_url: string | null;
+  owner_admin_uid: string | null;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
 };
 
 /**
- * 根据联系方式配置生成头像 URL
- * 优先级：自定义头像 > QQ 头像 > 空字符串
+ * 生成头像 URL（同时兼容旧 site_meta 全局 Record 和新 AdminProfile）
+ * 优先级：自定义头像 > QQ 头像 > 空
  */
-export function getAdminAvatar(meta: Record<string, string>): string {
-  const custom = meta.admin_avatar_url?.trim();
+export function getAdminAvatar(m: Record<string, string>): string;
+export function getAdminAvatar(p: Partial<AdminProfile>): string;
+export function getAdminAvatar(x: Record<string, string | undefined> | Partial<AdminProfile>): string {
+  const custom = (x.avatar_url ?? x.admin_avatar_url ?? "").trim();
   if (custom) return custom;
-  const qq = meta.admin_qq?.trim();
+  const qq = (x.qq ?? x.admin_qq ?? "").trim();
   if (qq) return `https://q.qlogo.cn/g?b=qq&nk=${encodeURIComponent(qq)}&s=100`;
   return "";
 }

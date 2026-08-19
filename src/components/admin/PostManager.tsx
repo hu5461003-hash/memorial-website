@@ -34,11 +34,15 @@ export default function PostManager() {
   const [busy, setBusy] = useState(false);
   const [uploadingImg, setUploadingImg] = useState(false);
   const [hint, setHint] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
   const [progress, setProgress] = useState<{ ok: number; total: number } | null>(null);
   // 展开查看的帖子 ID（查看 IP / 评论 / 图片详情）
   const [expanded, setExpanded] = useState<string | null>(null);
 
   async function load() {
+    setLoading(true);
+    setLoadError(null);
     const [postsRes, imagesRes, commentsRes] = await Promise.all([
       supabase
         .from("posts")
@@ -47,6 +51,12 @@ export default function PostManager() {
       supabase.from("post_images").select("*"),
       supabase.from("post_comments").select("*"),
     ]);
+    const errs = [postsRes.error, imagesRes.error, commentsRes.error]
+      .filter(Boolean)
+      .map((e) => [e!.message, e!.code, e!.details, e!.hint].filter(Boolean).join(" · "))
+      .join(" | ");
+    if (errs) setLoadError(errs);
+
     const posts = (postsRes.data as Post[]) ?? [];
     setList(posts);
 
@@ -69,6 +79,7 @@ export default function PostManager() {
       cMap[c.post_id].push(c);
     });
     setCommentsMap(cMap);
+    setLoading(false);
   }
 
   useEffect(() => {
@@ -329,7 +340,28 @@ export default function PostManager() {
           全部帖子（{list.length}）
         </h3>
 
-        {list.length === 0 && (
+        {loading && (
+          <div className="flex items-center justify-center gap-2 py-8 text-xs text-ink-soft">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            加载帖子中…
+          </div>
+        )}
+
+        {!loading && loadError && (
+          <div className="mb-2 rounded-soft border border-rose-200 bg-rose-50/80 px-3 py-3 text-xs text-rose-600">
+            <div className="font-semibold">加载帖子列表失败</div>
+            <div className="mt-1 break-all opacity-90">{loadError}</div>
+            <button
+              type="button"
+              onClick={() => load()}
+              className="btn-gold mt-2 !py-1 text-[11px]"
+            >
+              重试
+            </button>
+          </div>
+        )}
+
+        {!loading && !loadError && list.length === 0 && (
           <div className="flex flex-col items-center py-8 text-ink-mute">
             <FileText className="h-6 w-6" strokeWidth={1.4} />
             <p className="mt-2 text-xs">还没有帖子，先去发一篇吧</p>

@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import { Lock, KeyRound, X, AlertCircle, CameraOff, Play, Folder, ChevronLeft, Image as ImageIcon, Film } from "lucide-react";
+import {
+  Lock, KeyRound, X, AlertCircle, CameraOff, Play,
+  Folder, ChevronLeft, Image as ImageIcon, Film,
+} from "lucide-react";
 import PageHeader from "@/components/PageHeader";
 import Layout from "@/components/Layout";
 import Loading from "@/components/Loading";
@@ -8,10 +11,16 @@ import { GALLERY_PASSWORD } from "@/lib/config";
 import { useStore } from "@/store/useStore";
 import { useContent } from "@/hooks/useContent";
 import SectionRenderer from "@/components/SectionRenderer";
-import type { Photo, Video } from "@/lib/types";
+import type { Photo, Video, Album } from "@/lib/types";
 
 type View = "albums" | "all" | "album";
 
+/**
+ * 私密相册 v2：按自定义文件夹（albums 表）分组，不再按 city 字段分组。
+ * - city 字段保留但仅作展示用途（照片日期下方）
+ * - 视图：相簿（文件夹卡片） / 全部（平铺） / 某文件夹详情
+ * - 视频也按 album_id 归入同一文件夹
+ */
 export default function Gallery() {
   const { galleryUnlocked, unlockGallery } = useStore();
   const { getValue } = useContent();
@@ -22,28 +31,32 @@ export default function Gallery() {
 
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [videos, setVideos] = useState<Video[]>([]);
+  const [albums, setAlbums] = useState<Album[]>([]);
   const [loading, setLoading] = useState(true);
   const [active, setActive] = useState<Photo | null>(null);
   const [activeVideo, setActiveVideo] = useState<Video | null>(null);
 
-  // 视图：相簿 / 全部 / 某城市详情
   const [view, setView] = useState<View>("albums");
-  const [selectedCity, setSelectedCity] = useState<string | null>(null);
+  const [selectedAlbumId, setSelectedAlbumId] = useState<string | null>(null);
 
   async function loadAll() {
     setLoading(true);
     if (!supabaseReady || !supabase) {
       setPhotos([]);
       setVideos([]);
+      setAlbums([]);
       setLoading(false);
       return;
     }
-    const [photoRes, videoRes] = await Promise.all([
-      supabase.from("photos").select("*").order("photo_date", { ascending: false }),
-      supabase.from("videos").select("*").order("video_date", { ascending: false }),
+    const [photoRes, videoRes, albumRes] = await Promise.all([
+      supabase.from("photos").select("*").order("photo_date", { ascending: false, nullsFirst: false }),
+      supabase.from("videos").select("*").order("video_date", { ascending: false, nullsFirst: false }),
+      supabase.from("albums").select("*").order("sort_order", { ascending: true }),
     ]);
     setPhotos((photoRes.data as Photo[]) ?? []);
     setVideos((videoRes.data as Video[]) ?? []);
+    const alist = (albumRes.data as Album[]) ?? [];
+    setAlbums(alist);
     setLoading(false);
   }
 
@@ -61,50 +74,82 @@ export default function Gallery() {
     }
   }
 
-  // ============ 按城市分组的相簿 ============
-  type Album = {
-    city: string;
+  // ============ 文件夹卡片视图数据 ============
+  // 每个 album 包装：封面 / 照片数 / 视频数
+  type AlbumView = {
+    id: string;
+    name: string;
     cover: string | null;
-    count: number;
-    photos: Photo[];
-    videos: Video[];
+    photoCount: number;
+    videoCount: number;
   };
+  const albumViews = useMemo<AlbumView[]>(() => {
+    return albums.map((a) => {
+      const ps = photos.filter((p) => p.album_id === a.id);
+      const vs = videos.filter((v) => v.album_id === a.id);
+      const cover = a.cover_url ?? ps[0]?.public_url ?? vs[0]?.cover_url ?? vs[0]?.public_url ?? null;
+      return {
+        id: a.id,
+        name: a.name,
+        cover,
+        photoCount: ps.length,
+        videoCount: vs.length,
+      };
+    });
+  }, [albums, photos, videos]);
 
-  const albums = useMemo<Album[]>(() => {
-    const map = new Map<string, Album>();
-    const ensure = (city: string): Album => {
-      if (!map.has(city)) {
-        map.set(city, { city, cover: null, count: 0, photos: [], videos: [] });
-      }
-      return map.get(city)!;
+  // 未分类单独一张卡片
+  const uncategorized = useMemo<AlbumView>(() => {
+    const ps = photos.filter((p) => !p.album_id);
+    const vs = videos.filter((v) => !v.album_id);
+    return {
+      id: "__uncategorized__",
+      name: "未分类",
+      cover: ps[0]?.public_url ?? vs[0]?.cover_url ?? vs[0]?.public_url ?? null,
+      photoCount: ps.length,
+      videoCount: vs.length,
     };
-    photos.forEach((p) => {
-      const key = p.city?.trim() || "未分类";
-      const a = ensure(key);
-      a.photos.push(p);
-      a.count++;
-      if (!a.cover) a.cover = p.public_url;
-    });
-    videos.forEach((v) => {
-      const key = v.city?.trim() || "未分类";
-      const a = ensure(key);
-      a.videos.push(v);
-      a.count++;
-      if (!a.cover) a.cover = v.cover_url ?? v.public_url;
-    });
-    // 按数量从多到少排序，"未分类"放最后
-    return Array.from(map.values()).sort((a, b) => {
-      if (a.city === "未分类") return 1;
-      if (b.city === "未分类") return -1;
-      return b.count - a.count;
-    });
   }, [photos, videos]);
 
-  // 当前选中城市的相簿
-  const currentAlbum = useMemo<Album | null>(
-    () => albums.find((a) => a.city === selectedCity) ?? null,
-    [albums, selectedCity],
-  );
+  const allAlbumCards = useMemo<AlbumView[]>(() => {
+    const cards: AlbumView[] = [...albumViews];
+    if (uncategorized.photoCount > 0 || uncategorized.videoCount > 0) {
+      cards.push(uncategorized);
+    }
+    return cards;
+  }, [albumViews, uncategorized]);
+
+  const currentAlbum = useMemo<{
+    album: Album | null;
+    name: string;
+    photos: Photo[];
+    videos: Video[];
+    total: number;
+  } | null>(() => {
+    if (view !== "album" || !selectedAlbumId) return null;
+    if (selectedAlbumId === "__uncategorized__") {
+      return {
+        album: null,
+        name: "未分类",
+        photos: photos.filter((p) => !p.album_id),
+        videos: videos.filter((v) => !v.album_id),
+        total:
+          photos.filter((p) => !p.album_id).length +
+          videos.filter((v) => !v.album_id).length,
+      };
+    }
+    const a = albums.find((x) => x.id === selectedAlbumId);
+    if (!a) return null;
+    return {
+      album: a,
+      name: a.name,
+      photos: photos.filter((p) => p.album_id === a.id),
+      videos: videos.filter((v) => v.album_id === a.id),
+      total:
+        photos.filter((p) => p.album_id === a.id).length +
+        videos.filter((v) => v.album_id === a.id).length,
+    };
+  }, [view, selectedAlbumId, albums, photos, videos]);
 
   // ============ 密码门 ============
   if (!galleryUnlocked) {
@@ -178,13 +223,13 @@ export default function Gallery() {
     <Layout>
       <PageHeader title="私密相册" subtitle={gallerySubtitle} showBack={false} />
 
-      {/* 顶部 Tab 切换：相簿 / 全部 */}
+      {/* 顶部 Tab */}
       <div className="mb-4 flex items-center gap-1 border-b border-cream-300">
         <button
           type="button"
           onClick={() => {
             setView("albums");
-            setSelectedCity(null);
+            setSelectedAlbumId(null);
           }}
           className={
             view === "albums"
@@ -199,7 +244,7 @@ export default function Gallery() {
           type="button"
           onClick={() => {
             setView("all");
-            setSelectedCity(null);
+            setSelectedAlbumId(null);
           }}
           className={
             view === "all"
@@ -210,31 +255,35 @@ export default function Gallery() {
           <ImageIcon className="h-4 w-4" strokeWidth={2} />
           全部
         </button>
-        {/* 统计 */}
         <span className="ml-auto px-2 text-xs text-ink-mute">
           {photos.length} 照片 · {videos.length} 视频
         </span>
       </div>
 
-      {/* ============ 视图1：相簿列表（按城市分组） ============ */}
+      {/* ============ 视图1：自定义文件夹卡片网格 ============ */}
       {view === "albums" && (
         <section className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-          {albums.map((a) => (
+          {allAlbumCards.length === 0 && (
+            <div className="col-span-full flex flex-col items-center py-10 text-ink-mute">
+              <Folder className="h-8 w-8" strokeWidth={1.4} />
+              <p className="mt-2 text-xs">管理员还没有创建自定义文件夹</p>
+            </div>
+          )}
+          {allAlbumCards.map((a) => (
             <button
-              key={a.city}
+              key={a.id}
               type="button"
               onClick={() => {
-                setSelectedCity(a.city);
+                setSelectedAlbumId(a.id);
                 setView("album");
               }}
               className="group flex flex-col overflow-hidden rounded-card border border-cream-300 bg-cream-200 shadow-paper transition-all hover:-translate-y-0.5 hover:shadow-ins active:scale-[0.98] animate-fade-up"
             >
-              {/* 封面 */}
               <div className="relative aspect-square overflow-hidden bg-cream-100">
                 {a.cover ? (
                   <img
                     src={a.cover}
-                    alt={a.city}
+                    alt={a.name}
                     loading="lazy"
                     className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                   />
@@ -243,23 +292,20 @@ export default function Gallery() {
                     <Folder className="h-8 w-8" strokeWidth={1.4} />
                   </div>
                 )}
-                {/* 数量徽章 */}
                 <span className="absolute right-2 top-2 inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-ink/70 px-1.5 text-[10px] font-semibold text-cream-50 backdrop-blur-sm">
-                  {a.count}
+                  {a.photoCount + a.videoCount}
                 </span>
-                {/* 视频角标 */}
-                {a.videos.length > 0 && (
+                {a.videoCount > 0 && (
                   <span className="absolute left-2 top-2 inline-flex items-center gap-0.5 rounded-full bg-gold/85 px-1.5 py-0.5 text-[9px] font-medium text-cream-50">
                     <Film className="h-2.5 w-2.5" strokeWidth={2} />
-                    {a.videos.length}
+                    {a.videoCount}
                   </span>
                 )}
               </div>
-              {/* 城市名 + 数量 */}
               <div className="px-2.5 py-2">
-                <p className="truncate text-sm font-semibold text-ink">{a.city}</p>
+                <p className="truncate text-sm font-semibold text-ink">{a.name}</p>
                 <p className="mt-0.5 text-[10px] text-ink-soft">
-                  {a.photos.length} 照片{a.videos.length > 0 ? ` · ${a.videos.length} 视频` : ""}
+                  {a.photoCount} 照片{a.videoCount > 0 ? ` · ${a.videoCount} 视频` : ""}
                 </p>
               </div>
             </button>
@@ -267,16 +313,15 @@ export default function Gallery() {
         </section>
       )}
 
-      {/* ============ 视图2：单个城市相簿详情 ============ */}
+      {/* ============ 视图2：某文件夹详情 ============ */}
       {view === "album" && currentAlbum && (
         <>
-          {/* 顶栏：返回 + 城市名 */}
           <div className="mb-4 flex items-center gap-2">
             <button
               type="button"
               onClick={() => {
                 setView("albums");
-                setSelectedCity(null);
+                setSelectedAlbumId(null);
               }}
               className="flex items-center gap-1.5 rounded-soft px-2 py-1.5 text-xs text-ink-soft transition-colors hover:bg-cream-100 hover:text-ink"
             >
@@ -285,12 +330,11 @@ export default function Gallery() {
             </button>
             <div className="flex items-center gap-1.5">
               <Folder className="h-4 w-4 text-gold" strokeWidth={2} />
-              <span className="font-semibold text-ink">{currentAlbum.city}</span>
-              <span className="text-xs text-ink-mute">· {currentAlbum.count}</span>
+              <span className="font-semibold text-ink">{currentAlbum.name}</span>
+              <span className="text-xs text-ink-mute">· {currentAlbum.total}</span>
             </div>
           </div>
 
-          {/* 3 列方格 Feed */}
           <section className="grid grid-cols-3 gap-0.5 sm:gap-1">
             {currentAlbum.photos.map((p) => (
               <button
@@ -315,7 +359,6 @@ export default function Gallery() {
                 </div>
               </button>
             ))}
-
             {currentAlbum.videos.map((v) => (
               <button
                 key={v.id}
@@ -342,11 +385,17 @@ export default function Gallery() {
                 )}
               </button>
             ))}
+            {currentAlbum.total === 0 && (
+              <div className="col-span-full flex flex-col items-center py-12 text-ink-mute">
+                <CameraOff className="h-6 w-6" strokeWidth={1.4} />
+                <p className="mt-2 text-xs">文件夹还是空的</p>
+              </div>
+            )}
           </section>
         </>
       )}
 
-      {/* ============ 视图3：全部（平铺 3 列方格） ============ */}
+      {/* ============ 视图3：全部（平铺） ============ */}
       {view === "all" && (
         <section className="grid grid-cols-3 gap-0.5 sm:gap-1">
           {photos.map((p) => (
@@ -366,13 +415,10 @@ export default function Gallery() {
                 <p className="px-2 text-center text-[11px] font-semibold text-cream-50 line-clamp-2">
                   {p.title}
                 </p>
-                {p.city && (
-                  <p className="text-[9px] text-cream-50/80">{p.city}</p>
-                )}
+                {p.city && <p className="text-[9px] text-cream-50/80">{p.city}</p>}
               </div>
             </button>
           ))}
-
           {videos.map((v) => (
             <button
               key={v.id}
@@ -407,7 +453,7 @@ export default function Gallery() {
         <SectionRenderer pageName="gallery" />
       </div>
 
-      {/* 全屏查看照片 */}
+      {/* 全屏照片 */}
       {active && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-ink/90 p-4 backdrop-blur-sm animate-fade-in"
@@ -431,9 +477,7 @@ export default function Gallery() {
             />
             <figcaption className="mt-3 text-center text-sm font-medium text-cream-50">
               {active.title}
-              {active.city && (
-                <span className="ml-2 text-xs text-gold-tint">· {active.city}</span>
-              )}
+              {active.city && <span className="ml-2 text-gold-tint">· {active.city}</span>}
               {active.photo_date && (
                 <span className="ml-2 text-xs text-cream-50/70">· {active.photo_date}</span>
               )}
@@ -442,7 +486,7 @@ export default function Gallery() {
         </div>
       )}
 
-      {/* 全屏播放视频 */}
+      {/* 全屏视频 */}
       {activeVideo && (
         <div
           className="fixed inset-0 z-[60] flex items-center justify-center bg-ink/95 p-4 backdrop-blur-sm animate-fade-in"
@@ -467,9 +511,7 @@ export default function Gallery() {
               className="max-h-[80vh] max-w-full rounded-soft"
             />
             <figcaption className="mt-3 flex items-center justify-center gap-2 text-sm font-medium text-cream-50">
-              {activeVideo.city && (
-                <span className="text-gold-tint">{activeVideo.city}</span>
-              )}
+              {activeVideo.city && <span className="text-gold-tint">{activeVideo.city}</span>}
               <span>{activeVideo.title}</span>
               {activeVideo.video_date && (
                 <span className="text-xs text-cream-50/70">· {activeVideo.video_date}</span>
