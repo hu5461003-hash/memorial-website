@@ -8,10 +8,10 @@ import ContactCard from "@/components/ContactCard";
 import Loading from "@/components/Loading";
 
 const ENTRIES = [
-  { to: "/map", title: "足迹地图", desc: "九座城市，一条暖色的河", Icon: Map },
-  { to: "/letter", title: "纪念长信", desc: "写给那段时光", Icon: BookOpen },
-  { to: "/messages", title: "温暖留言", desc: "留下一张便签", Icon: Mail },
-  { to: "/gallery", title: "私密相册", desc: "需要一把小钥匙", Icon: Image },
+  { to: "/map", title: "足迹地图", desc: "九座城市，一条暖色的河", Icon: Map, color: "#F5853F" },
+  { to: "/letter", title: "纪念长信", desc: "写给那段时光", Icon: BookOpen, color: "#833AB4" },
+  { to: "/messages", title: "温暖留言", desc: "留下一张便签", Icon: Mail, color: "#E1306C" },
+  { to: "/gallery", title: "私密相册", desc: "需要一把小钥匙", Icon: Image, color: "#F77737" },
 ] as const;
 
 export default function Home() {
@@ -30,7 +30,7 @@ export default function Home() {
       <section className="mb-5 mt-1">
         <div className="mb-3 flex items-center justify-between">
           <h2 className="flex items-center gap-1.5 text-sm font-bold text-ink">
-            <PenSquare className="h-4 w-4 text-gold" strokeWidth={2} />
+            <PenSquare className="h-4 w-4" style={{ color: "#E1306C" }} strokeWidth={2} />
             推荐帖子
           </h2>
           <Link
@@ -62,7 +62,10 @@ export default function Home() {
                 to={`/posts/${p.id}`}
                 className="group flex flex-none flex-col items-center gap-1.5"
               >
-                <span className="block h-[68px] w-[68px] overflow-hidden rounded-full bg-cream-100 ring-2 ring-gold/30 transition-all group-hover:ring-gold group-active:scale-95">
+                <span
+                  className="block h-[68px] w-[68px] overflow-hidden rounded-full bg-cream-100 ring-2 transition-all group-hover:ring-[#E1306C] group-active:scale-95"
+                  style={{ boxShadow: "0 0 0 2px rgba(225,48,108,0.3)" }}
+                >
                   {p.cover_url ? (
                     <img
                       src={p.cover_url}
@@ -87,14 +90,17 @@ export default function Home() {
 
       {/* 入口卡片网格 */}
       <section className="mt-6 grid grid-cols-2 gap-3 pb-8">
-        {ENTRIES.map(({ to, title, desc, Icon }, idx) => (
+        {ENTRIES.map(({ to, title, desc, Icon, color }, idx) => (
           <Link
             key={to}
             to={to}
-            className="group flex flex-col items-start gap-2 rounded-card border border-cream-300 bg-cream-200 p-4 shadow-paper transition-all hover:-translate-y-0.5 hover:border-gold/50 hover:shadow-ins active:scale-[0.98] animate-fade-up"
+            className="group flex flex-col items-start gap-2 rounded-card border border-cream-300 bg-cream-200 p-4 shadow-paper transition-all hover:-translate-y-0.5 hover:shadow-ins active:scale-[0.98] animate-fade-up"
             style={{ animationDelay: `${0.2 + idx * 0.08}s` }}
           >
-            <span className="inline-flex h-9 w-9 items-center justify-center rounded-soft ins-gradient-soft text-white transition-opacity group-hover:opacity-90">
+            <span
+              className="inline-flex h-9 w-9 items-center justify-center rounded-soft text-white transition-opacity group-hover:opacity-90"
+              style={{ backgroundColor: color }}
+            >
               <Icon className="h-4 w-4" strokeWidth={2} />
             </span>
             <div>

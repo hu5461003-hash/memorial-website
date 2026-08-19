@@ -23,12 +23,12 @@ export default {
           soft: "#666666",     // 次灰文字
           mute: "#999999",     // 弱灰文字
         },
-        // gold 系：强调色（改为黑色/深灰，保留 token 名）
+        // gold 系：强调色（Ins 品牌色）
         gold: {
-          DEFAULT: "#1A1A1A",  // 主强调：黑色
-          deep: "#333333",    // 深灰
-          soft: "#555555",    // 中灰
-          tint: "#888888",    // 浅灰
+          DEFAULT: "#E1306C",  // Ins 粉红
+          deep: "#C13584",    // Ins 深粉
+          soft: "#F77737",    // Ins 珊瑚
+          tint: "#FCAF45",    // Ins 黄
         },
         // coffee 系：辅助强调（深灰）
         coffee: {
@@ -62,9 +62,9 @@ export default {
         ins: '0 8px 24px rgba(0,0,0,0.12)',
       },
       backgroundImage: {
-        // 黑白渐变
-        'ins-gradient': 'linear-gradient(45deg, #1A1A1A 0%, #333333 50%, #666666 100%)',
-        'ins-gradient-soft': 'linear-gradient(45deg, #333333, #666666, #999999)',
+        // Ins 品牌渐变
+        'ins-gradient': 'linear-gradient(45deg, #F5853F 0%, #FCAF45 25%, #E1306C 50%, #C13584 75%, #833AB4 100%)',
+        'ins-gradient-soft': 'linear-gradient(45deg, #FCAF45, #E1306C, #833AB4)',
       },
       keyframes: {
         'fade-up': {
