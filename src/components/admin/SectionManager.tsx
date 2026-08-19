@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import {
   Trash2,
   Plus,
@@ -12,17 +12,23 @@ import {
   Minus,
   Eye,
   EyeOff,
+  LayoutDashboard,
+  FilePlus,
+  Pencil,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import type { PageSection, SectionType } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import MediaPicker from "@/components/admin/MediaPicker";
 
-const PAGES: Record<string, string> = {
+/** 系统内置页面（不可删除） */
+const SYSTEM_PAGES: Record<string, string> = {
   home: "首页",
   map: "地图",
   letter: "长信",
   messages: "留言",
   gallery: "相册",
+  posts: "帖子",
 };
 
 const SECTION_TYPES: {
@@ -31,6 +37,7 @@ const SECTION_TYPES: {
   Icon: typeof Code;
   desc: string;
 }[] = [
+  { type: "banner", label: "Banner 轮播图", Icon: ImageIcon, desc: "首页大图轮播，可多张" },
   { type: "marquee", label: "无限滚动相册", Icon: ImageIcon, desc: "横向自动滚动的照片条" },
   { type: "timeline", label: "恋爱时间轴", Icon: Clock, desc: "垂直时间线展示重要日期" },
   { type: "custom_html", label: "自定义代码块", Icon: Code, desc: "注入 HTML/CSS/JS" },
@@ -43,10 +50,38 @@ export default function SectionManager() {
   const [page, setPage] = useState("home");
   const [busy, setBusy] = useState(false);
   const [hint, setHint] = useState<string | null>(null);
-  // 编辑态：可视化对象编辑
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editObj, setEditObj] = useState<Record<string, unknown>>({});
   const [editType, setEditType] = useState<SectionType>("custom_html");
+  /** 自定义页面列表（从 page_sections 中 DISTINCT 出来的） */
+  const [customPages, setCustomPages] = useState<{ name: string; label: string }[]>([]);
+  /** 新建页面对话框 */
+  const [showNewPage, setShowNewPage] = useState(false);
+  const [newPageName, setNewPageName] = useState("");
+  const [newPageLabel, setNewPageLabel] = useState("");
+  /** 重命名页面 */
+  const [renamingPage, setRenamingPage] = useState<string | null>(null);
+  const [renameLabel, setRenameLabel] = useState("");
+
+  /** 合并系统页面 + 自定义页面 */
+  const allPages: Record<string, string> = {
+    ...SYSTEM_PAGES,
+    ...Object.fromEntries(customPages.map((p) => [p.name, p.label])),
+  };
+
+  /** 从 page_sections 拉取所有自定义页面名 */
+  const loadCustomPages = useCallback(async () => {
+    if (!supabase) return;
+    const { data } = await supabase
+      .from("page_sections")
+      .select("page_name")
+      .order("page_name", { ascending: true });
+    const names = [...new Set((data ?? []).map((d: { page_name: string }) => d.page_name))];
+    const custom = names
+      .filter((n) => !(n in SYSTEM_PAGES))
+      .map((n) => ({ name: n, label: n }));
+    setCustomPages(custom);
+  }, []);
 
   async function load() {
     const { data } = await supabase
@@ -61,6 +96,10 @@ export default function SectionManager() {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page]);
+
+  useEffect(() => {
+    loadCustomPages();
+  }, [loadCustomPages]);
 
   async function addSection(type: SectionType) {
     setBusy(true);
@@ -88,47 +127,32 @@ export default function SectionManager() {
     const a = list[index];
     const b = list[target];
     setBusy(true);
-    const { error: e1 } = await supabase
+    await supabase
       .from("page_sections")
       .update({ sort_order: b.sort_order, updated_at: new Date().toISOString() })
       .eq("id", a.id);
-    const { error: e2 } = await supabase
+    await supabase
       .from("page_sections")
       .update({ sort_order: a.sort_order, updated_at: new Date().toISOString() })
       .eq("id", b.id);
     setBusy(false);
-    if (e1 || e2) {
-      setHint(`排序失败：${e1?.message ?? e2?.message}`);
-    } else {
-      setHint(null);
-      load();
-    }
+    load();
   }
 
   async function toggleActive(s: PageSection) {
-    const { error } = await supabase
+    await supabase
       .from("page_sections")
       .update({ active: !s.active, updated_at: new Date().toISOString() })
       .eq("id", s.id);
-    if (error) {
-      setHint(`操作失败：${error.message}`);
-    } else {
-      setHint(null);
-      load();
-    }
+    load();
   }
 
   async function handleDelete(s: PageSection) {
     if (!confirm(`确认删除此「${sectionLabel(s.section_type)}」组件？`)) return;
     setBusy(true);
-    const { error } = await supabase.from("page_sections").delete().eq("id", s.id);
+    await supabase.from("page_sections").delete().eq("id", s.id);
     setBusy(false);
-    if (error) {
-      setHint(`删除失败：${error.message}`);
-    } else {
-      setHint(null);
-      load();
-    }
+    load();
   }
 
   function startEdit(s: PageSection) {
@@ -153,7 +177,68 @@ export default function SectionManager() {
     setBusy(false);
   }
 
-  // 编辑器辅助
+  // ============ 页面 CRUD ============
+
+  async function createPage() {
+    const name = newPageName.trim().toLowerCase().replace(/\s+/g, "_");
+    const label = newPageLabel.trim() || name;
+    if (!name) {
+      setHint("页面标识不能为空");
+      return;
+    }
+    if (name in SYSTEM_PAGES || customPages.some((p) => p.name === name)) {
+      setHint("页面标识已存在");
+      return;
+    }
+    // 创建一个空的 spacer 占位，确保页面名出现在 page_sections 里
+    const { error } = await supabase.from("page_sections").insert({
+      page_name: name,
+      section_type: "spacer",
+      content_data: { height: 8 },
+      sort_order: 1,
+      active: false,
+    });
+    if (error) {
+      setHint(`创建失败：${error.message}`);
+      return;
+    }
+    setHint(`页面「${label}」已创建`);
+    setNewPageName("");
+    setNewPageLabel("");
+    setShowNewPage(false);
+    await loadCustomPages();
+    setPage(name);
+  }
+
+  async function deletePage(pageName: string) {
+    if (pageName in SYSTEM_PAGES) {
+      setHint("系统页面不可删除");
+      return;
+    }
+    if (!confirm(`确认删除页面「${allPages[pageName] ?? pageName}」及其所有组件？`)) return;
+    setBusy(true);
+    await supabase.from("page_sections").delete().eq("page_name", pageName);
+    setBusy(false);
+    await loadCustomPages();
+    setPage("home");
+    setHint(`页面已删除`);
+  }
+
+  async function renamePage() {
+    if (!renamingPage) return;
+    const label = renameLabel.trim();
+    if (!label) return;
+    // 自定义页面的 label 就是 name（简化处理：更新 page_name 为新的 label）
+    // 实际只是更新 UI 显示，不修改数据库中的 page_name（避免破坏引用）
+    setCustomPages((prev) =>
+      prev.map((p) => (p.name === renamingPage ? { ...p, label } : p)),
+    );
+    setRenamingPage(null);
+    setRenameLabel("");
+  }
+
+  // ============ 编辑器辅助 ============
+
   function setField(key: string, val: unknown) {
     setEditObj((o) => ({ ...o, [key]: val }));
   }
@@ -164,12 +249,31 @@ export default function SectionManager() {
   }
   function addImage(url: string) {
     if (!url.trim()) return;
+    setField("images", [...getImageList(), url.trim()]);
+  }
+  function updateImage(idx: number, url: string) {
     const list = getImageList();
-    setField("images", [...list, url.trim()]);
+    list[idx] = url;
+    setField("images", list);
   }
   function removeImage(idx: number) {
-    const list = getImageList();
-    setField("images", list.filter((_, i) => i !== idx));
+    setField("images", getImageList().filter((_, i) => i !== idx));
+  }
+
+  function getBannerSlides(): { image: string; title: string; subtitle: string }[] {
+    const arr = editObj.slides as { image: string; title: string; subtitle: string }[] | undefined;
+    return Array.isArray(arr) ? arr : [];
+  }
+  function addBannerSlide() {
+    setField("slides", [...getBannerSlides(), { image: "", title: "", subtitle: "" }]);
+  }
+  function updateSlide(idx: number, field: "image" | "title" | "subtitle", val: string) {
+    const slides = getBannerSlides();
+    slides[idx] = { ...slides[idx], [field]: val };
+    setField("slides", slides);
+  }
+  function removeSlide(idx: number) {
+    setField("slides", getBannerSlides().filter((_, i) => i !== idx));
   }
 
   function getTimelineItems(): { date: string; text: string }[] {
@@ -177,8 +281,7 @@ export default function SectionManager() {
     return Array.isArray(arr) ? arr : [];
   }
   function addTimelineItem() {
-    const items = getTimelineItems();
-    setField("items", [...items, { date: "", text: "" }]);
+    setField("items", [...getTimelineItems(), { date: "", text: "" }]);
   }
   function updateTimelineItem(idx: number, field: "date" | "text", val: string) {
     const items = getTimelineItems();
@@ -186,30 +289,109 @@ export default function SectionManager() {
     setField("items", items);
   }
   function removeTimelineItem(idx: number) {
-    const items = getTimelineItems();
-    setField("items", items.filter((_, i) => i !== idx));
+    setField("items", getTimelineItems().filter((_, i) => i !== idx));
   }
 
   return (
     <div className="space-y-5">
-      {/* 页面选择 */}
+      {/* 页面选择 + 页面管理 */}
       <div className="rounded-card border border-coffee-line/70 bg-cream-200 p-4 shadow-paper">
-        <h3 className="mb-3 font-hand text-base text-ink">动态组件排版</h3>
-        <div className="mb-3 flex items-center gap-2 overflow-x-auto">
-          {Object.entries(PAGES).map(([k, v]) => (
-            <button
-              key={k}
-              type="button"
-              onClick={() => setPage(k)}
-              className={cn(
-                "flex-none rounded-soft px-3 py-1.5 text-xs transition-colors",
-                page === k ? "bg-gold/20 text-coffee" : "text-ink-mute hover:text-ink-soft",
+        <div className="mb-3 flex items-center justify-between">
+          <h3 className="font-hand text-base text-ink">页面排版管理</h3>
+          <button
+            type="button"
+            onClick={() => setShowNewPage((v) => !v)}
+            className="btn-ghost !px-2 !py-1 text-[11px]"
+          >
+            <FilePlus className="h-3 w-3" strokeWidth={1.8} />
+            新建页面
+          </button>
+        </div>
+
+        {/* 新建页面对话框 */}
+        {showNewPage && (
+          <div className="mb-3 rounded-soft border border-gold/30 bg-cream-50 p-3">
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="field-label">页面标识（英文）</label>
+                <input
+                  value={newPageName}
+                  onChange={(e) => setNewPageName(e.target.value)}
+                  placeholder="如 about"
+                  className="input-line text-xs"
+                />
+              </div>
+              <div>
+                <label className="field-label">显示名称</label>
+                <input
+                  value={newPageLabel}
+                  onChange={(e) => setNewPageLabel(e.target.value)}
+                  placeholder="如 关于我们"
+                  className="input-line text-xs"
+                />
+              </div>
+            </div>
+            <div className="mt-2 flex gap-2">
+              <button type="button" onClick={createPage} className="btn-gold !px-3 !py-1 text-[11px]">
+                <Plus className="h-3 w-3" /> 创建
+              </button>
+              <button type="button" onClick={() => setShowNewPage(false)} className="btn-ghost !px-3 !py-1 text-[11px]">
+                取消
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* 页面列表 */}
+        <div className="mb-3 flex flex-wrap items-center gap-1.5">
+          {Object.entries(allPages).map(([k, v]) => (
+            <div key={k} className="group relative flex items-center">
+              <button
+                type="button"
+                onClick={() => setPage(k)}
+                className={cn(
+                  "flex-none rounded-soft px-3 py-1.5 text-xs transition-colors",
+                  page === k ? "bg-gold/20 text-coffee" : "text-ink-mute hover:text-ink-soft",
+                )}
+              >
+                {v}
+              </button>
+              {/* 自定义页面才有重命名/删除 */}
+              {!(k in SYSTEM_PAGES) && page === k && (
+                <span className="ml-0.5 flex gap-0.5">
+                  <button
+                    type="button"
+                    onClick={() => { setRenamingPage(k); setRenameLabel(v); }}
+                    className="rounded p-0.5 text-ink-soft hover:bg-cream-100 hover:text-coffee"
+                  >
+                    <Pencil className="h-2.5 w-2.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => deletePage(k)}
+                    className="rounded p-0.5 text-rust/70 hover:bg-rust/10 hover:text-rust"
+                  >
+                    <Trash2 className="h-2.5 w-2.5" />
+                  </button>
+                </span>
               )}
-            >
-              {v}
-            </button>
+            </div>
           ))}
         </div>
+
+        {/* 重命名对话框 */}
+        {renamingPage && (
+          <div className="mb-3 flex items-center gap-2 rounded-soft border border-gold/30 bg-cream-50 p-2">
+            <input
+              value={renameLabel}
+              onChange={(e) => setRenameLabel(e.target.value)}
+              placeholder="显示名称"
+              className="input-line flex-1 text-xs"
+            />
+            <button type="button" onClick={renamePage} className="btn-gold !px-2 !py-1 text-[11px]">确定</button>
+            <button type="button" onClick={() => setRenamingPage(null)} className="btn-ghost !px-2 !py-1 text-[11px]">取消</button>
+          </div>
+        )}
 
         {/* 添加组件 */}
         <div className="grid grid-cols-2 gap-2">
@@ -235,7 +417,7 @@ export default function SectionManager() {
       {/* 组件列表 */}
       <div className="rounded-card border border-coffee-line/70 bg-cream-200/60 p-4">
         <p className="mb-3 text-xs text-ink-soft">
-          {PAGES[page]} · 共 {list.length} 个组件（按顺序渲染）
+          {allPages[page] ?? page} · 共 {list.length} 个组件（按顺序渲染）
         </p>
         <div className="space-y-2">
           {list.map((s, i) => {
@@ -260,39 +442,31 @@ export default function SectionManager() {
                       type="button"
                       onClick={() => moveSection(i, -1)}
                       disabled={busy || i === 0}
-                      aria-label="上移"
-                      className="rounded p-1 text-ink-soft transition-colors hover:bg-cream-200 hover:text-coffee disabled:opacity-30"
+                      className="rounded p-1 text-ink-soft hover:bg-cream-200 hover:text-coffee disabled:opacity-30"
                     >
-                      <ChevronUp className="h-3.5 w-3.5" strokeWidth={1.8} />
+                      <ChevronUp className="h-3.5 w-3.5" />
                     </button>
                     <button
                       type="button"
                       onClick={() => moveSection(i, 1)}
                       disabled={busy || i === list.length - 1}
-                      aria-label="下移"
-                      className="rounded p-1 text-ink-soft transition-colors hover:bg-cream-200 hover:text-coffee disabled:opacity-30"
+                      className="rounded p-1 text-ink-soft hover:bg-cream-200 hover:text-coffee disabled:opacity-30"
                     >
-                      <ChevronDown className="h-3.5 w-3.5" strokeWidth={1.8} />
+                      <ChevronDown className="h-3.5 w-3.5" />
                     </button>
                     <button
                       type="button"
                       onClick={() => toggleActive(s)}
-                      aria-label={s.active ? "隐藏" : "显示"}
-                      className="rounded p-1 text-ink-soft transition-colors hover:bg-cream-200 hover:text-coffee"
+                      className="rounded p-1 text-ink-soft hover:bg-cream-200 hover:text-coffee"
                     >
-                      {s.active ? (
-                        <Eye className="h-3.5 w-3.5" strokeWidth={1.8} />
-                      ) : (
-                        <EyeOff className="h-3.5 w-3.5" strokeWidth={1.8} />
-                      )}
+                      {s.active ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
                     </button>
                     <button
                       type="button"
                       onClick={() => handleDelete(s)}
-                      aria-label="删除"
-                      className="rounded p-1 text-rust/70 transition-colors hover:bg-rust/10 hover:text-rust"
+                      className="rounded p-1 text-rust/70 hover:bg-rust/10 hover:text-rust"
                     >
-                      <Trash2 className="h-3.5 w-3.5" strokeWidth={1.8} />
+                      <Trash2 className="h-3.5 w-3.5" />
                     </button>
                   </div>
                 </div>
@@ -300,6 +474,75 @@ export default function SectionManager() {
                 {/* 可视化编辑区 */}
                 {editingId === s.id ? (
                   <div className="mt-2.5 rounded-soft border border-gold/30 bg-cream-50/80 p-3">
+                    {/* === Banner 轮播图 === */}
+                    {editType === "banner" && (
+                      <div className="space-y-3">
+                        <div>
+                          <label className="field-label">轮播速度：{(editObj.speed as number) ?? 5000}ms</label>
+                          <input
+                            type="range"
+                            min={2000}
+                            max={10000}
+                            step={500}
+                            value={(editObj.speed as number) ?? 5000}
+                            onChange={(e) => setField("speed", Number(e.target.value))}
+                            className="w-full accent-gold"
+                          />
+                        </div>
+                        <div>
+                          <div className="mb-1.5 flex items-center justify-between">
+                            <label className="field-label mb-0">轮播图列表</label>
+                            <button type="button" onClick={addBannerSlide} className="text-[11px] text-gold hover:underline">
+                              + 添加幻灯片
+                            </button>
+                          </div>
+                          <div className="space-y-2">
+                            {getBannerSlides().map((slide, i) => (
+                              <div key={i} className="rounded-soft border border-cream-300 bg-cream-50 p-2">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-[10px] text-ink-mute">#{i + 1}</span>
+                                  <span className="flex-1" />
+                                  <button
+                                    type="button"
+                                    onClick={() => removeSlide(i)}
+                                    className="rounded p-1 text-rust/70 hover:bg-rust/10 hover:text-rust"
+                                  >
+                                    <Trash2 className="h-3 w-3" />
+                                  </button>
+                                </div>
+                                <div className="mt-1.5">
+                                  <MediaPicker
+                                    value={slide.image}
+                                    onChange={(url) => updateSlide(i, "image", url)}
+                                    label="图片"
+                                    accept="image/*"
+                                    mediaType="image"
+                                  />
+                                </div>
+                                <div className="mt-2 grid grid-cols-2 gap-2">
+                                  <input
+                                    value={slide.title}
+                                    onChange={(e) => updateSlide(i, "title", e.target.value)}
+                                    placeholder="标题"
+                                    className="input-line text-xs"
+                                  />
+                                  <input
+                                    value={slide.subtitle}
+                                    onChange={(e) => updateSlide(i, "subtitle", e.target.value)}
+                                    placeholder="副标题"
+                                    className="input-line text-xs"
+                                  />
+                                </div>
+                              </div>
+                            ))}
+                            {getBannerSlides().length === 0 && (
+                              <p className="py-2 text-center text-[11px] text-ink-mute">点击「添加幻灯片」创建第一个</p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
                     {/* === 标题文字 === */}
                     {editType === "heading" && (
                       <div className="space-y-2.5">
@@ -322,7 +565,7 @@ export default function SectionManager() {
                                   type="button"
                                   onClick={() => setField("level", lv)}
                                   className={cn(
-                                    "flex-1 rounded-soft border py-1.5 text-xs transition-colors",
+                                    "flex-1 rounded-soft border py-1.5 text-xs",
                                     (editObj.level as string) === lv
                                       ? "border-gold bg-gold/15 text-coffee"
                                       : "border-coffee-line/50 text-ink-mute hover:text-ink",
@@ -342,7 +585,7 @@ export default function SectionManager() {
                                   type="button"
                                   onClick={() => setField("align", al)}
                                   className={cn(
-                                    "flex-1 rounded-soft border py-1.5 text-xs transition-colors",
+                                    "flex-1 rounded-soft border py-1.5 text-xs",
                                     (editObj.align as string) === al
                                       ? "border-gold bg-gold/15 text-coffee"
                                       : "border-coffee-line/50 text-ink-mute hover:text-ink",
@@ -361,9 +604,7 @@ export default function SectionManager() {
                     {editType === "spacer" && (
                       <div className="space-y-2.5">
                         <div>
-                          <label className="field-label">
-                            高度：{(editObj.height as number) ?? 32}px
-                          </label>
+                          <label className="field-label">高度：{(editObj.height as number) ?? 32}px</label>
                           <input
                             type="range"
                             min={8}
@@ -374,7 +615,6 @@ export default function SectionManager() {
                             className="w-full accent-gold"
                           />
                         </div>
-                        {/* 可视化预览 */}
                         <div className="rounded-soft border border-coffee-line/50 bg-cream-200">
                           <div
                             className="flex items-center justify-center text-[10px] text-ink-mute"
@@ -397,14 +637,11 @@ export default function SectionManager() {
                           placeholder={'<div style="text-align:center;color:#E8919F;">自定义内容</div>'}
                           className="w-full resize-y rounded-soft border border-coffee-line/70 bg-cream-50 px-3 py-2 font-mono text-xs focus:border-gold focus:outline-none"
                         />
-                        {/* 实时预览 */}
                         <div className="rounded-soft border border-coffee-line/50 bg-white p-2">
                           <p className="mb-1 text-[10px] text-ink-mute">预览</p>
                           <div
                             className="overflow-hidden text-xs"
-                            dangerouslySetInnerHTML={{
-                              __html: (editObj.html as string) ?? "",
-                            }}
+                            dangerouslySetInnerHTML={{ __html: (editObj.html as string) ?? "" }}
                           />
                         </div>
                       </div>
@@ -414,9 +651,7 @@ export default function SectionManager() {
                     {editType === "marquee" && (
                       <div className="space-y-2.5">
                         <div>
-                          <label className="field-label">
-                            滚动速度：{(editObj.speed as number) ?? 30}
-                          </label>
+                          <label className="field-label">滚动速度：{(editObj.speed as number) ?? 30}</label>
                           <input
                             type="range"
                             min={10}
@@ -429,54 +664,36 @@ export default function SectionManager() {
                         </div>
                         <div>
                           <label className="field-label">图片列表</label>
-                          <div className="space-y-1.5">
+                          <div className="space-y-2">
                             {getImageList().map((url, i) => (
-                              <div key={i} className="flex items-center gap-1.5">
-                                <img
-                                  src={url}
-                                  alt=""
-                                  className="h-8 w-8 flex-none rounded object-cover"
-                                />
-                                <input
-                                  value={url}
-                                  onChange={(e) => {
-                                    const list = getImageList();
-                                    list[i] = e.target.value;
-                                    setField("images", list);
-                                  }}
-                                  className="input-line flex-1 text-xs"
-                                />
+                              <div key={i} className="flex items-start gap-1.5">
+                                <img src={url} alt="" className="mt-0.5 h-8 w-8 flex-none rounded object-cover" />
+                                <div className="flex-1">
+                                  <MediaPicker
+                                    value={url}
+                                    onChange={(newUrl) => updateImage(i, newUrl)}
+                                    label=""
+                                    accept="image/*"
+                                    mediaType="image"
+                                  />
+                                </div>
                                 <button
                                   type="button"
                                   onClick={() => removeImage(i)}
-                                  className="flex-none rounded p-1 text-rust/70 hover:bg-rust/10 hover:text-rust"
+                                  className="mt-0.5 flex-none rounded p-1 text-rust/70 hover:bg-rust/10 hover:text-rust"
                                 >
-                                  <Trash2 className="h-3 w-3" strokeWidth={1.8} />
+                                  <Trash2 className="h-3 w-3" />
                                 </button>
                               </div>
                             ))}
                           </div>
-                          <div className="mt-1.5 flex gap-1.5">
-                            <input
-                              id={`add-img-${s.id}`}
-                              placeholder="粘贴图片 URL"
-                              className="input-line flex-1 text-xs"
-                            />
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const el = document.getElementById(`add-img-${s.id}`) as HTMLInputElement;
-                                if (el) {
-                                  addImage(el.value);
-                                  el.value = "";
-                                }
-                              }}
-                              className="btn-ghost flex-none !px-2 !py-1 text-[11px]"
-                            >
-                              <Plus className="h-3 w-3" strokeWidth={1.8} />
-                              添加
-                            </button>
-                          </div>
+                          <button
+                            type="button"
+                            onClick={() => addImage("")}
+                            className="mt-1.5 btn-ghost !px-2 !py-1 text-[11px]"
+                          >
+                            <Plus className="h-3 w-3" /> 添加图片
+                          </button>
                         </div>
                       </div>
                     )}
@@ -496,11 +713,7 @@ export default function SectionManager() {
                         <div>
                           <div className="mb-1 flex items-center justify-between">
                             <label className="field-label mb-0">事件列表</label>
-                            <button
-                              type="button"
-                              onClick={addTimelineItem}
-                              className="text-[11px] text-gold hover:underline"
-                            >
+                            <button type="button" onClick={addTimelineItem} className="text-[11px] text-gold hover:underline">
                               + 添加事件
                             </button>
                           </div>
@@ -524,14 +737,12 @@ export default function SectionManager() {
                                   onClick={() => removeTimelineItem(i)}
                                   className="flex-none rounded p-1 text-rust/70 hover:bg-rust/10 hover:text-rust"
                                 >
-                                  <Trash2 className="h-3 w-3" strokeWidth={1.8} />
+                                  <Trash2 className="h-3 w-3" />
                                 </button>
                               </div>
                             ))}
                             {getTimelineItems().length === 0 && (
-                              <p className="py-2 text-center text-[11px] text-ink-mute">
-                                点击「添加事件」创建第一个
-                              </p>
+                              <p className="py-2 text-center text-[11px] text-ink-mute">点击「添加事件」创建第一个</p>
                             )}
                           </div>
                         </div>
@@ -571,9 +782,7 @@ export default function SectionManager() {
             );
           })}
           {list.length === 0 && (
-            <p className="py-6 text-center text-xs text-ink-mute">
-              暂无组件，点击上方按钮添加
-            </p>
+            <p className="py-6 text-center text-xs text-ink-mute">暂无组件，点击上方按钮添加</p>
           )}
         </div>
       </div>
@@ -583,6 +792,7 @@ export default function SectionManager() {
 
 function sectionLabel(type: SectionType): string {
   const map: Record<SectionType, string> = {
+    banner: "Banner 轮播图",
     marquee: "无限滚动相册",
     timeline: "恋爱时间轴",
     custom_html: "自定义代码块",
@@ -594,6 +804,8 @@ function sectionLabel(type: SectionType): string {
 
 function getDefaultData(type: SectionType): Record<string, unknown> {
   switch (type) {
+    case "banner":
+      return { slides: [], speed: 5000 };
     case "marquee":
       return { images: [], speed: 30 };
     case "timeline":

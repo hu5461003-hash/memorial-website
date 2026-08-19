@@ -89,6 +89,7 @@ export type Video = {
 // ============ 动态组件 / 自由排版 ============
 
 export type SectionType =
+  | "banner"        // Banner 轮播图
   | "marquee"       // 无限滚动相册
   | "timeline"      // 恋爱时间轴
   | "custom_html"   // 自定义代码块

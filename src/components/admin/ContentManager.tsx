@@ -17,7 +17,7 @@ type Form = {
 
 const EMPTY: Form = {
   content_key: "",
-  page: "home",
+  page: "global",
   label: "",
   type: "text",
   content_value: "",
@@ -26,11 +26,13 @@ const EMPTY: Form = {
 };
 
 const PAGE_LABELS: Record<string, string> = {
+  global: "全局",
   home: "首页",
   map: "地图",
   letter: "长信",
   messages: "留言",
   gallery: "相册",
+  posts: "帖子",
 };
 
 export default function ContentManager() {

@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { usePageSections } from "@/hooks/usePageSections";
 import type { PageSection } from "@/lib/types";
+import BannerSection from "@/components/sections/BannerSection";
 import MarqueeSection from "@/components/sections/MarqueeSection";
 import TimelineSection from "@/components/sections/TimelineSection";
 import CustomHtmlSection from "@/components/sections/CustomHtmlSection";
@@ -18,6 +19,8 @@ export default function SectionRenderer({ pageName }: { pageName: string }) {
     () =>
       sections.map((s: PageSection) => {
         switch (s.section_type) {
+          case "banner":
+            return <BannerSection key={s.id} data={s.content_data} />;
           case "marquee":
             return <MarqueeSection key={s.id} data={s.content_data} />;
           case "timeline":

@@ -63,6 +63,12 @@ export const DEFAULT_BANNER_IMAGE =
  * 后台可新增任意 key，未在下面列出的 key 也会被读取。
  */
 export const CONTENT_DEFAULTS: ContentDefault[] = [
+  // 全局
+  { content_key: "global.site_title", page: "global", label: "网站全局标题（浏览器标签）", type: "text", content_value: "记录", image_url: null, sort_order: 1 },
+  { content_key: "global.header_text", page: "global", label: "页眉文字", type: "text", content_value: "", image_url: null, sort_order: 2 },
+  { content_key: "global.footer_text", page: "global", label: "页脚文字", type: "text", content_value: "— 愿你在的那个地方 也有一盏灯 —", image_url: null, sort_order: 3 },
+  { content_key: "global.logo_text", page: "global", label: "Logo 文字", type: "text", content_value: "记录", image_url: null, sort_order: 4 },
+  // 首页
   { content_key: "home.banner_title", page: "home", label: "首页 Banner 标题", type: "text", content_value: "记录", image_url: null, sort_order: 1 },
   { content_key: "home.banner_subtitle", page: "home", label: "首页 Banner 副标题", type: "text", content_value: "走过的地方 都值得留下", image_url: null, sort_order: 2 },
   { content_key: "home.footer", page: "home", label: "首页底部文字", type: "text", content_value: "— 愿你在的那个地方 也有一盏灯 —", image_url: null, sort_order: 3 },
@@ -72,6 +78,7 @@ export const CONTENT_DEFAULTS: ContentDefault[] = [
   { content_key: "letter.signature", page: "letter", label: "长信落款", type: "text", content_value: LETTER_SIGNATURE, image_url: null, sort_order: 2 },
   { content_key: "messages.subtitle", page: "messages", label: "留言板副标题", type: "text", content_value: "留下一张便签", image_url: null, sort_order: 1 },
   { content_key: "gallery.subtitle", page: "gallery", label: "相册页副标题", type: "text", content_value: "一些被暖光留下的瞬间", image_url: null, sort_order: 1 },
+  { content_key: "posts.subtitle", page: "posts", label: "帖子页副标题", type: "text", content_value: "所有人均可匿名发帖", image_url: null, sort_order: 1 },
 ];
 
 /** 默认内容查找表：key → 默认值字符串 */

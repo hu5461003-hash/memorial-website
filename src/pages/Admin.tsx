@@ -64,7 +64,7 @@ const CARDS: CardDef[] = [
   {
     key: "banner",
     label: "Banner",
-    desc: "首页轮播图管理",
+    desc: "首页轮播图（可在排版内管理）",
     Icon: ImagePlus,
     gradient: "from-rose-50 to-pink-100",
     iconBg: "bg-rose-100 text-rose-500",
@@ -72,7 +72,7 @@ const CARDS: CardDef[] = [
   {
     key: "content",
     label: "内容",
-    desc: "各页面文字与图片",
+    desc: "页眉页脚、全局标题、各页文字",
     Icon: FileText,
     gradient: "from-amber-50 to-orange-100",
     iconBg: "bg-amber-100 text-amber-600",
@@ -80,7 +80,7 @@ const CARDS: CardDef[] = [
   {
     key: "sections",
     label: "排版",
-    desc: "动态组件与自由排版",
+    desc: "页面管理、Banner、分区增删改查",
     Icon: LayoutGrid,
     gradient: "from-violet-50 to-purple-100",
     iconBg: "bg-violet-100 text-violet-500",
