@@ -111,7 +111,7 @@ function PostListView() {
               <input
                 value={nickname}
                 onChange={(e) => setNickname(e.target.value)}
-                placeholder="默认显示为"匿名""
+                placeholder={'默认显示为"匿名"'}
                 className="input-line"
               />
             </div>
