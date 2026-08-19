@@ -248,9 +248,11 @@ export type Album = {
 export function getAdminAvatar(m: Record<string, string>): string;
 export function getAdminAvatar(p: Partial<AdminProfile>): string;
 export function getAdminAvatar(x: Record<string, string | undefined> | Partial<AdminProfile>): string {
-  const custom = (x.avatar_url ?? x.admin_avatar_url ?? "").trim();
+  // 联合类型下直接访问具体属性会报"属性不存在"，统一按索引签名读取
+  const r = x as Record<string, string | undefined>;
+  const custom = (r.avatar_url ?? r.admin_avatar_url ?? "").trim();
   if (custom) return custom;
-  const qq = (x.qq ?? x.admin_qq ?? "").trim();
+  const qq = (r.qq ?? r.admin_qq ?? "").trim();
   if (qq) return `https://q.qlogo.cn/g?b=qq&nk=${encodeURIComponent(qq)}&s=100`;
   return "";
 }
