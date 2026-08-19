@@ -13,20 +13,7 @@
 -- ================================================================
 
 -- =================================================================
--- 0. 工具函数：当前登录用户是否是管理员
--- =================================================================
-create or replace function public.is_admin()
-returns boolean
-language sql
-stable
-as $$
-  select exists (
-    select 1 from public.admin_users where uid = auth.uid()
-  );
-$$;
-
--- =================================================================
--- 1. admin_users 表（管理员白名单）
+-- 0. admin_users 表（管理员白名单）— 先建表再建函数
 -- =================================================================
 create table if not exists public.admin_users (
   uid uuid primary key references auth.users(id) on delete cascade,
@@ -42,13 +29,26 @@ create policy "admin_users_public_read" on public.admin_users
 create policy "admin_users_self_write" on public.admin_users
   for all using (uid = auth.uid()) with check (uid = auth.uid());
 
--- ★ 绑定两位管理员（按邮箱匹配 auth.users，已在 Auth 中创建好的两个账号）
+-- ★ 绑定两位管理员（按邮箱匹配 auth.users，大小写不敏感）
 insert into public.admin_users (uid, email, is_primary)
 select id, email,
   case when email = '2832290588@qq.com' then true else false end as is_primary
 from auth.users
-where email in ('2832290588@qq.com', 'Hu5461003@gmail.com')
+where lower(email) in ('2832290588@qq.com', 'hu5461003@gmail.com')
 on conflict (email) do nothing;
+
+-- =================================================================
+-- 0.5 工具函数：当前登录用户是否是管理员（必须在 admin_users 表之后创建）
+-- =================================================================
+create or replace function public.is_admin()
+returns boolean
+language sql
+stable
+as $$
+  select exists (
+    select 1 from public.admin_users where uid = auth.uid()
+  );
+$$;
 
 -- =================================================================
 -- 2. admin_profiles 表（每个管理员独立的联系方式）
@@ -181,8 +181,8 @@ begin
 
   for r in select distinct city from public.photos where city is not null and city <> '' loop
     insert into public.albums (name, owner_admin_uid, sort_order)
-    values (r.city, v_owner, 0)
-    on conflict (name) where false do nothing;
+    select r.city, v_owner, 0
+    where not exists (select 1 from public.albums a where a.name = r.city);
   end loop;
 
   -- 把 city 对应到 album
