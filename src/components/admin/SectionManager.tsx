@@ -18,6 +18,7 @@ import {
   Save,
   Undo2,
   Check,
+  ExternalLink,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { BUILTIN_BLOCKS, BUILTIN_LABELS } from "@/lib/config";
@@ -95,14 +96,19 @@ export default function SectionManager() {
   /** 从 page_sections 拉取所有自定义页面名 */
   const loadCustomPages = useCallback(async () => {
     if (!supabase) return;
-    const { data } = await supabase
-      .from("page_sections")
-      .select("page_name")
-      .order("page_name", { ascending: true });
-    const names = [...new Set((data ?? []).map((d: { page_name: string }) => d.page_name))];
+    const [sectionsRes, contentRes] = await Promise.all([
+      supabase.from("page_sections").select("page_name").order("page_name", { ascending: true }),
+      supabase.from("site_content").select("content_key, content_value").like("content_key", "page.%"),
+    ]);
+    const names = [...new Set((sectionsRes.data ?? []).map((d: { page_name: string }) => d.page_name))];
+    const titles = new Map<string, string>();
+    for (const row of (contentRes.data as { content_key: string; content_value: string | null }[] | null) ?? []) {
+      const m = row.content_key.match(/^page\.(.+)\.title$/);
+      if (m) titles.set(m[1], row.content_value ?? "");
+    }
     const custom = names
       .filter((n) => !(n in SYSTEM_PAGES))
-      .map((n) => ({ name: n, label: n }));
+      .map((n) => ({ name: n, label: titles.get(n) || n }));
     setCustomPages(custom);
   }, []);
 
@@ -352,13 +358,22 @@ export default function SectionManager() {
       section_type: "spacer",
       content_data: { height: 8 },
       sort_order: 1,
-      active: false,
+      active: true,
     });
     if (error) {
       setHint(`创建失败：${error.message}`);
       return;
     }
-    setHint(`页面「${label}」已创建`);
+    // 显示名称持久化到 site_content，前台标题从这里读
+    await supabase.from("site_content").insert({
+      content_key: `page.${name}.title`,
+      page: name,
+      label: `页面标题（${label}）`,
+      type: "text",
+      content_value: label,
+      sort_order: 0,
+    });
+    setHint(`页面「${label}」已创建，前台地址：/#/${name}`);
     setNewPageName("");
     setNewPageLabel("");
     setShowNewPage(false);
@@ -374,6 +389,7 @@ export default function SectionManager() {
     if (!confirm(`确认删除页面「${allPages[pageName] ?? pageName}」及其所有组件？`)) return;
     setBusy(true);
     await supabase.from("page_sections").delete().eq("page_name", pageName);
+    await supabase.from("site_content").delete().eq("content_key", `page.${pageName}.title`);
     setBusy(false);
     await loadCustomPages();
     setPage("home");
@@ -384,11 +400,17 @@ export default function SectionManager() {
     if (!renamingPage) return;
     const label = renameLabel.trim();
     if (!label) return;
+    // 重命名落库：前台标题同步更新
+    await supabase
+      .from("site_content")
+      .update({ content_value: label, label: `页面标题（${label}）`, updated_at: new Date().toISOString() })
+      .eq("content_key", `page.${renamingPage}.title`);
     setCustomPages((prev) =>
       prev.map((p) => (p.name === renamingPage ? { ...p, label } : p)),
     );
     setRenamingPage(null);
     setRenameLabel("");
+    setHint("✓ 页面名称已更新");
   }
 
   // ============ 编辑器辅助 ============
@@ -477,6 +499,22 @@ export default function SectionManager() {
                 取消
               </button>
             </div>
+          </div>
+        )}
+
+        {/* 当前页面访问地址 */}
+        {!(page in SYSTEM_PAGES) && (
+          <div className="mb-3 flex items-center gap-1.5 text-[11px] text-ink-mute">
+            <ExternalLink className="h-3 w-3" />
+            前台地址：
+            <a
+              href={`#/${page}`}
+              target="_blank"
+              rel="noreferrer"
+              className="text-coffee underline decoration-gold/50 underline-offset-2 hover:text-gold"
+            >
+              #/{page}
+            </a>
           </div>
         )}
 
