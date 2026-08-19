@@ -98,8 +98,8 @@ export default function Home() {
             style={{ animationDelay: `${0.2 + idx * 0.08}s` }}
           >
             <span
-              className="inline-flex h-9 w-9 items-center justify-center rounded-soft text-white transition-opacity group-hover:opacity-90"
-              style={{ backgroundColor: color }}
+              className="inline-flex h-9 w-9 items-center justify-center rounded-soft text-white shadow-sm transition-opacity group-hover:opacity-90"
+              style={{ background: "linear-gradient(135deg, #f09433, #dc2743, #bc1888)" }}
             >
               <Icon className="h-4 w-4" strokeWidth={2} />
             </span>
