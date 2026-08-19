@@ -10,7 +10,7 @@ import { supabase, supabaseReady } from "@/lib/supabase";
 import { GALLERY_PASSWORD } from "@/lib/config";
 import { useStore } from "@/store/useStore";
 import { useContent } from "@/hooks/useContent";
-import SectionRenderer from "@/components/SectionRenderer";
+import PageBlocks from "@/components/PageBlocks";
 import type { Photo, Video, Album } from "@/lib/types";
 
 type View = "albums" | "all" | "album";
@@ -24,6 +24,7 @@ type View = "albums" | "all" | "album";
 export default function Gallery() {
   const { galleryUnlocked, unlockGallery } = useStore();
   const { getValue } = useContent();
+  const galleryTitle = getValue("gallery.title");
   const gallerySubtitle = getValue("gallery.subtitle");
 
   const [pwd, setPwd] = useState("");
@@ -55,8 +56,7 @@ export default function Gallery() {
     ]);
     setPhotos((photoRes.data as Photo[]) ?? []);
     setVideos((videoRes.data as Video[]) ?? []);
-    const alist = (albumRes.data as Album[]) ?? [];
-    setAlbums(alist);
+    setAlbums((albumRes.data as Album[]) ?? []);
     setLoading(false);
   }
 
@@ -155,13 +155,13 @@ export default function Gallery() {
   if (!galleryUnlocked) {
     return (
       <Layout>
-        <PageHeader title="私密相册" subtitle="需要一把小钥匙" showBack={false} />
+        <PageHeader title={galleryTitle} subtitle={getValue("gallery.password_subtitle")} showBack={false} />
         <div className="flex flex-col items-center justify-center py-16">
           <div className="flex h-20 w-20 items-center justify-center rounded-full border-2 border-gold/30 bg-gold/5 text-gold animate-soft-pulse">
             <Lock className="h-8 w-8" strokeWidth={1.5} />
           </div>
-          <p className="mt-5 text-base font-semibold text-ink">这里收着一些瞬间</p>
-          <p className="mt-1 text-xs text-ink-soft">输入密码，推开这扇门</p>
+          <p className="mt-5 text-base font-semibold text-ink">{getValue("gallery.password_tip1")}</p>
+          <p className="mt-1 text-xs text-ink-soft">{getValue("gallery.password_tip2")}</p>
 
           <form onSubmit={handleUnlock} className="mt-7 w-full max-w-[260px]">
             <div className="flex items-center gap-2">
@@ -174,7 +174,7 @@ export default function Gallery() {
                   setPwd(e.target.value);
                   setError(false);
                 }}
-                placeholder="密码"
+                placeholder={getValue("gallery.password_placeholder")}
                 autoFocus
                 className="input-line text-center tracking-[0.4em]"
               />
@@ -182,11 +182,11 @@ export default function Gallery() {
             {error && (
               <div className="mt-3 flex items-center justify-center gap-1.5 text-xs text-rust">
                 <AlertCircle className="h-3.5 w-3.5" strokeWidth={1.8} />
-                密码不对哦，再试一次
+                {getValue("gallery.password_error")}
               </div>
             )}
             <button type="submit" className="btn-gold mt-5 w-full">
-              推开门
+              {getValue("gallery.password_btn")}
             </button>
           </form>
         </div>
@@ -198,7 +198,7 @@ export default function Gallery() {
   if (loading) {
     return (
       <Layout>
-        <PageHeader title="私密相册" subtitle={gallerySubtitle} showBack={false} />
+        <PageHeader title={galleryTitle} subtitle={gallerySubtitle} showBack={false} />
         <Loading tip="正在加载…" />
       </Layout>
     );
@@ -208,250 +208,254 @@ export default function Gallery() {
   if (photos.length === 0 && videos.length === 0) {
     return (
       <Layout>
-        <PageHeader title="私密相册" subtitle={gallerySubtitle} showBack={false} />
+        <PageHeader title={galleryTitle} subtitle={gallerySubtitle} showBack={false} />
         <div className="flex flex-col items-center justify-center rounded-card border border-dashed border-cream-300 bg-cream-200 py-16 text-center">
           <CameraOff className="h-8 w-8 text-ink-mute" strokeWidth={1.4} />
-          <p className="mt-3 text-sm font-medium text-ink-soft">还没有内容</p>
-          <p className="mt-1 text-xs text-ink-mute">管理员可以在后台添加</p>
+          <p className="mt-3 text-sm font-medium text-ink-soft">{getValue("gallery.empty_title")}</p>
+          <p className="mt-1 text-xs text-ink-mute">{getValue("gallery.empty_desc")}</p>
         </div>
-        <SectionRenderer pageName="gallery" />
+        <PageBlocks pageName="gallery" blocks={{ gallery_grid: null }} />
       </Layout>
     );
   }
 
   return (
     <Layout>
-      <PageHeader title="私密相册" subtitle={gallerySubtitle} showBack={false} />
+      <PageHeader title={galleryTitle} subtitle={gallerySubtitle} showBack={false} />
 
-      {/* 顶部 Tab */}
-      <div className="mb-4 flex items-center gap-1 border-b border-cream-300">
-        <button
-          type="button"
-          onClick={() => {
-            setView("albums");
-            setSelectedAlbumId(null);
-          }}
-          className={
-            view === "albums"
-              ? "flex items-center gap-1.5 border-b-2 border-gold px-3 py-2 text-sm font-semibold text-gold"
-              : "flex items-center gap-1.5 border-b-2 border-transparent px-3 py-2 text-sm font-medium text-ink-soft hover:text-ink"
-          }
-        >
-          <Folder className="h-4 w-4" strokeWidth={2} />
-          相簿
-        </button>
-        <button
-          type="button"
-          onClick={() => {
-            setView("all");
-            setSelectedAlbumId(null);
-          }}
-          className={
-            view === "all"
-              ? "flex items-center gap-1.5 border-b-2 border-gold px-3 py-2 text-sm font-semibold text-gold"
-              : "flex items-center gap-1.5 border-b-2 border-transparent px-3 py-2 text-sm font-medium text-ink-soft hover:text-ink"
-          }
-        >
-          <ImageIcon className="h-4 w-4" strokeWidth={2} />
-          全部
-        </button>
-        <span className="ml-auto px-2 text-xs text-ink-mute">
-          {photos.length} 照片 · {videos.length} 视频
-        </span>
-      </div>
-
-      {/* ============ 视图1：自定义文件夹卡片网格 ============ */}
-      {view === "albums" && (
-        <section className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-          {allAlbumCards.length === 0 && (
-            <div className="col-span-full flex flex-col items-center py-10 text-ink-mute">
-              <Folder className="h-8 w-8" strokeWidth={1.4} />
-              <p className="mt-2 text-xs">管理员还没有创建自定义文件夹</p>
-            </div>
-          )}
-          {allAlbumCards.map((a) => (
-            <button
-              key={a.id}
-              type="button"
-              onClick={() => {
-                setSelectedAlbumId(a.id);
-                setView("album");
-              }}
-              className="group flex flex-col overflow-hidden rounded-card border border-cream-300 bg-cream-200 shadow-paper transition-all hover:-translate-y-0.5 hover:shadow-ins active:scale-[0.98] animate-fade-up"
-            >
-              <div className="relative aspect-square overflow-hidden bg-cream-100">
-                {a.cover ? (
-                  <img
-                    src={a.cover}
-                    alt={a.name}
-                    loading="lazy"
-                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                  />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center text-ink-mute">
-                    <Folder className="h-8 w-8" strokeWidth={1.4} />
-                  </div>
-                )}
-                <span className="absolute right-2 top-2 inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-ink/70 px-1.5 text-[10px] font-semibold text-cream-50 backdrop-blur-sm">
-                  {a.photoCount + a.videoCount}
+      <PageBlocks
+        pageName="gallery"
+        blocks={{
+          gallery_grid: (
+            <>
+              {/* 顶部 Tab */}
+              <div className="mb-4 flex items-center gap-1 border-b border-cream-300">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setView("albums");
+                    setSelectedAlbumId(null);
+                  }}
+                  className={
+                    view === "albums"
+                      ? "flex items-center gap-1.5 border-b-2 border-gold px-3 py-2 text-sm font-semibold text-gold"
+                      : "flex items-center gap-1.5 border-b-2 border-transparent px-3 py-2 text-sm font-medium text-ink-soft hover:text-ink"
+                  }
+                >
+                  <Folder className="h-4 w-4" strokeWidth={2} />
+                  {getValue("gallery.tab_albums")}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setView("all");
+                    setSelectedAlbumId(null);
+                  }}
+                  className={
+                    view === "all"
+                      ? "flex items-center gap-1.5 border-b-2 border-gold px-3 py-2 text-sm font-semibold text-gold"
+                      : "flex items-center gap-1.5 border-b-2 border-transparent px-3 py-2 text-sm font-medium text-ink-soft hover:text-ink"
+                  }
+                >
+                  <ImageIcon className="h-4 w-4" strokeWidth={2} />
+                  {getValue("gallery.tab_all")}
+                </button>
+                <span className="ml-auto px-2 text-xs text-ink-mute">
+                  {photos.length} 照片 · {videos.length} 视频
                 </span>
-                {a.videoCount > 0 && (
-                  <span className="absolute left-2 top-2 inline-flex items-center gap-0.5 rounded-full bg-gold/85 px-1.5 py-0.5 text-[9px] font-medium text-cream-50">
-                    <Film className="h-2.5 w-2.5" strokeWidth={2} />
-                    {a.videoCount}
-                  </span>
-                )}
               </div>
-              <div className="px-2.5 py-2">
-                <p className="truncate text-sm font-semibold text-ink">{a.name}</p>
-                <p className="mt-0.5 text-[10px] text-ink-soft">
-                  {a.photoCount} 照片{a.videoCount > 0 ? ` · ${a.videoCount} 视频` : ""}
-                </p>
-              </div>
-            </button>
-          ))}
-        </section>
-      )}
 
-      {/* ============ 视图2：某文件夹详情 ============ */}
-      {view === "album" && currentAlbum && (
-        <>
-          <div className="mb-4 flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => {
-                setView("albums");
-                setSelectedAlbumId(null);
-              }}
-              className="flex items-center gap-1.5 rounded-soft px-2 py-1.5 text-xs text-ink-soft transition-colors hover:bg-cream-100 hover:text-ink"
-            >
-              <ChevronLeft className="h-4 w-4" strokeWidth={1.8} />
-              返回相簿
-            </button>
-            <div className="flex items-center gap-1.5">
-              <Folder className="h-4 w-4 text-gold" strokeWidth={2} />
-              <span className="font-semibold text-ink">{currentAlbum.name}</span>
-              <span className="text-xs text-ink-mute">· {currentAlbum.total}</span>
-            </div>
-          </div>
-
-          <section className="grid grid-cols-3 gap-0.5 sm:gap-1">
-            {currentAlbum.photos.map((p) => (
-              <button
-                key={p.id}
-                type="button"
-                onClick={() => setActive(p)}
-                className="group relative aspect-square overflow-hidden bg-cream-100"
-              >
-                <img
-                  src={p.public_url}
-                  alt={p.title}
-                  loading="lazy"
-                  className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                />
-                <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 bg-ink/0 opacity-0 transition-all duration-200 group-hover:bg-ink/40 group-hover:opacity-100">
-                  <p className="px-2 text-center text-[11px] font-semibold text-cream-50 line-clamp-2">
-                    {p.title}
-                  </p>
-                  {p.photo_date && (
-                    <p className="text-[9px] text-cream-50/80">{p.photo_date}</p>
+              {/* ============ 视图1：自定义文件夹卡片网格 ============ */}
+              {view === "albums" && (
+                <section className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                  {allAlbumCards.length === 0 && (
+                    <div className="col-span-full flex flex-col items-center py-10 text-ink-mute">
+                      <Folder className="h-8 w-8" strokeWidth={1.4} />
+                      <p className="mt-2 text-xs">{getValue("gallery.no_folder")}</p>
+                    </div>
                   )}
-                </div>
-              </button>
-            ))}
-            {currentAlbum.videos.map((v) => (
-              <button
-                key={v.id}
-                type="button"
-                onClick={() => setActiveVideo(v)}
-                className="group relative aspect-square overflow-hidden bg-ink"
-              >
-                <video
-                  src={v.public_url}
-                  poster={v.cover_url ?? undefined}
-                  preload="metadata"
-                  muted
-                  className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                />
-                <div className="absolute inset-0 flex items-center justify-center bg-ink/20 transition-colors group-hover:bg-ink/30">
-                  <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-cream-50/85 text-gold">
-                    <Play className="h-4 w-4 translate-x-[1px]" strokeWidth={2.2} fill="currentColor" />
-                  </span>
-                </div>
-                {v.duration && (
-                  <span className="absolute bottom-1 right-1 rounded bg-ink/70 px-1 text-[9px] font-medium text-cream-50">
-                    {v.duration}
-                  </span>
-                )}
-              </button>
-            ))}
-            {currentAlbum.total === 0 && (
-              <div className="col-span-full flex flex-col items-center py-12 text-ink-mute">
-                <CameraOff className="h-6 w-6" strokeWidth={1.4} />
-                <p className="mt-2 text-xs">文件夹还是空的</p>
-              </div>
-            )}
-          </section>
-        </>
-      )}
-
-      {/* ============ 视图3：全部（平铺） ============ */}
-      {view === "all" && (
-        <section className="grid grid-cols-3 gap-0.5 sm:gap-1">
-          {photos.map((p) => (
-            <button
-              key={p.id}
-              type="button"
-              onClick={() => setActive(p)}
-              className="group relative aspect-square overflow-hidden bg-cream-100"
-            >
-              <img
-                src={p.public_url}
-                alt={p.title}
-                loading="lazy"
-                className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-              />
-              <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 bg-ink/0 opacity-0 transition-all duration-200 group-hover:bg-ink/40 group-hover:opacity-100">
-                <p className="px-2 text-center text-[11px] font-semibold text-cream-50 line-clamp-2">
-                  {p.title}
-                </p>
-                {p.city && <p className="text-[9px] text-cream-50/80">{p.city}</p>}
-              </div>
-            </button>
-          ))}
-          {videos.map((v) => (
-            <button
-              key={v.id}
-              type="button"
-              onClick={() => setActiveVideo(v)}
-              className="group relative aspect-square overflow-hidden bg-ink"
-            >
-              <video
-                src={v.public_url}
-                poster={v.cover_url ?? undefined}
-                preload="metadata"
-                muted
-                className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-              />
-              <div className="absolute inset-0 flex items-center justify-center bg-ink/20 transition-colors group-hover:bg-ink/30">
-                <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-cream-50/85 text-gold">
-                  <Play className="h-4 w-4 translate-x-[1px]" strokeWidth={2.2} fill="currentColor" />
-                </span>
-              </div>
-              {v.duration && (
-                <span className="absolute bottom-1 right-1 rounded bg-ink/70 px-1 text-[9px] font-medium text-cream-50">
-                  {v.duration}
-                </span>
+                  {allAlbumCards.map((a) => (
+                    <button
+                      key={a.id}
+                      type="button"
+                      onClick={() => {
+                        setSelectedAlbumId(a.id);
+                        setView("album");
+                      }}
+                      className="group flex flex-col overflow-hidden rounded-card border border-cream-300 bg-cream-200 shadow-paper transition-all hover:-translate-y-0.5 hover:shadow-ins active:scale-[0.98] animate-fade-up"
+                    >
+                      <div className="relative aspect-square overflow-hidden bg-cream-100">
+                        {a.cover ? (
+                          <img
+                            src={a.cover}
+                            alt={a.name}
+                            loading="lazy"
+                            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                          />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center text-ink-mute">
+                            <Folder className="h-8 w-8" strokeWidth={1.4} />
+                          </div>
+                        )}
+                        <span className="absolute right-2 top-2 inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-ink/70 px-1.5 text-[10px] font-semibold text-cream-50 backdrop-blur-sm">
+                          {a.photoCount + a.videoCount}
+                        </span>
+                        {a.videoCount > 0 && (
+                          <span className="absolute left-2 top-2 inline-flex items-center gap-0.5 rounded-full bg-gold/85 px-1.5 py-0.5 text-[9px] font-medium text-cream-50">
+                            <Film className="h-2.5 w-2.5" strokeWidth={2} />
+                            {a.videoCount}
+                          </span>
+                        )}
+                      </div>
+                      <div className="px-2.5 py-2">
+                        <p className="truncate text-sm font-semibold text-ink">{a.name}</p>
+                        <p className="mt-0.5 text-[10px] text-ink-soft">
+                          {a.photoCount} 照片{a.videoCount > 0 ? ` · ${a.videoCount} 视频` : ""}
+                        </p>
+                      </div>
+                    </button>
+                  ))}
+                </section>
               )}
-            </button>
-          ))}
-        </section>
-      )}
 
-      {/* 动态组件区 */}
-      <div className="mt-6">
-        <SectionRenderer pageName="gallery" />
-      </div>
+              {/* ============ 视图2：某文件夹详情 ============ */}
+              {view === "album" && currentAlbum && (
+                <>
+                  <div className="mb-4 flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setView("albums");
+                        setSelectedAlbumId(null);
+                      }}
+                      className="flex items-center gap-1.5 rounded-soft px-2 py-1.5 text-xs text-ink-soft transition-colors hover:bg-cream-100 hover:text-ink"
+                    >
+                      <ChevronLeft className="h-4 w-4" strokeWidth={1.8} />
+                      {getValue("gallery.back_albums")}
+                    </button>
+                    <div className="flex items-center gap-1.5">
+                      <Folder className="h-4 w-4 text-gold" strokeWidth={2} />
+                      <span className="font-semibold text-ink">{currentAlbum.name}</span>
+                      <span className="text-xs text-ink-mute">· {currentAlbum.total}</span>
+                    </div>
+                  </div>
+
+                  <section className="grid grid-cols-3 gap-0.5 sm:gap-1">
+                    {currentAlbum.photos.map((p) => (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => setActive(p)}
+                        className="group relative aspect-square overflow-hidden bg-cream-100"
+                      >
+                        <img
+                          src={p.public_url}
+                          alt={p.title}
+                          loading="lazy"
+                          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                        />
+                        <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 bg-ink/0 opacity-0 transition-all duration-200 group-hover:bg-ink/40 group-hover:opacity-100">
+                          <p className="px-2 text-center text-[11px] font-semibold text-cream-50 line-clamp-2">
+                            {p.title}
+                          </p>
+                          {p.photo_date && (
+                            <p className="text-[9px] text-cream-50/80">{p.photo_date}</p>
+                          )}
+                        </div>
+                      </button>
+                    ))}
+                    {currentAlbum.videos.map((v) => (
+                      <button
+                        key={v.id}
+                        type="button"
+                        onClick={() => setActiveVideo(v)}
+                        className="group relative aspect-square overflow-hidden bg-ink"
+                      >
+                        <video
+                          src={v.public_url}
+                          poster={v.cover_url ?? undefined}
+                          preload="metadata"
+                          muted
+                          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                        />
+                        <div className="absolute inset-0 flex items-center justify-center bg-ink/20 transition-colors group-hover:bg-ink/30">
+                          <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-cream-50/85 text-gold">
+                            <Play className="h-4 w-4 translate-x-[1px]" strokeWidth={2.2} fill="currentColor" />
+                          </span>
+                        </div>
+                        {v.duration && (
+                          <span className="absolute bottom-1 right-1 rounded bg-ink/70 px-1 text-[9px] font-medium text-cream-50">
+                            {v.duration}
+                          </span>
+                        )}
+                      </button>
+                    ))}
+                    {currentAlbum.total === 0 && (
+                      <div className="col-span-full flex flex-col items-center py-12 text-ink-mute">
+                        <CameraOff className="h-6 w-6" strokeWidth={1.4} />
+                        <p className="mt-2 text-xs">{getValue("gallery.empty_folder")}</p>
+                      </div>
+                    )}
+                  </section>
+                </>
+              )}
+
+              {/* ============ 视图3：全部（平铺） ============ */}
+              {view === "all" && (
+                <section className="grid grid-cols-3 gap-0.5 sm:gap-1">
+                  {photos.map((p) => (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() => setActive(p)}
+                      className="group relative aspect-square overflow-hidden bg-cream-100"
+                    >
+                      <img
+                        src={p.public_url}
+                        alt={p.title}
+                        loading="lazy"
+                        className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      />
+                      <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 bg-ink/0 opacity-0 transition-all duration-200 group-hover:bg-ink/40 group-hover:opacity-100">
+                        <p className="px-2 text-center text-[11px] font-semibold text-cream-50 line-clamp-2">
+                          {p.title}
+                        </p>
+                        {p.city && <p className="text-[9px] text-cream-50/80">{p.city}</p>}
+                      </div>
+                    </button>
+                  ))}
+                  {videos.map((v) => (
+                    <button
+                      key={v.id}
+                      type="button"
+                      onClick={() => setActiveVideo(v)}
+                      className="group relative aspect-square overflow-hidden bg-ink"
+                    >
+                      <video
+                        src={v.public_url}
+                        poster={v.cover_url ?? undefined}
+                        preload="metadata"
+                        muted
+                        className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      />
+                      <div className="absolute inset-0 flex items-center justify-center bg-ink/20 transition-colors group-hover:bg-ink/30">
+                        <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-cream-50/85 text-gold">
+                          <Play className="h-4 w-4 translate-x-[1px]" strokeWidth={2.2} fill="currentColor" />
+                        </span>
+                      </div>
+                      {v.duration && (
+                        <span className="absolute bottom-1 right-1 rounded bg-ink/70 px-1 text-[9px] font-medium text-cream-50">
+                          {v.duration}
+                        </span>
+                      )}
+                    </button>
+                  ))}
+                </section>
+              )}
+            </>
+          ),
+        }}
+      />
 
       {/* 全屏照片 */}
       {active && (

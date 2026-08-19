@@ -15,8 +15,10 @@ import {
   LayoutDashboard,
   FilePlus,
   Pencil,
+  Pin,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { BUILTIN_BLOCKS, BUILTIN_LABELS } from "@/lib/config";
 import type { PageSection, SectionType } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import MediaPicker from "@/components/admin/MediaPicker";
@@ -82,7 +84,63 @@ export default function SectionManager() {
     setCustomPages(custom);
   }, []);
 
+  /**
+   * 内置区块落库：首次进入某页时，为注册表中尚无数据库记录的内置区块补插记录，
+   * 使内置区块与动态组件统一用 sort_order 排序、active 显隐。
+   * 内置区块占据 1..N，动态组件整体后移。
+   */
+  async function materializeBuiltins(pageName: string) {
+    const builtins = BUILTIN_BLOCKS[pageName] ?? [];
+    if (builtins.length === 0) return;
+    const { data } = await supabase
+      .from("page_sections")
+      .select("*")
+      .eq("page_name", pageName)
+      .order("sort_order", { ascending: true });
+    const rows = (data as PageSection[]) ?? [];
+    const byBlock = new Map<string, PageSection>();
+    for (const r of rows) {
+      if (r.section_type === "builtin") {
+        byBlock.set(String((r.content_data as Record<string, unknown>)?.block ?? ""), r);
+      }
+    }
+    const missing = builtins.filter((b) => !byBlock.has(b.block));
+    if (missing.length === 0) return;
+
+    const dynamicRows = rows.filter((r) => r.section_type !== "builtin");
+    const N = builtins.length;
+    const maxOrder = rows.reduce((m, r) => Math.max(m, r.sort_order), 0);
+    let cursor = Math.max(maxOrder, N);
+    for (const r of dynamicRows) {
+      cursor += 1;
+      await supabase
+        .from("page_sections")
+        .update({ sort_order: cursor, updated_at: new Date().toISOString() })
+        .eq("id", r.id);
+    }
+    for (let i = 0; i < builtins.length; i++) {
+      const existing = byBlock.get(builtins[i].block);
+      if (existing) {
+        if (existing.sort_order !== i + 1) {
+          await supabase
+            .from("page_sections")
+            .update({ sort_order: i + 1, updated_at: new Date().toISOString() })
+            .eq("id", existing.id);
+        }
+      } else {
+        await supabase.from("page_sections").insert({
+          page_name: pageName,
+          section_type: "builtin",
+          content_data: { block: builtins[i].block },
+          sort_order: i + 1,
+          active: true,
+        });
+      }
+    }
+  }
+
   async function load() {
+    await materializeBuiltins(page);
     const { data } = await supabase
       .from("page_sections")
       .select("*")
@@ -147,6 +205,10 @@ export default function SectionManager() {
   }
 
   async function handleDelete(s: PageSection) {
+    if (s.section_type === "builtin") {
+      setHint("内置区块不可删除，可用眼睛图标隐藏（随时可恢复）");
+      return;
+    }
     if (!confirm(`确认删除此「${sectionLabel(s.section_type)}」组件？`)) return;
     setBusy(true);
     await supabase.from("page_sections").delete().eq("id", s.id);
@@ -406,13 +468,21 @@ export default function SectionManager() {
 
       {/* 组件列表 */}
       <div className="rounded-card border border-coffee-line/70 bg-cream-200/60 p-4">
-        <p className="mb-3 text-xs text-ink-soft">
-          {allPages[page] ?? page} · 共 {list.length} 个组件（按顺序渲染）
+        <p className="mb-1 text-xs text-ink-soft">
+          {allPages[page] ?? page} · 共 {list.length} 个区块（按顺序渲染）
+        </p>
+        <p className="mb-3 text-[10px] leading-relaxed text-ink-mute">
+          带「内置」标记的是页面原生区块：可隐藏（眼睛图标）/排序，删除即隐藏、随时可恢复；
+          其余为自定义组件：可编辑内容、可删除。
         </p>
         <div className="space-y-2">
           {list.map((s, i) => {
+            const isBuiltin = s.section_type === "builtin";
             const meta = SECTION_TYPES.find((t) => t.type === s.section_type);
-            const Icon = meta?.Icon ?? Code;
+            const Icon = isBuiltin ? Pin : (meta?.Icon ?? Code);
+            const blockKey = isBuiltin
+              ? String((s.content_data as Record<string, unknown>)?.block ?? "")
+              : "";
             return (
               <div
                 key={s.id}
@@ -425,8 +495,15 @@ export default function SectionManager() {
                   <span className="flex-none text-[10px] text-ink-mute">#{i + 1}</span>
                   <Icon className="h-3.5 w-3.5 flex-none text-gold" strokeWidth={1.8} />
                   <span className="flex-1 truncate font-hand text-sm text-ink">
-                    {sectionLabel(s.section_type)}
+                    {isBuiltin
+                      ? (BUILTIN_LABELS[blockKey] ?? "内置区块")
+                      : sectionLabel(s.section_type)}
                   </span>
+                  {isBuiltin && (
+                    <span className="flex-none rounded-full bg-gold/15 px-1.5 py-0.5 text-[9px] font-medium text-coffee">
+                      内置
+                    </span>
+                  )}
                   <div className="flex flex-none gap-0.5">
                     <button
                       type="button"
@@ -447,19 +524,27 @@ export default function SectionManager() {
                     <button
                       type="button"
                       onClick={() => toggleActive(s)}
+                      title={isBuiltin ? (s.active ? "隐藏（可恢复）" : "恢复显示") : (s.active ? "隐藏" : "显示")}
                       className="rounded p-1 text-ink-soft hover:bg-cream-200 hover:text-coffee"
                     >
                       {s.active ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
                     </button>
-                    <button
-                      type="button"
-                      onClick={() => handleDelete(s)}
-                      className="rounded p-1 text-rust/70 hover:bg-rust/10 hover:text-rust"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
+                    {!isBuiltin && (
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(s)}
+                        className="rounded p-1 text-rust/70 hover:bg-rust/10 hover:text-rust"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    )}
                   </div>
                 </div>
+                {isBuiltin && (
+                  <p className="mt-0.5 pl-6 text-[10px] text-ink-mute">
+                    {BUILTIN_LABELS[blockKey] ?? blockKey} · 页面原生区块，文字内容请在「内容」中修改
+                  </p>
+                )}
 
                 {/* 可视化编辑区 */}
                 {editingId === s.id ? (
@@ -732,7 +817,7 @@ export default function SectionManager() {
                       </button>
                     </div>
                   </div>
-                ) : (
+                ) : !isBuiltin ? (
                   <button
                     type="button"
                     onClick={() => startEdit(s)}
@@ -740,7 +825,7 @@ export default function SectionManager() {
                   >
                     编辑内容
                   </button>
-                )}
+                ) : null}
               </div>
             );
           })}
@@ -755,6 +840,7 @@ export default function SectionManager() {
 
 function sectionLabel(type: SectionType): string {
   const map: Record<SectionType, string> = {
+    builtin: "内置区块",
     marquee: "无限滚动相册",
     timeline: "恋爱时间轴",
     custom_html: "自定义代码块",

@@ -5,10 +5,10 @@ import { Calendar, MapPin, Images, X, CameraOff } from "lucide-react";
 import PageHeader from "@/components/PageHeader";
 import Layout from "@/components/Layout";
 import Loading from "@/components/Loading";
+import PageBlocks from "@/components/PageBlocks";
 import { supabase, supabaseReady } from "@/lib/supabase";
 import { FALLBACK_FOOTPRINTS } from "@/lib/config";
 import { useContent } from "@/hooks/useContent";
-import SectionRenderer from "@/components/SectionRenderer";
 import type { Footprint, Photo } from "@/lib/types";
 
 // 樱花粉圆形标记（divIcon）
@@ -36,8 +36,12 @@ function FitBounds({ points }: { points: Footprint[] }) {
 
 export default function MapPage() {
   const { getValue } = useContent();
+  const pageTitle = getValue("map.title");
   const mapSubtitle = getValue("map.subtitle");
   const listTitle = getValue("map.list_title");
+  const loadingTip = getValue("map.loading");
+  const viewAlbumText = getValue("map.view_album");
+  const noPhotosText = getValue("map.no_photos");
   const [footprints, setFootprints] = useState<Footprint[]>([]);
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [loading, setLoading] = useState(true);
@@ -117,133 +121,136 @@ export default function MapPage() {
   return (
     <Layout>
       <PageHeader
-        title="足迹地图"
+        title={pageTitle}
         subtitle={mapSubtitle}
         showBack={false}
       />
 
       {loading ? (
-        <Loading tip="正在铺开地图…" />
+        <Loading tip={loadingTip} />
       ) : (
-        <>
-          <div className="overflow-hidden rounded-card border border-coffee-line/70 shadow-paper">
-            <MapContainer
-              center={[28.5, 113]}
-              zoom={5}
-              scrollWheelZoom={false}
-              style={{ height: "60vh", minHeight: 360, width: "100%" }}
-              attributionControl={true}
-            >
-              <TileLayer
-                url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
-                attribution='&copy; OpenStreetMap &copy; CARTO'
-                subdomains="abcd"
-                maxZoom={19}
-              />
-              {linePositions.length > 1 && (
-                <Polyline
-                  positions={linePositions}
-                  pathOptions={{
-                    color: "#D67385",
-                    weight: 2,
-                    opacity: 0.85,
-                    dashArray: "6 8",
-                    lineCap: "round",
-                  }}
-                />
-              )}
-              {footprints.map((fp) => {
-                const cityPhotos = photosByCity.get(fp.name) ?? [];
-                return (
-                  <Marker
-                    key={fp.id}
-                    position={[fp.lat, fp.lng]}
-                    icon={markerIcon}
-                  >
-                    <Popup>
-                      <div className="min-w-[180px] max-w-[220px]">
-                        <div className="flex items-center gap-1.5 font-hand text-base text-ink">
-                          <MapPin className="h-3.5 w-3.5 text-gold" strokeWidth={1.8} />
-                          {fp.name}
-                        </div>
-                        <div className="mt-1 flex items-center gap-1.5 text-xs text-ink-mute">
-                          <Calendar className="h-3 w-3" strokeWidth={1.6} />
-                          {fp.visit_date}
-                        </div>
-                        {fp.cover_url && (
-                          <img
-                            src={fp.cover_url}
-                            alt={fp.name}
-                            className="mt-2 h-28 w-full rounded object-cover"
-                            loading="lazy"
-                          />
-                        )}
-                        <p className="mt-2 text-[13px] leading-relaxed text-ink-soft">
-                          {fp.story}
-                        </p>
-                        {cityPhotos.length > 0 && (
-                          <button
-                            type="button"
-                            onClick={() => setActiveCity(fp.name)}
-                            className="mt-3 inline-flex w-full items-center justify-center gap-1.5 rounded-soft border border-gold/60 bg-gold/10 px-3 py-1.5 text-xs font-medium text-coffee transition-colors hover:bg-gold/20"
-                          >
-                            <Images className="h-3.5 w-3.5" strokeWidth={1.8} />
-                            查看相册 · {cityPhotos.length}
-                          </button>
-                        )}
-                      </div>
-                    </Popup>
-                  </Marker>
-                );
-              })}
-              <FitBounds points={footprints} />
-            </MapContainer>
-          </div>
+        <PageBlocks
+          pageName="map"
+          blocks={{
+            map_view: (
+              <div className="overflow-hidden rounded-card border border-coffee-line/70 shadow-paper">
+                <MapContainer
+                  center={[28.5, 113]}
+                  zoom={5}
+                  scrollWheelZoom={false}
+                  style={{ height: "60vh", minHeight: 360, width: "100%" }}
+                  attributionControl={true}
+                >
+                  <TileLayer
+                    url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+                    attribution='&copy; OpenStreetMap &copy; CARTO'
+                    subdomains="abcd"
+                    maxZoom={19}
+                  />
+                  {linePositions.length > 1 && (
+                    <Polyline
+                      positions={linePositions}
+                      pathOptions={{
+                        color: "#D67385",
+                        weight: 2,
+                        opacity: 0.85,
+                        dashArray: "6 8",
+                        lineCap: "round",
+                      }}
+                    />
+                  )}
+                  {footprints.map((fp) => {
+                    const cityPhotos = photosByCity.get(fp.name) ?? [];
+                    return (
+                      <Marker
+                        key={fp.id}
+                        position={[fp.lat, fp.lng]}
+                        icon={markerIcon}
+                      >
+                        <Popup>
+                          <div className="min-w-[180px] max-w-[220px]">
+                            <div className="flex items-center gap-1.5 font-hand text-base text-ink">
+                              <MapPin className="h-3.5 w-3.5 text-gold" strokeWidth={1.8} />
+                              {fp.name}
+                            </div>
+                            <div className="mt-1 flex items-center gap-1.5 text-xs text-ink-mute">
+                              <Calendar className="h-3 w-3" strokeWidth={1.6} />
+                              {fp.visit_date}
+                            </div>
+                            {fp.cover_url && (
+                              <img
+                                src={fp.cover_url}
+                                alt={fp.name}
+                                className="mt-2 h-28 w-full rounded object-cover"
+                                loading="lazy"
+                              />
+                            )}
+                            <p className="mt-2 text-[13px] leading-relaxed text-ink-soft">
+                              {fp.story}
+                            </p>
+                            {cityPhotos.length > 0 && (
+                              <button
+                                type="button"
+                                onClick={() => setActiveCity(fp.name)}
+                                className="mt-3 inline-flex w-full items-center justify-center gap-1.5 rounded-soft border border-gold/60 bg-gold/10 px-3 py-1.5 text-xs font-medium text-coffee transition-colors hover:bg-gold/20"
+                              >
+                                <Images className="h-3.5 w-3.5" strokeWidth={1.8} />
+                                {viewAlbumText} · {cityPhotos.length}
+                              </button>
+                            )}
+                          </div>
+                        </Popup>
+                      </Marker>
+                    );
+                  })}
+                  <FitBounds points={footprints} />
+                </MapContainer>
+              </div>
+            ),
 
-          {/* 城市列表（按旅程顺序） */}
-          <section className="mt-5">
-            <h2 className="mb-3 font-hand text-lg text-ink-soft">{listTitle}</h2>
-            <ol className="space-y-2.5">
-              {footprints.map((fp, idx) => {
-                const count = (photosByCity.get(fp.name) ?? []).length;
-                return (
-                  <li
-                    key={fp.id}
-                    className="flex items-start gap-3 rounded-card border border-coffee-line/60 bg-cream-200/70 p-3"
-                  >
-                    <span className="mt-0.5 inline-flex h-6 w-6 flex-none items-center justify-center rounded-full bg-gold/15 font-hand text-xs text-coffee">
-                      {idx + 1}
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-baseline justify-between gap-2">
-                        <span className="font-hand text-base text-ink">{fp.name}</span>
-                        <span className="flex-none text-[11px] text-ink-mute">
-                          {fp.visit_date}
+            city_list: (
+              <section className="mt-5">
+                <h2 className="mb-3 font-hand text-lg text-ink-soft">{listTitle}</h2>
+                <ol className="space-y-2.5">
+                  {footprints.map((fp, idx) => {
+                    const count = (photosByCity.get(fp.name) ?? []).length;
+                    return (
+                      <li
+                        key={fp.id}
+                        className="flex items-start gap-3 rounded-card border border-coffee-line/60 bg-cream-200/70 p-3"
+                      >
+                        <span className="mt-0.5 inline-flex h-6 w-6 flex-none items-center justify-center rounded-full bg-gold/15 font-hand text-xs text-coffee">
+                          {idx + 1}
                         </span>
-                      </div>
-                      <p className="mt-0.5 text-xs leading-relaxed text-ink-soft">
-                        {fp.story}
-                      </p>
-                      {count > 0 && (
-                        <button
-                          type="button"
-                          onClick={() => setActiveCity(fp.name)}
-                          className="mt-2 inline-flex items-center gap-1 text-[11px] text-coffee transition-colors hover:text-gold"
-                        >
-                          <Images className="h-3 w-3" strokeWidth={1.8} />
-                          查看相册 · {count} 张
-                        </button>
-                      )}
-                    </div>
-                  </li>
-                );
-              })}
-            </ol>
-          </section>
-
-          {/* 动态组件区 */}
-          <SectionRenderer pageName="map" />
-        </>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-baseline justify-between gap-2">
+                            <span className="font-hand text-base text-ink">{fp.name}</span>
+                            <span className="flex-none text-[11px] text-ink-mute">
+                              {fp.visit_date}
+                            </span>
+                          </div>
+                          <p className="mt-0.5 text-xs leading-relaxed text-ink-soft">
+                            {fp.story}
+                          </p>
+                          {count > 0 && (
+                            <button
+                              type="button"
+                              onClick={() => setActiveCity(fp.name)}
+                              className="mt-2 inline-flex items-center gap-1 text-[11px] text-coffee transition-colors hover:text-gold"
+                            >
+                              <Images className="h-3 w-3" strokeWidth={1.8} />
+                              {viewAlbumText} · {count} 张
+                            </button>
+                          )}
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ol>
+              </section>
+            ),
+          }}
+        />
       )}
 
       {/* 城市相册弹窗：显示该城市（中文）的照片墙 */}
@@ -280,7 +287,7 @@ export default function MapPage() {
               {activeCityPhotos.length === 0 ? (
                 <div className="flex flex-col items-center py-10 text-ink-mute">
                   <CameraOff className="h-6 w-6" strokeWidth={1.4} />
-                  <p className="mt-2 text-xs">这里还没有照片</p>
+                  <p className="mt-2 text-xs">{noPhotosText}</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-2 gap-3">

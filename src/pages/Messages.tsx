@@ -8,7 +8,7 @@ import { randomNoteColor } from "@/lib/types";
 import type { MessageNote, NoteColor } from "@/lib/types";
 import { useContent } from "@/hooks/useContent";
 import { cn } from "@/lib/utils";
-import SectionRenderer from "@/components/SectionRenderer";
+import PageBlocks from "@/components/PageBlocks";
 
 const NOTE_BG: Record<NoteColor, string> = {
   yellow: "bg-note-yellow",
@@ -106,111 +106,113 @@ export default function Messages() {
   return (
     <Layout>
       <PageHeader
-        title="温暖留言"
+        title={getValue("messages.title")}
         subtitle={subtitle}
         showBack={false}
       />
 
-      {/* 留言表单 */}
-      <form
-        onSubmit={handleSubmit}
-        className="mb-6 rounded-card border border-coffee-line/70 bg-cream-200 p-4 shadow-paper"
-      >
-        <label className="field-label block">昵称（可不填）</label>
-        <input
-          type="text"
-          value={nickname}
-          onChange={(e) => setNickname(e.target.value)}
-          placeholder="一位访客"
-          maxLength={20}
-          className="input-line"
-        />
-        <label className="field-label mt-3 block">留言</label>
-        <textarea
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          placeholder="写下你想说的一句话…"
-          maxLength={200}
-          rows={3}
-          className="mt-1 w-full resize-none rounded-soft border border-coffee-line/70 bg-cream-50/60 px-3 py-2 text-sm text-ink placeholder:text-ink-mute focus:border-gold focus:outline-none"
-        />
-        <div className="mt-3 flex items-center justify-between gap-3">
-          <span className="text-[11px] text-ink-mute">
-            {content.length}/200
-          </span>
-          <button
-            type="submit"
-            disabled={submitting}
-            className="btn-gold"
-          >
-            <Send className="h-3.5 w-3.5" strokeWidth={1.8} />
-            {submitting ? "发送中…" : "留下便签"}
-          </button>
-        </div>
-        {hint && (
-          <div
-            className={cn(
-              "mt-3 flex items-center gap-1.5 rounded-soft px-3 py-2 text-xs",
-              hint.type === "ok"
-                ? "bg-gold/15 text-coffee"
-                : "bg-rust/10 text-rust",
-            )}
-          >
-            {hint.type === "ok" ? (
-              <CheckCircle2 className="h-3.5 w-3.5" strokeWidth={1.8} />
-            ) : (
-              <AlertCircle className="h-3.5 w-3.5" strokeWidth={1.8} />
-            )}
-            {hint.text}
-          </div>
-        )}
-      </form>
-
-      {/* 便签瀑布流 */}
-      {loading ? (
-        <Loading tip="正在收集便签…" />
-      ) : messages.length === 0 ? (
-        <div className="rounded-card border border-dashed border-coffee-line/70 bg-cream-200/40 py-12 text-center">
-          <p className="font-hand text-base text-ink-soft">
-            这里还没有便签
-          </p>
-          <p className="mt-1 text-xs text-ink-mute">
-            成为第一个留下温暖的人吧
-          </p>
-        </div>
-      ) : (
-        <div className="columns-2 gap-3 [column-fill:balance]">
-          {messages.map((m, idx) => (
-            <div
-              key={m.id}
-              className={cn(
-                "mb-3 inline-block w-full break-inside-avoid rounded-card p-3.5 shadow-note",
-                NOTE_BG[m.color],
-                NOTE_ROTATE[idx % NOTE_ROTATE.length],
-              )}
+      <PageBlocks
+        pageName="messages"
+        blocks={{
+          message_form: (
+            <form
+              onSubmit={handleSubmit}
+              className="mb-6 rounded-card border border-coffee-line/70 bg-cream-200 p-4 shadow-paper"
             >
-              <Pin
-                className="mx-auto mb-1.5 h-3.5 w-3.5 text-coffee/50"
-                strokeWidth={1.6}
+              <label className="field-label block">{getValue("messages.form_nickname_label")}</label>
+              <input
+                type="text"
+                value={nickname}
+                onChange={(e) => setNickname(e.target.value)}
+                placeholder={getValue("messages.form_nickname_placeholder")}
+                maxLength={20}
+                className="input-line"
               />
-              <p className="whitespace-pre-wrap font-hand text-[14px] leading-relaxed text-ink">
-                {m.content}
-              </p>
-              <div className="mt-3 flex items-baseline justify-between">
-                <span className="font-hand text-xs text-ink-soft">
-                  — {m.nickname}
+              <label className="field-label mt-3 block">{getValue("messages.form_content_label")}</label>
+              <textarea
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                placeholder={getValue("messages.form_content_placeholder")}
+                maxLength={200}
+                rows={3}
+                className="mt-1 w-full resize-none rounded-soft border border-coffee-line/70 bg-cream-50/60 px-3 py-2 text-sm text-ink placeholder:text-ink-mute focus:border-gold focus:outline-none"
+              />
+              <div className="mt-3 flex items-center justify-between gap-3">
+                <span className="text-[11px] text-ink-mute">
+                  {content.length}/200
                 </span>
-                <span className="text-[10px] text-ink-mute">
-                  {formatTime(m.created_at)}
-                </span>
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="btn-gold"
+                >
+                  <Send className="h-3.5 w-3.5" strokeWidth={1.8} />
+                  {submitting ? getValue("messages.submitting") : getValue("messages.submit")}
+                </button>
               </div>
-            </div>
-          ))}
-        </div>
-      )}
+              {hint && (
+                <div
+                  className={cn(
+                    "mt-3 flex items-center gap-1.5 rounded-soft px-3 py-2 text-xs",
+                    hint.type === "ok"
+                      ? "bg-gold/15 text-coffee"
+                      : "bg-rust/10 text-rust",
+                  )}
+                >
+                  {hint.type === "ok" ? (
+                    <CheckCircle2 className="h-3.5 w-3.5" strokeWidth={1.8} />
+                  ) : (
+                    <AlertCircle className="h-3.5 w-3.5" strokeWidth={1.8} />
+                  )}
+                  {hint.text}
+                </div>
+              )}
+            </form>
+          ),
 
-      {/* 动态组件区 */}
-      <SectionRenderer pageName="messages" />
+          notes_wall: loading ? (
+            <Loading tip={getValue("messages.loading")} />
+          ) : messages.length === 0 ? (
+            <div className="rounded-card border border-dashed border-coffee-line/70 bg-cream-200/40 py-12 text-center">
+              <p className="font-hand text-base text-ink-soft">
+                {getValue("messages.empty_title")}
+              </p>
+              <p className="mt-1 text-xs text-ink-mute">
+                {getValue("messages.empty_desc")}
+              </p>
+            </div>
+          ) : (
+            <div className="columns-2 gap-3 [column-fill:balance]">
+              {messages.map((m, idx) => (
+                <div
+                  key={m.id}
+                  className={cn(
+                    "mb-3 inline-block w-full break-inside-avoid rounded-card p-3.5 shadow-note",
+                    NOTE_BG[m.color],
+                    NOTE_ROTATE[idx % NOTE_ROTATE.length],
+                  )}
+                >
+                  <Pin
+                    className="mx-auto mb-1.5 h-3.5 w-3.5 text-coffee/50"
+                    strokeWidth={1.6}
+                  />
+                  <p className="whitespace-pre-wrap font-hand text-[14px] leading-relaxed text-ink">
+                    {m.content}
+                  </p>
+                  <div className="mt-3 flex items-baseline justify-between">
+                    <span className="font-hand text-xs text-ink-soft">
+                      — {m.nickname}
+                    </span>
+                    <span className="text-[10px] text-ink-mute">
+                      {formatTime(m.created_at)}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ),
+        }}
+      />
     </Layout>
   );
 }

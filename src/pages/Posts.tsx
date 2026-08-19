@@ -17,12 +17,14 @@ import PageHeader from "@/components/PageHeader";
 import Layout from "@/components/Layout";
 import Loading from "@/components/Loading";
 import PostGrid from "@/components/PostGrid";
+import PageBlocks from "@/components/PageBlocks";
 import {
   usePosts,
   usePostDetail,
   usePostActions,
   formatTime,
 } from "@/hooks/usePosts";
+import { useContent } from "@/hooks/useContent";
 import type { Post } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -44,6 +46,7 @@ export default function Posts() {
 function PostListView() {
   const { posts, loading, error, reload } = usePosts();
   const { createAnonymousPost } = usePostActions();
+  const { getValue } = useContent();
   const [showForm, setShowForm] = useState(false);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
@@ -81,112 +84,121 @@ function PostListView() {
 
   return (
     <>
-      <PageHeader title="帖子" subtitle={subtitle} showBack={false} />
+      <PageHeader title={getValue("posts.title")} subtitle={subtitle} showBack={false} />
 
-      {/* 发帖按钮 */}
-      <div className="mb-4 flex items-center justify-between">
-        <p className="text-xs text-ink-soft">
-          所有人均可匿名发帖
-        </p>
-        <button
-          type="button"
-          onClick={() => setShowForm((v) => !v)}
-          className="btn-gold text-xs"
-        >
-          <PenSquare className="h-3.5 w-3.5" strokeWidth={1.8} />
-          {showForm ? "收起表单" : "我要发帖"}
-        </button>
-      </div>
+      <PageBlocks
+        pageName="posts"
+        blocks={{
+          post_list: (
+            <>
+              {/* 发帖按钮 */}
+              <div className="mb-4 flex items-center justify-between">
+                <p className="text-xs text-ink-soft">
+                  {getValue("posts.tip")}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setShowForm((v) => !v)}
+                  className="btn-gold text-xs"
+                >
+                  <PenSquare className="h-3.5 w-3.5" strokeWidth={1.8} />
+                  {showForm ? getValue("posts.form_collapse") : getValue("posts.form_toggle")}
+                </button>
+              </div>
 
-      {/* 发帖表单 */}
-      {showForm && (
-        <form
-          onSubmit={handleCreate}
-          className="mb-5 rounded-card border border-cream-300 bg-cream-200 p-3 shadow-paper animate-fade-up"
-        >
-          <h3 className="mb-2 text-sm font-semibold text-ink">匿名发帖</h3>
-          <div className="space-y-2">
-            <div>
-              <label className="field-label">昵称（可选）</label>
-              <input
-                value={nickname}
-                onChange={(e) => setNickname(e.target.value)}
-                placeholder={'默认显示为"匿名"'}
-                className="input-line"
-              />
-            </div>
-            <div>
-              <label className="field-label">标题</label>
-              <input
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="一句话标题"
-                className="input-line"
-              />
-            </div>
-            <div>
-              <label className="field-label">正文</label>
-              <textarea
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                rows={4}
-                placeholder="想说的话…"
-                className="input-line resize-y"
-              />
-              <p className="mt-0.5 text-[10px] text-ink-mute">
-                * 游客发帖暂不支持图片，带图帖子请在后台发布
-              </p>
-            </div>
-          </div>
+              {/* 发帖表单 */}
+              {showForm && (
+                <form
+                  onSubmit={handleCreate}
+                  className="mb-5 rounded-card border border-cream-300 bg-cream-200 p-3 shadow-paper animate-fade-up"
+                >
+                  <h3 className="mb-2 text-sm font-semibold text-ink">{getValue("posts.form_title")}</h3>
+                  <div className="space-y-2">
+                    <div>
+                      <label className="field-label">{getValue("posts.form_nickname_label")}</label>
+                      <input
+                        value={nickname}
+                        onChange={(e) => setNickname(e.target.value)}
+                        placeholder={'默认显示为"匿名"'}
+                        className="input-line"
+                      />
+                    </div>
+                    <div>
+                      <label className="field-label">{getValue("posts.form_title_label")}</label>
+                      <input
+                        value={title}
+                        onChange={(e) => setTitle(e.target.value)}
+                        placeholder="一句话标题"
+                        className="input-line"
+                      />
+                    </div>
+                    <div>
+                      <label className="field-label">{getValue("posts.form_content_label")}</label>
+                      <textarea
+                        value={content}
+                        onChange={(e) => setContent(e.target.value)}
+                        rows={4}
+                        placeholder="想说的话…"
+                        className="input-line resize-y"
+                      />
+                      <p className="mt-0.5 text-[10px] text-ink-mute">
+                        * 游客发帖暂不支持图片，带图帖子请在后台发布
+                      </p>
+                    </div>
+                  </div>
 
-          {hint && (
-            <p
-              className={cn(
-                "mt-2 flex items-center gap-1 text-xs",
-                hint.type === "ok" ? "text-emerald-600" : "text-rust",
+                  {hint && (
+                    <p
+                      className={cn(
+                        "mt-2 flex items-center gap-1 text-xs",
+                        hint.type === "ok" ? "text-emerald-600" : "text-rust",
+                      )}
+                    >
+                      {hint.type === "ok" ? (
+                        <Check className="h-3.5 w-3.5" />
+                      ) : (
+                        <AlertCircle className="h-3.5 w-3.5" />
+                      )}
+                      {hint.text}
+                    </p>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={busy}
+                    className="btn-gold mt-3 text-xs"
+                  >
+                    {busy ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Send className="h-3.5 w-3.5" />
+                    )}
+                    {getValue("posts.submit")}
+                  </button>
+                </form>
               )}
-            >
-              {hint.type === "ok" ? (
-                <Check className="h-3.5 w-3.5" />
+
+              {loading ? (
+                <Loading tip="正在加载帖子…" />
+              ) : error ? (
+                <div className="rounded-card border border-rose-200 bg-rose-50/80 px-4 py-5 text-sm text-rose-600">
+                  <div className="mb-1 font-semibold">加载帖子失败</div>
+                  <div className="break-all text-xs opacity-90">{error}</div>
+                  <button
+                    type="button"
+                    onClick={() => reload()}
+                    className="btn-gold mt-3 !py-1.5 text-xs"
+                  >
+                    重新加载
+                  </button>
+                </div>
               ) : (
-                <AlertCircle className="h-3.5 w-3.5" />
+                <PostGrid posts={posts} />
               )}
-              {hint.text}
-            </p>
-          )}
-
-          <button
-            type="submit"
-            disabled={busy}
-            className="btn-gold mt-3 text-xs"
-          >
-            {busy ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            ) : (
-              <Send className="h-3.5 w-3.5" />
-            )}
-            发布
-          </button>
-        </form>
-      )}
-
-      {loading ? (
-        <Loading tip="正在加载帖子…" />
-      ) : error ? (
-        <div className="rounded-card border border-rose-200 bg-rose-50/80 px-4 py-5 text-sm text-rose-600">
-          <div className="mb-1 font-semibold">加载帖子失败</div>
-          <div className="break-all text-xs opacity-90">{error}</div>
-          <button
-            type="button"
-            onClick={() => reload()}
-            className="btn-gold mt-3 !py-1.5 text-xs"
-          >
-            重新加载
-          </button>
-        </div>
-      ) : (
-        <PostGrid posts={posts} />
-      )}
+            </>
+          ),
+        }}
+      />
     </>
   );
 }

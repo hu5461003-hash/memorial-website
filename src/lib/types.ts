@@ -82,6 +82,7 @@ export type Video = {
 // ============ 动态组件 / 自由排版 ============
 
 export type SectionType =
+  | "builtin"       // 内置区块（页面原生组件的显隐/排序，不可删除）
   | "marquee"       // 无限滚动相册
   | "timeline"      // 恋爱时间轴
   | "custom_html"   // 自定义代码块

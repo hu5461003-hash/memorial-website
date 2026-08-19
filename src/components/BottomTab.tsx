@@ -43,8 +43,7 @@ export default function BottomTab() {
               )
             }
             style={({ isActive }) => ({
-              color: color,
-              opacity: isActive ? 1 : 0.5,
+              color: isActive ? color : "#111111",
             })}
             aria-label={label}
             title={label}

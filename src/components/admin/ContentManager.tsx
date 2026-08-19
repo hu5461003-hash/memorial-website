@@ -1,5 +1,8 @@
-import { useEffect, useState } from "react";
-import { Trash2, Plus, Loader2, Save, Upload, Type, Image as ImageIcon } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import {
+  Trash2, Plus, Loader2, Save, Upload, Type, Image as ImageIcon,
+  X,
+} from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { CONTENT_DEFAULTS } from "@/lib/config";
 import type { SiteContent, ContentType } from "@/lib/types";
@@ -45,6 +48,20 @@ const PAGE_LABELS: Record<string, string> = {
   posts: "帖子",
 };
 
+const LOGO_KEY = "global.logo_image";
+
+/** 上传图片到 covers 桶，返回公开 URL */
+async function uploadImage(file: File): Promise<string> {
+  const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+  const path = `content-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+  const { error } = await supabase.storage
+    .from("covers")
+    .upload(path, file, { cacheControl: "3600", upsert: false });
+  if (error) throw error;
+  const { data: pub } = supabase.storage.from("covers").getPublicUrl(path);
+  return pub.publicUrl;
+}
+
 export default function ContentManager() {
   const [list, setList] = useState<SiteContent[]>([]);
   const [filterPage, setFilterPage] = useState<string>("all");
@@ -55,6 +72,11 @@ export default function ContentManager() {
   // 编辑态：记录当前正在编辑的 key（行内展开）
   const [editingKey, setEditingKey] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
+  // 图片行内上传：目标行与上传状态
+  const [imageTarget, setImageTarget] = useState<string | null>(null);
+  const [imageBusy, setImageBusy] = useState(false);
+  const logoInputRef = useRef<HTMLInputElement | null>(null);
+  const rowInputRef = useRef<HTMLInputElement | null>(null);
 
   async function load() {
     const { data } = await supabase
@@ -69,13 +91,19 @@ export default function ContentManager() {
     load();
   }, []);
 
+  const logoRow = list.find((c) => c.content_key === LOGO_KEY);
+
   const filtered =
     filterPage === "all" ? list : list.filter((c) => c.page === filterPage);
 
   // 合并默认项（若数据库未初始化，展示默认项供编辑创建）
+  // Logo 图片由顶部 Logo 卡片单独管理，列表中不再重复展示
   const knownKeys = new Set(list.map((c) => c.content_key));
   const defaultsToShow = CONTENT_DEFAULTS.filter(
-    (d) => !knownKeys.has(d.content_key) && (filterPage === "all" || d.page === filterPage),
+    (d) =>
+      d.content_key !== LOGO_KEY &&
+      !knownKeys.has(d.content_key) &&
+      (filterPage === "all" || d.page === filterPage),
   );
 
   async function handleCreate(e: React.FormEvent) {
@@ -91,18 +119,13 @@ export default function ContentManager() {
 
     // 若为图片类型且选择了文件，先上传
     if (form.type === "image" && file) {
-      const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
-      const path = `content-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-      const { error: upErr } = await supabase.storage
-        .from("covers")
-        .upload(path, file, { cacheControl: "3600", upsert: false });
-      if (upErr) {
+      try {
+        imageUrl = await uploadImage(file);
+      } catch (upErr) {
         setBusy(false);
-        setHint(`图片上传失败：${upErr.message}`);
+        setHint(`图片上传失败：${(upErr as Error).message}`);
         return;
       }
-      const { data: pub } = supabase.storage.from("covers").getPublicUrl(path);
-      imageUrl = pub.publicUrl;
     }
 
     const { error } = await supabase.from("site_content").upsert({
@@ -176,8 +199,152 @@ export default function ContentManager() {
     else load();
   }
 
+  // ============ Logo 上传 / 清除 ============
+
+  async function saveLogo(url: string | null) {
+    const def = CONTENT_DEFAULTS.find((d) => d.content_key === LOGO_KEY);
+    const { error } = await supabase.from("site_content").upsert({
+      content_key: LOGO_KEY,
+      page: "global",
+      label: def?.label ?? "Logo 图片（优先显示）",
+      type: "image",
+      content_value: null,
+      image_url: url,
+      sort_order: def?.sort_order ?? 5,
+      updated_at: new Date().toISOString(),
+    });
+    if (error) {
+      setHint(`Logo 保存失败：${error.message}`);
+      return false;
+    }
+    return true;
+  }
+
+  async function handleLogoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0];
+    e.target.value = "";
+    if (!f) return;
+    setImageBusy(true);
+    setHint(null);
+    try {
+      const url = await uploadImage(f);
+      if (await saveLogo(url)) {
+        setHint("✓ Logo 已更新，前台顶部即时生效");
+        await load();
+      }
+    } catch (err) {
+      setHint(`Logo 上传失败：${(err as Error).message}`);
+    }
+    setImageBusy(false);
+  }
+
+  async function handleLogoClear() {
+    if (!logoRow) return;
+    setImageBusy(true);
+    if (await saveLogo(null)) {
+      setHint("已清除 Logo 图片，前台将显示 Logo 文字");
+      await load();
+    }
+    setImageBusy(false);
+  }
+
+  // ============ 图片行的行内上传 / 清除 ============
+
+  async function handleRowImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0];
+    e.target.value = "";
+    if (!f || !imageTarget) return;
+    const row = list.find((c) => c.id === imageTarget);
+    if (!row) return;
+    setImageBusy(true);
+    setHint(null);
+    try {
+      const url = await uploadImage(f);
+      const { error } = await supabase
+        .from("site_content")
+        .update({ image_url: url, updated_at: new Date().toISOString() })
+        .eq("id", row.id);
+      if (error) setHint(`图片保存失败：${error.message}`);
+      else {
+        setHint(`✓「${row.label}」图片已更新`);
+        await load();
+      }
+    } catch (err) {
+      setHint(`图片上传失败：${(err as Error).message}`);
+    }
+    setImageBusy(false);
+    setImageTarget(null);
+  }
+
+  async function handleRowImageClear(c: SiteContent) {
+    setImageBusy(true);
+    const { error } = await supabase
+      .from("site_content")
+      .update({ image_url: null, updated_at: new Date().toISOString() })
+      .eq("id", c.id);
+    if (error) setHint(`清除失败：${error.message}`);
+    else {
+      setHint(`已清除「${c.label}」的图片`);
+      await load();
+    }
+    setImageBusy(false);
+  }
+
   return (
     <div className="space-y-5">
+      {/* Logo 上传快捷入口 */}
+      <div className="rounded-card border border-coffee-line/70 bg-cream-200 p-4 shadow-paper">
+        <h3 className="mb-1 flex items-center gap-1.5 font-hand text-base text-ink">
+          <ImageIcon className="h-4 w-4 text-gold" strokeWidth={1.8} />
+          Logo 图片
+        </h3>
+        <p className="mb-3 text-[10px] text-ink-mute">
+          上传后前台顶部优先显示图片 Logo；未上传时显示 Logo 文字（可在下方列表「全局」中修改）
+        </p>
+        <div className="flex items-center gap-4">
+          <div className="flex h-16 w-28 flex-none items-center justify-center overflow-hidden rounded-soft border border-coffee-line/50 bg-cream-50">
+            {logoRow?.image_url ? (
+              <img src={logoRow.image_url} alt="Logo" className="max-h-full max-w-full object-contain" />
+            ) : (
+              <span className="text-[10px] text-ink-mute">未设置</span>
+            )}
+          </div>
+          <div className="flex flex-1 flex-col gap-2">
+            <input
+              ref={logoInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleLogoUpload}
+            />
+            <button
+              type="button"
+              disabled={imageBusy}
+              onClick={() => logoInputRef.current?.click()}
+              className="btn-gold !py-1.5 text-xs"
+            >
+              {imageBusy ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" strokeWidth={1.8} />
+              ) : (
+                <Upload className="h-3.5 w-3.5" strokeWidth={1.8} />
+              )}
+              {logoRow?.image_url ? "替换 Logo" : "上传 Logo"}
+            </button>
+            {logoRow?.image_url && (
+              <button
+                type="button"
+                disabled={imageBusy}
+                onClick={handleLogoClear}
+                className="btn-ghost !py-1.5 text-xs"
+              >
+                <X className="h-3.5 w-3.5" strokeWidth={1.8} />
+                清除（改用文字）
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
       {/* 新增表单 */}
       <form
         onSubmit={handleCreate}
@@ -407,16 +574,43 @@ export default function ContentManager() {
                     </span>
                   </div>
                   {c.type === "image" ? (
-                    c.image_url ? (
-                      <img
-                        src={c.image_url}
-                        alt={c.label}
-                        className="mt-1.5 h-16 w-full rounded object-cover"
-                        loading="lazy"
-                      />
-                    ) : (
-                      <p className="mt-1 text-[11px] text-ink-mute">无图片</p>
-                    )
+                    <div className="mt-1.5">
+                      {c.image_url ? (
+                        <img
+                          src={c.image_url}
+                          alt={c.label}
+                          className="h-16 w-full rounded object-cover"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <p className="mt-1 text-[11px] text-ink-mute">无图片</p>
+                      )}
+                      <div className="mt-1.5 flex gap-1.5">
+                        <button
+                          type="button"
+                          disabled={imageBusy}
+                          onClick={() => {
+                            setImageTarget(c.id);
+                            setTimeout(() => rowInputRef.current?.click(), 0);
+                          }}
+                          className="btn-ghost !px-2 !py-1 text-[10px]"
+                        >
+                          <Upload className="h-3 w-3" strokeWidth={1.8} />
+                          {c.image_url ? "替换图片" : "上传图片"}
+                        </button>
+                        {c.image_url && (
+                          <button
+                            type="button"
+                            disabled={imageBusy}
+                            onClick={() => handleRowImageClear(c)}
+                            className="btn-ghost !px-2 !py-1 text-[10px]"
+                          >
+                            <X className="h-3 w-3" strokeWidth={1.8} />
+                            清除
+                          </button>
+                        )}
+                      </div>
+                    </div>
                   ) : editingKey === c.content_key ? (
                     <div className="mt-1.5">
                       <textarea
@@ -504,6 +698,15 @@ export default function ContentManager() {
             <p className="py-6 text-center text-xs text-ink-mute">暂无内容</p>
           )}
         </div>
+
+        {/* 图片行行内上传用的共享文件选择器 */}
+        <input
+          ref={rowInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={handleRowImageUpload}
+        />
       </div>
     </div>
   );
