@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { MapContainer, TileLayer, Polyline, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
+import "leaflet/dist/leaflet.css";
 import { Calendar, MapPin, Images, X, CameraOff } from "lucide-react";
 import PageHeader from "@/components/PageHeader";
 import Layout from "@/components/Layout";
@@ -42,6 +43,9 @@ export default function MapPage() {
   const loadingTip = getValue("map.loading");
   const viewAlbumText = getValue("map.view_album");
   const noPhotosText = getValue("map.no_photos");
+  const noFootprintsText = getValue("map.no_footprints");
+  const closeLabel = getValue("global.a11y_close");
+  const photoUnit = (n: number) => getValue("map.photo_unit").replace("{n}", String(n));
   const [footprints, setFootprints] = useState<Footprint[]>([]);
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [loading, setLoading] = useState(true);
@@ -123,7 +127,7 @@ export default function MapPage() {
                 {footprints.length === 0 && (
                   <div className="flex items-center justify-center gap-1.5 border-b border-coffee-line/50 bg-cream-100/60 py-3 text-xs text-ink-mute">
                     <MapPin className="h-3.5 w-3.5" strokeWidth={1.6} />
-                    还没有足迹节点，请在后台上传
+                    {noFootprintsText}
                   </div>
                 )}
                 <MapContainer
@@ -231,7 +235,7 @@ export default function MapPage() {
                               className="mt-2 inline-flex items-center gap-1 text-[11px] text-coffee transition-colors hover:text-gold"
                             >
                               <Images className="h-3 w-3" strokeWidth={1.8} />
-                              {viewAlbumText} · {count} 张
+                              {viewAlbumText} · {photoUnit(count)}
                             </button>
                           )}
                         </div>
@@ -261,13 +265,13 @@ export default function MapPage() {
                 <MapPin className="h-4 w-4 text-gold" strokeWidth={1.8} />
                 <h2 className="font-hand text-xl text-ink">{activeCity}</h2>
                 <span className="text-xs text-ink-mute">
-                  · {activeCityPhotos.length} 张
+                  · {photoUnit(activeCityPhotos.length)}
                 </span>
               </div>
               <button
                 type="button"
                 onClick={() => setActiveCity(null)}
-                aria-label="关闭"
+                aria-label={closeLabel}
                 className="inline-flex h-8 w-8 items-center justify-center rounded-full text-ink-soft transition-colors hover:bg-cream-200 hover:text-ink"
               >
                 <X className="h-4.5 w-4.5" strokeWidth={1.8} />
@@ -324,7 +328,7 @@ export default function MapPage() {
         >
           <button
             type="button"
-            aria-label="关闭"
+            aria-label={closeLabel}
             className="absolute right-4 top-4 inline-flex h-9 w-9 items-center justify-center rounded-full bg-cream-50/20 text-cream-50 transition-colors hover:bg-cream-50/30"
           >
             <X className="h-5 w-5" strokeWidth={1.8} />

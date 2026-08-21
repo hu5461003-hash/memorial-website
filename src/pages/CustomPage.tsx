@@ -42,7 +42,7 @@ export default function CustomPage() {
       <Layout>
         <div className="flex items-center justify-center gap-2 py-20 text-xs text-ink-mute">
           <Loader2 className="h-4 w-4 animate-spin" />
-          加载页面中…
+          {getValue("custom.loading")}
         </div>
       </Layout>
     );
@@ -51,10 +51,13 @@ export default function CustomPage() {
   if (state === "missing") {
     return (
       <Layout>
-        <PageHeader title="页面不存在" subtitle="该页面尚未创建或已被删除" />
+        <PageHeader
+          title={getValue("custom.not_found_title")}
+          subtitle={getValue("custom.not_found_subtitle")}
+        />
         <div className="flex flex-col items-center gap-3 py-16 text-ink-mute">
           <FileQuestion className="h-10 w-10" strokeWidth={1.4} />
-          <p className="text-xs">在浏览器地址栏确认链接是否正确，或到后台「排版」重新创建。</p>
+          <p className="text-xs">{getValue("custom.not_found_desc")}</p>
         </div>
       </Layout>
     );

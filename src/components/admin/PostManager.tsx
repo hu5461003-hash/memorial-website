@@ -32,7 +32,6 @@ export default function PostManager() {
   const [featured, setFeatured] = useState(false);
   const [pendingImgs, setPendingImgs] = useState<PendingImage[]>([]);
   const [busy, setBusy] = useState(false);
-  const [uploadingImg, setUploadingImg] = useState(false);
   const [hint, setHint] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);

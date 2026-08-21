@@ -5,6 +5,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { CONTENT_DEFAULTS } from "@/lib/config";
+import { invalidateContent } from "@/hooks/useContent";
 import type { SiteContent, ContentType } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -85,6 +86,8 @@ export default function ContentManager() {
       .order("page", { ascending: true })
       .order("sort_order", { ascending: true });
     setList((data as SiteContent[]) ?? []);
+    // 同步刷新前台共享内容缓存（后台改完无需整页刷新）
+    invalidateContent();
   }
 
   useEffect(() => {

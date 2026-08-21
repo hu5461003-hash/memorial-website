@@ -6,7 +6,6 @@ import {
   MessageSquare,
   Share2,
   Loader2,
-  X,
   Send,
   AlertCircle,
   Check,
@@ -70,17 +69,20 @@ function PostListView() {
     });
     setBusy(false);
     if (r.ok) {
-      setHint({ type: "ok", text: "✓ 发帖成功，等待管理员推荐到首页" });
+      setHint({ type: "ok", text: getValue("posts.hint_post_ok") });
       setTitle("");
       setContent("");
       setNickname("");
       setShowForm(false);
     } else {
-      setHint({ type: "err", text: r.error ?? "发帖失败" });
+      setHint({ type: "err", text: r.error || getValue("posts.hint_post_failed") });
     }
   }
 
-  const subtitle = posts.length > 0 ? `共 ${posts.length} 篇` : "";
+  const subtitle =
+    posts.length > 0
+      ? getValue("posts.count").replace("{n}", String(posts.length))
+      : "";
 
   return (
     <>
@@ -119,7 +121,7 @@ function PostListView() {
                       <input
                         value={nickname}
                         onChange={(e) => setNickname(e.target.value)}
-                        placeholder={'默认显示为"匿名"'}
+                        placeholder={getValue("posts.form_nickname_placeholder")}
                         className="input-line"
                       />
                     </div>
@@ -128,7 +130,7 @@ function PostListView() {
                       <input
                         value={title}
                         onChange={(e) => setTitle(e.target.value)}
-                        placeholder="一句话标题"
+                        placeholder={getValue("posts.form_title_placeholder")}
                         className="input-line"
                       />
                     </div>
@@ -138,11 +140,11 @@ function PostListView() {
                         value={content}
                         onChange={(e) => setContent(e.target.value)}
                         rows={4}
-                        placeholder="想说的话…"
+                        placeholder={getValue("posts.form_content_placeholder")}
                         className="input-line resize-y"
                       />
                       <p className="mt-0.5 text-[10px] text-ink-mute">
-                        * 游客发帖暂不支持图片，带图帖子请在后台发布
+                        {getValue("posts.form_no_image_tip")}
                       </p>
                     </div>
                   </div>
@@ -179,17 +181,17 @@ function PostListView() {
               )}
 
               {loading ? (
-                <Loading tip="正在加载帖子…" />
+                <Loading tip={getValue("posts.loading")} />
               ) : error ? (
                 <div className="rounded-card border border-rose-200 bg-rose-50/80 px-4 py-5 text-sm text-rose-600">
-                  <div className="mb-1 font-semibold">加载帖子失败</div>
+                  <div className="mb-1 font-semibold">{getValue("posts.load_error")}</div>
                   <div className="break-all text-xs opacity-90">{error}</div>
                   <button
                     type="button"
                     onClick={() => reload()}
                     className="btn-gold mt-3 !py-1.5 text-xs"
                   >
-                    重新加载
+                    {getValue("posts.reload")}
                   </button>
                 </div>
               ) : (
@@ -213,6 +215,7 @@ function PostDetailView({
 }) {
   const { post, images, comments, liked, loading, error, reload } = usePostDetail(postId);
   const { likePost, addComment, sharePost } = usePostActions();
+  const { getValue } = useContent();
   const navigate = useNavigate();
 
   // 图片轮播当前序号
@@ -246,14 +249,14 @@ function PostDetailView({
     const r = await likePost(postId);
     setLikeBusy(false);
     if (r.already) {
-      setCHint({ type: "err", text: r.error ?? "已经赞过啦" });
+      setCHint({ type: "err", text: r.error || getValue("posts.hint_liked") });
     } else if (r.ok) {
       setLocalCount({
         ...post,
         like_count: typeof r.newCount === "number" ? r.newCount : post.like_count + 1,
       });
     } else {
-      setCHint({ type: "err", text: r.error ?? "点赞失败" });
+      setCHint({ type: "err", text: r.error || getValue("posts.hint_like_failed") });
     }
   }
 
@@ -265,9 +268,9 @@ function PostDetailView({
     setShareBusy(false);
     if (r.ok) {
       setLocalCount((prev) => (prev ? { ...prev, share_count: prev.share_count + 1 } : prev));
-      setCHint({ type: "ok", text: "✓ 链接已复制，快去分享吧" });
+      setCHint({ type: "ok", text: getValue("posts.hint_share_ok") });
     } else {
-      setCHint({ type: "err", text: r.error ?? "分享失败" });
+      setCHint({ type: "err", text: r.error || getValue("posts.hint_share_failed") });
     }
   }
 
@@ -279,19 +282,19 @@ function PostDetailView({
     const r = await addComment(postId, { nickname: cNick, content: cContent });
     setCBusy(false);
     if (r.ok) {
-      setCHint({ type: "ok", text: "✓ 评论已发出" });
+      setCHint({ type: "ok", text: getValue("posts.hint_comment_ok") });
       setCContent("");
       reload();
     } else {
-      setCHint({ type: "err", text: r.error ?? "评论失败" });
+      setCHint({ type: "err", text: r.error || getValue("posts.hint_comment_failed") });
     }
   }
 
   if (loading) {
     return (
       <>
-        <PageHeader title="帖子详情" showBack={false} />
-        <Loading tip="加载中…" />
+        <PageHeader title={getValue("posts.detail_title")} showBack={false} />
+        <Loading tip={getValue("global.loading")} />
       </>
     );
   }
@@ -299,16 +302,16 @@ function PostDetailView({
   if (error) {
     return (
       <>
-        <PageHeader title="帖子详情" showBack={false} />
+        <PageHeader title={getValue("posts.detail_title")} showBack={false} />
         <div className="rounded-card border border-rose-200 bg-rose-50/80 px-4 py-5 text-sm text-rose-600">
-          <div className="mb-1 font-semibold">加载帖子详情失败</div>
+          <div className="mb-1 font-semibold">{getValue("posts.detail_load_error")}</div>
           <div className="break-all text-xs opacity-90">{error}</div>
           <button
             type="button"
             onClick={() => reload()}
             className="btn-gold mt-3 !py-1.5 text-xs"
           >
-            重新加载
+            {getValue("posts.reload")}
           </button>
         </div>
       </>
@@ -318,17 +321,17 @@ function PostDetailView({
   if (!post) {
     return (
       <>
-        <PageHeader title="帖子" showBack={false} />
+        <PageHeader title={getValue("posts.title")} showBack={false} />
         <div className="flex flex-col items-center py-16 text-ink-mute">
           <AlertCircle className="h-7 w-7" />
-          <p className="mt-2 text-sm">帖子不存在或已删除</p>
+          <p className="mt-2 text-sm">{getValue("posts.not_found")}</p>
           <button
             type="button"
             onClick={() => navigate("/posts")}
             className="btn-ghost mt-4 text-xs"
           >
             <ChevronLeft className="h-3.5 w-3.5" />
-            返回帖子列表
+            {getValue("posts.back_list")}
           </button>
         </div>
       </>
@@ -339,7 +342,7 @@ function PostDetailView({
 
   return (
     <>
-      <PageHeader title="帖子详情" showBack={false} />
+      <PageHeader title={getValue("posts.detail_title")} showBack={false} />
 
       {/* 返回按钮 */}
       <button
@@ -348,7 +351,7 @@ function PostDetailView({
         className="mb-3 flex items-center gap-1.5 rounded-soft px-2 py-1.5 text-xs text-ink-soft transition-colors hover:bg-cream-100 hover:text-ink"
       >
         <ChevronLeft className="h-4 w-4" strokeWidth={1.8} />
-        返回帖子列表
+        {getValue("posts.back_list")}
       </button>
 
       {/* 帖子卡片 */}
@@ -382,7 +385,7 @@ function PostDetailView({
                   type="button"
                   onClick={() => setImgIdx((v) => (v - 1 + images.length) % images.length)}
                   className="absolute left-2 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-ink/50 text-cream-50 transition-colors hover:bg-ink/70"
-                  aria-label="上一张"
+                  aria-label={getValue("posts.prev_image")}
                 >
                   <ChevronLeft className="h-4 w-4" strokeWidth={2} />
                 </button>
@@ -390,7 +393,7 @@ function PostDetailView({
                   type="button"
                   onClick={() => setImgIdx((v) => (v + 1) % images.length)}
                   className="absolute right-2 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 rotate-180 items-center justify-center rounded-full bg-ink/50 text-cream-50 transition-colors hover:bg-ink/70"
-                  aria-label="下一张"
+                  aria-label={getValue("posts.next_image")}
                 >
                   <ChevronLeft className="h-4 w-4" strokeWidth={2} />
                 </button>
@@ -446,13 +449,15 @@ function PostDetailView({
               className="inline-flex items-center gap-1 rounded-soft px-2 py-1.5 text-xs text-ink-soft hover:text-coffee hover:bg-cream-100"
             >
               <Share2 className="h-4 w-4" strokeWidth={1.8} />
-              分享 {p.share_count > 0 ? p.share_count : ""}
+              {getValue("posts.share")} {p.share_count > 0 ? p.share_count : ""}
             </button>
 
             {/* 作者信息 */}
             <div className="ml-auto text-right">
               <p className="text-[11px] font-medium text-ink">
-                {p.is_admin ? "管理员" : p.nickname ? p.nickname : "匿名"}
+                {p.is_admin
+                  ? getValue("posts.admin_label")
+                  : p.nickname || getValue("posts.anonymous")}
               </p>
               <p className="text-[9px] text-ink-mute">{formatTime(p.created_at)}</p>
             </div>
@@ -473,7 +478,7 @@ function PostDetailView({
         {/* 评论区 */}
         <div id="comments" className="border-t border-cream-300 p-4">
           <h3 className="mb-2 text-sm font-semibold text-ink">
-            评论（{comments.length}）
+            {getValue("posts.comment_title").replace("{n}", String(comments.length))}
           </h3>
 
           {cHint && (
@@ -496,7 +501,7 @@ function PostDetailView({
           <ul className="space-y-3">
             {comments.length === 0 && (
               <li className="py-4 text-center text-xs text-ink-mute">
-                抢沙发 — 说点什么吧
+                {getValue("posts.comment_empty")}
               </li>
             )}
             {comments.map((c) => (
@@ -506,12 +511,12 @@ function PostDetailView({
               >
                 {/* 简单圆圈头像 */}
                 <span className="flex-none inline-flex h-7 w-7 items-center justify-center rounded-full ins-gradient text-[11px] font-semibold text-cream-50">
-                  {(c.nickname || "匿").slice(0, 1)}
+                  {(c.nickname || getValue("posts.avatar_letter")).slice(0, 1)}
                 </span>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-1.5">
                     <strong className="text-[11px] text-ink">
-                      {c.nickname || "匿名"}
+                      {c.nickname || getValue("posts.anonymous")}
                     </strong>
                     <span className="text-[9px] text-ink-mute">
                       {formatTime(c.created_at)}
@@ -533,7 +538,7 @@ function PostDetailView({
             <input
               value={cNick}
               onChange={(e) => setCNick(e.target.value)}
-              placeholder="昵称（可选）"
+              placeholder={getValue("posts.comment_nickname_placeholder")}
               className="input-line text-xs"
             />
             <div className="mt-2 flex items-end gap-2">
@@ -541,7 +546,7 @@ function PostDetailView({
                 value={cContent}
                 onChange={(e) => setCContent(e.target.value)}
                 rows={2}
-                placeholder="写评论…"
+                placeholder={getValue("posts.comment_placeholder")}
                 className="input-line flex-1 resize-none text-xs"
               />
               <button

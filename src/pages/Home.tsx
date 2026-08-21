@@ -53,7 +53,7 @@ export default function Home() {
                 </div>
               ) : featuredError ? (
                 <div className="rounded-card border border-rose-200 bg-rose-50/80 px-3 py-4 text-[11px] text-rose-600">
-                  <div className="font-semibold">加载推荐帖子失败</div>
+                  <div className="font-semibold">{getValue("home.featured_load_error")}</div>
                   <div className="mt-1 break-all opacity-90">{featuredError}</div>
                 </div>
               ) : featuredPosts.length === 0 ? (
@@ -86,7 +86,7 @@ export default function Home() {
                         )}
                       </span>
                       <span className="block w-[72px] truncate text-center text-[10px] font-medium text-ink-soft group-hover:text-coffee">
-                        {p.title || "(无标题)"}
+                        {p.title || getValue("home.no_title")}
                       </span>
                     </Link>
                   ))}

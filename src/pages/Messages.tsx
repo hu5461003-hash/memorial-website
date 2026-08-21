@@ -41,7 +41,7 @@ export default function Messages() {
 
   const subtitle =
     messages.length > 0
-      ? `已有 ${messages.length} 张便签`
+      ? getValue("messages.count").replace("{n}", String(messages.length))
       : getValue("messages.subtitle");
 
   async function load() {
@@ -75,29 +75,29 @@ export default function Messages() {
     e.preventDefault();
     const text = content.trim();
     if (!text) {
-      setHint({ type: "err", text: "留言内容不能为空" });
+      setHint({ type: "err", text: getValue("messages.hint_empty") });
       return;
     }
     if (!supabaseReady || !supabase) {
       setHint({
         type: "err",
-        text: "Supabase 未配置，留言暂无法保存",
+        text: getValue("messages.hint_no_supabase"),
       });
       return;
     }
     setSubmitting(true);
     const color = randomNoteColor();
     const { error } = await supabase.from("messages").insert({
-      nickname: nickname.trim() || "一位访客",
+      nickname: nickname.trim() || getValue("messages.anonymous_name"),
       content: text,
       color,
     });
     setSubmitting(false);
     if (error) {
-      setHint({ type: "err", text: "留言失败，请稍后再试" });
+      setHint({ type: "err", text: getValue("messages.hint_failed") });
       return;
     }
-    setHint({ type: "ok", text: "留言已留下，谢谢你的温暖" });
+    setHint({ type: "ok", text: getValue("messages.hint_ok") });
     setContent("");
     setNickname("");
     load();

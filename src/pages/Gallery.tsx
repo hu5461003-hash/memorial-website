@@ -26,6 +26,9 @@ export default function Gallery() {
   const { getValue } = useContent();
   const galleryTitle = getValue("gallery.title");
   const gallerySubtitle = getValue("gallery.subtitle");
+  const uncategorizedName = getValue("gallery.uncategorized");
+  const galleryLoadingTip = getValue("gallery.loading");
+  const galleryCloseLabel = getValue("gallery.close");
 
   const [pwd, setPwd] = useState("");
   const [error, setError] = useState(false);
@@ -39,6 +42,19 @@ export default function Gallery() {
 
   const [view, setView] = useState<View>("albums");
   const [selectedAlbumId, setSelectedAlbumId] = useState<string | null>(null);
+
+  const galleryCountText = getValue("gallery.count")
+    .replace("{p}", String(photos.length))
+    .replace("{v}", String(videos.length));
+
+  function albumCardCount(photoCount: number, videoCount: number): string {
+    if (videoCount > 0) {
+      return getValue("gallery.album_count")
+        .replace("{p}", String(photoCount))
+        .replace("{v}", String(videoCount));
+    }
+    return getValue("gallery.album_count_photos").replace("{p}", String(photoCount));
+  }
 
   async function loadAll() {
     setLoading(true);
@@ -104,12 +120,12 @@ export default function Gallery() {
     const vs = videos.filter((v) => !v.album_id);
     return {
       id: "__uncategorized__",
-      name: "未分类",
+      name: uncategorizedName,
       cover: ps[0]?.public_url ?? vs[0]?.cover_url ?? vs[0]?.public_url ?? null,
       photoCount: ps.length,
       videoCount: vs.length,
     };
-  }, [photos, videos]);
+  }, [photos, videos, uncategorizedName]);
 
   const allAlbumCards = useMemo<AlbumView[]>(() => {
     const cards: AlbumView[] = [...albumViews];
@@ -130,7 +146,7 @@ export default function Gallery() {
     if (selectedAlbumId === "__uncategorized__") {
       return {
         album: null,
-        name: "未分类",
+        name: uncategorizedName,
         photos: photos.filter((p) => !p.album_id),
         videos: videos.filter((v) => !v.album_id),
         total:
@@ -149,7 +165,7 @@ export default function Gallery() {
         photos.filter((p) => p.album_id === a.id).length +
         videos.filter((v) => v.album_id === a.id).length,
     };
-  }, [view, selectedAlbumId, albums, photos, videos]);
+  }, [view, selectedAlbumId, albums, photos, videos, uncategorizedName]);
 
   // ============ 密码门 ============
   if (!galleryUnlocked) {
@@ -199,7 +215,7 @@ export default function Gallery() {
     return (
       <Layout>
         <PageHeader title={galleryTitle} subtitle={gallerySubtitle} showBack={false} />
-        <Loading tip="正在加载…" />
+        <Loading tip={galleryLoadingTip} />
       </Layout>
     );
   }
@@ -261,7 +277,7 @@ export default function Gallery() {
                   {getValue("gallery.tab_all")}
                 </button>
                 <span className="ml-auto px-2 text-xs text-ink-mute">
-                  {photos.length} 照片 · {videos.length} 视频
+                  {galleryCountText}
                 </span>
               </div>
 
@@ -310,7 +326,7 @@ export default function Gallery() {
                       <div className="px-2.5 py-2">
                         <p className="truncate text-sm font-semibold text-ink">{a.name}</p>
                         <p className="mt-0.5 text-[10px] text-ink-soft">
-                          {a.photoCount} 照片{a.videoCount > 0 ? ` · ${a.videoCount} 视频` : ""}
+                          {albumCardCount(a.photoCount, a.videoCount)}
                         </p>
                       </div>
                     </button>
@@ -465,7 +481,7 @@ export default function Gallery() {
         >
           <button
             type="button"
-            aria-label="关闭"
+            aria-label={galleryCloseLabel}
             className="absolute right-4 top-4 inline-flex h-10 w-10 items-center justify-center rounded-full bg-cream-50/10 text-cream-50 transition-colors hover:bg-cream-50/20"
           >
             <X className="h-5 w-5" strokeWidth={1.8} />
@@ -498,7 +514,7 @@ export default function Gallery() {
         >
           <button
             type="button"
-            aria-label="关闭"
+            aria-label={galleryCloseLabel}
             className="absolute right-4 top-4 inline-flex h-10 w-10 items-center justify-center rounded-full bg-cream-50/10 text-cream-50 transition-colors hover:bg-cream-50/20"
           >
             <X className="h-5 w-5" strokeWidth={1.8} />

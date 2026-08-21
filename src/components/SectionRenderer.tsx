@@ -51,6 +51,11 @@ export function SectionItem({ section }: { section: PageSection }) {
   // spacer 不需要包裹背景
   if (s.section_type === "spacer") return <>{inner}</>;
 
+  // 自定义代码块勾选「全宽」时：脱离页面容器与内边距，占满 100% 屏宽
+  if (s.section_type === "custom_html" && (s.content_data as Record<string, unknown>)?.full_width) {
+    return <div className="relative mb-4 w-screen max-w-none left-1/2 -translate-x-1/2">{inner}</div>;
+  }
+
   return (
     <section className="mb-4 rounded-card border p-4" style={sectionStyle}>
       {inner}

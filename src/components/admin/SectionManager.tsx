@@ -25,9 +25,11 @@ import { BUILTIN_BLOCKS, BUILTIN_LABELS } from "@/lib/config";
 import type { PageSection, SectionType } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import MediaPicker from "@/components/admin/MediaPicker";
+import { invalidatePageBlocks } from "@/hooks/usePageBlocks";
 
 /** 系统内置页面（不可删除） */
 const SYSTEM_PAGES: Record<string, string> = {
+  global: "全局",
   home: "首页",
   map: "地图",
   letter: "长信",
@@ -328,6 +330,7 @@ export default function SectionManager() {
       }
       await load(page);
       await loadCustomPages();
+      invalidatePageBlocks();
       setHint("✓ 已保存，前台刷新即可看到效果");
     } catch (err) {
       setHint(`保存失败：${(err as Error).message}，请重试`);
@@ -391,6 +394,7 @@ export default function SectionManager() {
     await supabase.from("page_sections").delete().eq("page_name", pageName);
     await supabase.from("site_content").delete().eq("content_key", `page.${pageName}.title`);
     setBusy(false);
+    invalidatePageBlocks();
     await loadCustomPages();
     setPage("home");
     setHint(`页面已删除`);
@@ -779,6 +783,15 @@ export default function SectionManager() {
                           placeholder={'<div style="text-align:center;color:#E8919F;">自定义内容</div>'}
                           className="w-full resize-y rounded-soft border border-coffee-line/70 bg-cream-50 px-3 py-2 font-mono text-xs focus:border-gold focus:outline-none"
                         />
+                        <label className="flex cursor-pointer items-center gap-1.5 text-[11px] text-ink-soft">
+                          <input
+                            type="checkbox"
+                            checked={Boolean(editObj.full_width)}
+                            onChange={(e) => setField("full_width", e.target.checked)}
+                            className="h-3.5 w-3.5 accent-gold"
+                          />
+                          全宽显示（脱离页面容器，占满屏幕 100% 宽度，适合需要整屏宽的代码）
+                        </label>
                         <div className="rounded-soft border border-coffee-line/50 bg-white p-2">
                           <p className="mb-1 text-[10px] text-ink-mute">预览</p>
                           <div

@@ -4,12 +4,6 @@ import { STORAGE_KEYS } from "@/lib/config";
 import type { Session } from "@supabase/supabase-js";
 
 type AppState = {
-  // 背景音乐
-  isPlaying: boolean;
-  audioEl: HTMLAudioElement | null;
-  initAudio: (el: HTMLAudioElement) => void;
-  togglePlay: () => void;
-
   // 私密相册解锁态
   galleryUnlocked: boolean;
   unlockGallery: () => void;
@@ -20,49 +14,7 @@ type AppState = {
   setSession: (s: Session | null) => void;
 };
 
-export const useStore = create<AppState>((set, get) => ({
-  // 背景音乐：默认关闭，状态从 localStorage 恢复
-  isPlaying:
-    typeof window !== "undefined"
-      ? localStorage.getItem(STORAGE_KEYS.musicPlaying) === "1"
-      : false,
-  audioEl: null,
-
-  initAudio: (el) => {
-    const wasPlaying = get().isPlaying;
-    set({ audioEl: el });
-    el.volume = 0.35;
-    el.loop = true;
-    if (wasPlaying) {
-      el.play().catch(() => {
-        // 自动播放被浏览器拦截，置为暂停
-        set({ isPlaying: false });
-        localStorage.removeItem(STORAGE_KEYS.musicPlaying);
-      });
-    }
-  },
-
-  togglePlay: () => {
-    const { audioEl, isPlaying } = get();
-    if (!audioEl) return;
-    if (isPlaying) {
-      audioEl.pause();
-      localStorage.removeItem(STORAGE_KEYS.musicPlaying);
-      set({ isPlaying: false });
-    } else {
-      audioEl
-        .play()
-        .then(() => {
-          localStorage.setItem(STORAGE_KEYS.musicPlaying, "1");
-          set({ isPlaying: true });
-        })
-        .catch(() => {
-          // 播放失败（如自动播放策略），保持暂停态
-          set({ isPlaying: false });
-        });
-    }
-  },
-
+export const useStore = create<AppState>((set) => ({
   // 私密相册：解锁态存 sessionStorage，刷新本会话内保持
   galleryUnlocked:
     typeof window !== "undefined"

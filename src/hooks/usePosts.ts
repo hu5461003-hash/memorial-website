@@ -204,7 +204,7 @@ export function usePostActions() {
       if (!title && !content) return { ok: false, error: "标题或正文至少填一项" };
 
       const ipInfo = await getMyIpInfo();
-      let cover_url: string | null = null;
+      const cover_url: string | null = null;
 
       // 如果用户选了图，先上传到 posts 桶（匿名图片上传通过管理员的 RLS 是不行的——帖子存储桶只有管理员能上传）
       // 方案：普通用户发匿名帖不传图，只能管理员发帖带图（通过后台 PostManager）

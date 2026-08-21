@@ -7,18 +7,40 @@
     <meta name="theme-color" content="#FFF5F7" />
     <meta name="description" content="P" />
     <title>P</title>
+    <!-- 首屏防闪烁：React 加载前先用上次缓存的标题/图标（后台改过的不闪默认值） -->
+    <script>
+      try {
+        var m = JSON.parse(localStorage.getItem("zp_meta_cache") || "{}");
+        if (m.site_title) document.title = m.site_title;
+        if (m.favicon_url) {
+          var l = document.querySelector('link[rel="icon"]');
+          if (l) l.href = m.favicon_url;
+        }
+        if (m.bg_color) {
+          document.documentElement.style.backgroundColor = m.bg_color;
+        }
+      } catch (e) {}
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- 字体样式异步加载：请求慢/失败也不阻塞首屏，先以系统字体渲染再替换 -->
     <link
+      rel="preload"
+      as="style"
       href="https://fonts.googleapis.com/css2?family=LXGW+WenKai+TC:wght@300;400;700&family=Noto+Serif+SC:wght@300;400;500;700&display=swap"
-      rel="stylesheet"
     />
     <link
       rel="stylesheet"
-      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
-      crossorigin=""
+      href="https://fonts.googleapis.com/css2?family=LXGW+WenKai+TC:wght@300;400;700&family=Noto+Serif+SC:wght@300;400;500;700&display=swap"
+      media="print"
+      onload="this.media='all'"
     />
+    <noscript>
+      <link
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=LXGW+WenKai+TC:wght@300;400;700&family=Noto+Serif+SC:wght@300;400;500;700&display=swap"
+      />
+    </noscript>
   </head>
   <body>
     <div id="root"></div>

@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { Heart, MessageSquare, Share2, ImagePlus } from "lucide-react";
 import type { Post } from "@/lib/types";
 import { formatTime } from "@/hooks/usePosts";
+import { useContent } from "@/hooks/useContent";
 import { cn } from "@/lib/utils";
 
 /**
@@ -22,13 +23,14 @@ export default function PostGrid({
   compact?: boolean;
 }) {
   const navigate = useNavigate();
+  const { getValue } = useContent();
   const list = typeof limit === "number" ? posts.slice(0, limit) : posts;
   if (list.length === 0) {
     if (!showEmpty) return null;
     return (
       <div className="flex flex-col items-center justify-center py-10 text-ink-mute">
         <ImagePlus className="h-7 w-7" strokeWidth={1.4} />
-        <p className="mt-2 text-xs">还没有帖子</p>
+        <p className="mt-2 text-xs">{getValue("posts.empty")}</p>
       </div>
     );
   }
@@ -83,7 +85,7 @@ export default function PostGrid({
           {/* 标题：一行省略 */}
           <div className="p-2 text-left">
             <p className="truncate text-[11px] font-semibold text-ink">
-              {p.title || "(无标题)"}
+              {p.title || getValue("posts.no_title")}
             </p>
             <p className="mt-0.5 truncate text-[9px] text-ink-mute">
               {formatTime(p.created_at)}
