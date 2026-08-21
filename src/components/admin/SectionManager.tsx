@@ -22,6 +22,9 @@ import {
   Square,
   AlignLeft,
   Link as LinkIcon,
+  Monitor,
+  PanelLeft,
+  GripVertical,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { BUILTIN_BLOCKS, BUILTIN_LABELS } from "@/lib/config";
@@ -30,6 +33,16 @@ import { cn } from "@/lib/utils";
 import MediaPicker from "@/components/admin/MediaPicker";
 import SocialLinksEditor from "@/components/admin/SocialLinksEditor";
 import { invalidatePageBlocks } from "@/hooks/usePageBlocks";
+// 预览用组件
+import HeadingSection from "@/components/sections/HeadingSection";
+import SpacerSection from "@/components/sections/SpacerSection";
+import ImageSection from "@/components/sections/ImageSection";
+import TextSection from "@/components/sections/TextSection";
+import ButtonSection from "@/components/sections/ButtonSection";
+import DividerSection from "@/components/sections/DividerSection";
+import MarqueeSection from "@/components/sections/MarqueeSection";
+import TimelineSection from "@/components/sections/TimelineSection";
+import CustomHtmlSection from "@/components/sections/CustomHtmlSection";
 
 /** 系统内置页面（不可删除） */
 const SYSTEM_PAGES: Record<string, string> = {
@@ -463,8 +476,39 @@ export default function SectionManager() {
     setField("items", getTimelineItems().filter((_, i) => i !== idx));
   }
 
+  /** 实时预览单个区块 */
+  function PreviewBlock({ s }: { s: PageSection }) {
+    if (!s.active) return null;
+    const data = s.content_data ?? {};
+    switch (s.section_type) {
+      case "heading": return <HeadingSection data={data} />;
+      case "spacer": return <SpacerSection data={data} />;
+      case "image": return <ImageSection data={data} />;
+      case "text": return <TextSection data={data} />;
+      case "button": return <ButtonSection data={data} />;
+      case "divider": return <DividerSection data={data} />;
+      case "marquee": return <MarqueeSection data={data} />;
+      case "timeline": return <TimelineSection data={data} />;
+      case "custom_html": return <CustomHtmlSection data={data} />;
+      case "builtin": {
+        const block = String((data as Record<string, unknown>)?.block ?? "");
+        return (
+          <div className="my-3 rounded-soft border border-dashed border-gold/40 bg-gold/5 px-3 py-4 text-center">
+            <p className="text-xs font-medium text-coffee">
+              {BUILTIN_LABELS[block] ?? "内置区块"}
+            </p>
+            <p className="mt-0.5 text-[10px] text-ink-mute">页面原生组件 · 文字在「内容」中修改</p>
+          </div>
+        );
+      }
+      default: return null;
+    }
+  }
+
   return (
-    <div className="space-y-5 pb-16">
+    <div className="flex flex-col gap-4 pb-16 lg:flex-row">
+      {/* ========== 左侧：组件面板 ========== */}
+      <div className="w-full flex-none space-y-4 lg:w-[380px]">
       {/* 页面选择 + 页面管理 */}
       <div className="rounded-card border border-coffee-line/70 bg-cream-200 p-4 shadow-paper">
         <div className="mb-3 flex items-center justify-between">
@@ -1387,6 +1431,99 @@ export default function SectionManager() {
           )}
         </div>
       </div>
+
+      </div>
+      {/* ========== 左侧面板结束 ========== */}
+
+      {/* ========== 右侧：实时预览 ========== */}
+      <div className="min-w-0 flex-1">
+        <div className="sticky top-4 overflow-hidden rounded-card border border-coffee-line/70 bg-white shadow-paper">
+          {/* 预览头部 */}
+          <div className="flex items-center justify-between border-b border-cream-300 bg-cream-100 px-4 py-2.5">
+            <div className="flex items-center gap-2">
+              <Monitor className="h-4 w-4 text-gold" strokeWidth={1.8} />
+              <span className="text-xs font-semibold text-ink">实时预览</span>
+              <span className="rounded-full bg-gold/15 px-2 py-0.5 text-[10px] text-coffee">
+                {allPages[page] ?? page}
+              </span>
+            </div>
+            <div className="flex items-center gap-1">
+              <span className="h-2.5 w-2.5 rounded-full bg-[#FF5F57]" />
+              <span className="h-2.5 w-2.5 rounded-full bg-[#FEBC2E]" />
+              <span className="h-2.5 w-2.5 rounded-full bg-[#28C840]" />
+            </div>
+          </div>
+          {/* 预览内容区 */}
+          <div className="max-h-[calc(100vh-180px)] overflow-y-auto bg-cream-50 p-4">
+            {list.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-16 text-center">
+                <PanelLeft className="mb-3 h-10 w-10 text-ink-mute/40" strokeWidth={1.5} />
+                <p className="text-sm text-ink-mute">暂无组件</p>
+                <p className="mt-1 text-xs text-ink-mute/60">点击左侧「添加组件」开始搭建页面</p>
+              </div>
+            ) : (
+              <div className="mx-auto max-w-[420px]">
+                {list.map((s, i) => (
+                  <div
+                    key={s.id}
+                    className={cn(
+                      "group relative rounded-soft transition-all",
+                      editingId === s.id ? "ring-2 ring-gold ring-offset-2" : "hover:ring-1 hover:ring-gold/40",
+                    )}
+                  >
+                    {/* 悬浮工具栏 */}
+                    <div className="absolute -top-2 right-2 z-10 flex items-center gap-0.5 rounded-full bg-ink/80 px-1.5 py-0.5 opacity-0 transition-opacity group-hover:opacity-100">
+                      <span className="px-1 text-[9px] text-white/70">#{i + 1}</span>
+                      {!s.section_type.startsWith("builtin") && (
+                        <button
+                          type="button"
+                          onClick={() => startEdit(s)}
+                          className="rounded p-0.5 text-white/80 hover:bg-white/20 hover:text-white"
+                          title="编辑"
+                        >
+                          <Pencil className="h-2.5 w-2.5" />
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => toggleActive(s)}
+                        className="rounded p-0.5 text-white/80 hover:bg-white/20 hover:text-white"
+                        title={s.active ? "隐藏" : "显示"}
+                      >
+                        {s.active ? <Eye className="h-2.5 w-2.5" /> : <EyeOff className="h-2.5 w-2.5" />}
+                      </button>
+                    </div>
+                    {/* 拖拽手柄提示 */}
+                    <div className="absolute -left-1 top-1/2 -translate-y-1/2 opacity-0 transition-opacity group-hover:opacity-40">
+                      <GripVertical className="h-4 w-4 text-ink-mute" />
+                    </div>
+                    {/* 隐藏状态遮罩 */}
+                    {!s.active && (
+                      <div className="absolute inset-0 z-[1] flex items-center justify-center rounded-soft bg-white/60 backdrop-blur-[1px]">
+                        <span className="rounded-full bg-ink/60 px-2 py-0.5 text-[10px] text-white">已隐藏</span>
+                      </div>
+                    )}
+                    <PreviewBlock s={s} />
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          {/* 预览底部状态栏 */}
+          <div className="flex items-center justify-between border-t border-cream-300 bg-cream-100 px-4 py-2">
+            <span className="text-[10px] text-ink-mute">
+              共 {list.length} 个区块 · {list.filter((s) => s.active).length} 个显示中
+            </span>
+            {dirty && (
+              <span className="flex items-center gap-1 text-[10px] text-coffee">
+                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-gold" />
+                有未保存修改
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+      {/* ========== 右侧预览结束 ========== */}
 
       {/* 底部保存栏（草稿模式） */}
       {dirty && (
