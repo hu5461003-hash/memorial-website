@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import TopBar from "./TopBar";
 import BottomTab from "./BottomTab";
 import SiteFooter from "./SiteFooter";
+import SideNavDrawer from "./SideNavDrawer";
 import { SectionItem } from "./SectionRenderer";
 import { cn } from "@/lib/utils";
 import { usePageBlocks } from "@/hooks/usePageBlocks";
@@ -53,6 +54,7 @@ export default function Layout({
       ))}
       {footerActive && <SiteFooter />}
       {!hideNav && <BottomTab />}
+      <SideNavDrawer />
     </div>
   );
 }

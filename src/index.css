@@ -214,3 +214,123 @@ body {
   background: rgba(26, 26, 26, 0.15);
   color: #1A1A1A;
 }
+
+/* ============ 博客正文排版（后台富文本/源码产出的 HTML） ============ */
+.blog-content > *:first-child {
+  margin-top: 0;
+}
+.blog-content p {
+  margin: 0.9em 0;
+}
+.blog-content h1,
+.blog-content h2,
+.blog-content h3,
+.blog-content h4 {
+  margin: 1.4em 0 0.6em;
+  font-weight: 600;
+  color: #1A1A1A;
+  line-height: 1.4;
+}
+.blog-content h1 { font-size: 1.35em; }
+.blog-content h2 { font-size: 1.2em; }
+.blog-content h3 { font-size: 1.08em; }
+.blog-content h4 { font-size: 1em; }
+.blog-content img,
+.blog-content video,
+.blog-content iframe {
+  display: block;
+  max-width: 100%;
+  margin: 1.2em auto;
+  border-radius: 10px;
+}
+.blog-content blockquote {
+  margin: 1.2em 0;
+  padding: 0.4em 1em;
+  border-left: 3px solid rgba(232, 145, 159, 0.6);
+  background: rgba(250, 245, 247, 0.7);
+  border-radius: 0 8px 8px 0;
+  color: #6B6B6B;
+}
+.blog-content ul,
+.blog-content ol {
+  margin: 0.9em 0;
+  padding-left: 1.4em;
+}
+.blog-content ul { list-style: disc; }
+.blog-content ol { list-style: decimal; }
+.blog-content li { margin: 0.35em 0; }
+.blog-content a {
+  color: #B76E79;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  word-break: break-all;
+}
+.blog-content hr {
+  margin: 1.6em auto;
+  width: 60%;
+  border: none;
+  border-top: 1px dashed #DBDBDB;
+}
+.blog-content code {
+  padding: 0.15em 0.45em;
+  border-radius: 5px;
+  background: rgba(0, 0, 0, 0.05);
+  font-size: 0.9em;
+  font-family: "SFMono-Regular", Consolas, monospace;
+}
+.blog-content pre {
+  margin: 1.2em 0;
+  padding: 0.9em 1.1em;
+  border-radius: 10px;
+  background: #262626;
+  color: #F5F5F5;
+  overflow-x: auto;
+  line-height: 1.6;
+}
+.blog-content pre code {
+  padding: 0;
+  background: transparent;
+  color: inherit;
+}
+.blog-content table {
+  width: 100%;
+  margin: 1.2em 0;
+  border-collapse: collapse;
+  font-size: 0.92em;
+}
+.blog-content th,
+.blog-content td {
+  padding: 0.5em 0.7em;
+  border: 1px solid #E5E5E5;
+}
+.blog-content th {
+  background: rgba(0, 0, 0, 0.03);
+  font-weight: 600;
+}
+
+/* 嵌入播放器（B站/YouTube 等 iframe）16:9 自适应 */
+.blog-content .video-embed {
+  position: relative;
+  width: 100%;
+  max-width: 640px;
+  margin: 1.2em auto;
+  padding-top: 56.25%;
+  border-radius: 10px;
+  overflow: hidden;
+}
+.blog-content .video-embed iframe {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  border: 0;
+}
+
+/* 后台可视化编辑器空内容占位符 */
+.blog-content[contenteditable]:empty::before {
+  content: attr(data-placeholder);
+  color: #B3B3B3;
+  pointer-events: none;
+}

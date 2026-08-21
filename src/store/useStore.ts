@@ -12,6 +12,11 @@ type AppState = {
   // 管理员会话
   session: Session | null;
   setSession: (s: Session | null) => void;
+
+  // 侧边栏导航抽屉（页头汉堡按钮触发）
+  sidenavOpen: boolean;
+  openSidenav: () => void;
+  closeSidenav: () => void;
 };
 
 export const useStore = create<AppState>((set) => ({
@@ -34,6 +39,11 @@ export const useStore = create<AppState>((set) => ({
   // 管理员会话
   session: null,
   setSession: (s) => set({ session: s }),
+
+  // 侧边栏导航抽屉
+  sidenavOpen: false,
+  openSidenav: () => set({ sidenavOpen: true }),
+  closeSidenav: () => set({ sidenavOpen: false }),
 }));
 
 // 监听 Supabase Auth 状态变化（仅当 supabase 已配置时）

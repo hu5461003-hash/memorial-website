@@ -10,6 +10,9 @@ export const STORAGE_KEYS = {
   contentCache: "zp_content_cache",
   /** site_meta 缓存：标题/图标首屏防闪烁 */
   metaCache: "zp_meta_cache",
+  /** nav_links / social_links 缓存 */
+  navCache: "zp_nav_cache",
+  socialCache: "zp_social_cache",
 } as const;
 
 /** 九座城市初始数据（当 Supabase 未配置时作为兜底展示） */
@@ -213,6 +216,18 @@ export const CONTENT_DEFAULTS: ContentDefault[] = [
   { content_key: "posts.no_title", page: "posts", label: "帖子无标题占位文字", type: "text", content_value: "(无标题)", image_url: null, sort_order: 41 },
   { content_key: "posts.prev_image", page: "posts", label: "图片「上一张」无障碍文字", type: "text", content_value: "上一张", image_url: null, sort_order: 42 },
   { content_key: "posts.next_image", page: "posts", label: "图片「下一张」无障碍文字", type: "text", content_value: "下一张", image_url: null, sort_order: 43 },
+  // 博客页（/#/blog）
+  { content_key: "blog.title", page: "blog", label: "博客页·标题", type: "text", content_value: "博客", image_url: null, sort_order: 1 },
+  { content_key: "blog.subtitle", page: "blog", label: "博客页·副标题", type: "text", content_value: "记录每一段值得留下的文字", image_url: null, sort_order: 2 },
+  { content_key: "blog.loading", page: "blog", label: "博客·加载提示", type: "text", content_value: "加载博客中…", image_url: null, sort_order: 3 },
+  { content_key: "blog.empty", page: "blog", label: "博客·暂无文章提示", type: "text", content_value: "还没有发布博客", image_url: null, sort_order: 4 },
+  { content_key: "blog.back_list", page: "blog", label: "博客详情·返回列表按钮文字", type: "text", content_value: "返回博客列表", image_url: null, sort_order: 5 },
+  { content_key: "blog.not_found", page: "blog", label: "博客详情·文章不存在提示", type: "text", content_value: "文章不存在或未发布", image_url: null, sort_order: 6 },
+  { content_key: "blog.read_more", page: "blog", label: "博客卡片·阅读全文文字", type: "text", content_value: "阅读全文", image_url: null, sort_order: 7 },
+  { content_key: "blog.author_prefix", page: "blog", label: "博客详情·作者前缀文字", type: "text", content_value: "文 / ", image_url: null, sort_order: 8 },
+  // 侧边栏（页头汉堡菜单）
+  { content_key: "global.sidenav_title", page: "global", label: "侧边栏·标题文字", type: "text", content_value: "菜单", image_url: null, sort_order: 17 },
+  { content_key: "global.a11y_menu", page: "global", label: "无障碍·侧边栏按钮名称", type: "text", content_value: "打开菜单", image_url: null, sort_order: 18 },
 ];
 
 /** 默认内容查找表：key → 默认值字符串 */
@@ -255,6 +270,9 @@ export const BUILTIN_BLOCKS: Record<
   ],
   posts: [
     { block: "post_list", label: "帖子列表", desc: "发帖入口与帖子列表" },
+  ],
+  blog: [
+    { block: "blog_list", label: "博客列表", desc: "博客卡片流" },
   ],
   global: [
     { block: "header", label: "页头", desc: "顶部 Logo 栏（下滑自动隐藏）" },

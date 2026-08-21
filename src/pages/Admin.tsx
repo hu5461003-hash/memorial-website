@@ -21,6 +21,7 @@ import {
   ExternalLink,
   LogIn,
   StickyNote,
+  Newspaper,
 } from "lucide-react";
 import Loading from "@/components/Loading";
 import FootprintManager from "@/components/admin/FootprintManager";
@@ -34,6 +35,8 @@ import MediaLibrary from "@/components/admin/MediaLibrary";
 import ContactManager from "@/components/admin/ContactManager";
 import PostManager from "@/components/admin/PostManager";
 import MessageManager from "@/components/admin/MessageManager";
+import BlogManager from "@/components/admin/BlogManager";
+import NavLinkManager from "@/components/admin/NavLinkManager";
 import { supabase, supabaseReady } from "@/lib/supabase";
 import { useStore } from "@/store/useStore";
 import { cn } from "@/lib/utils";
@@ -50,7 +53,9 @@ type Tab =
   | "media"
   | "contact"
   | "post"
-  | "message";
+  | "message"
+  | "blog"
+  | "nav";
 
 type NavItemDef = {
   key: Exclude<Tab, "dashboard">;
@@ -67,6 +72,7 @@ const NAV_GROUPS: { title: string; items: NavItemDef[] }[] = [
       { key: "content", label: "内容", desc: "各页面文字、图片与 Logo", Icon: FileText },
       { key: "sections", label: "排版", desc: "页面组件显隐与排序", Icon: LayoutGrid },
       { key: "post", label: "帖子", desc: "帖子管理与推荐到首页", Icon: PenSquare },
+      { key: "blog", label: "博客", desc: "撰写与管理博客文章", Icon: Newspaper },
       { key: "message", label: "留言", desc: "访客留言查看与管理", Icon: StickyNote },
     ],
   },
@@ -84,6 +90,7 @@ const NAV_GROUPS: { title: string; items: NavItemDef[] }[] = [
     items: [
       { key: "theme", label: "主题", desc: "全站配色与字体", Icon: Palette },
       { key: "seo", label: "SEO", desc: "网站标题与搜索引擎", Icon: Search },
+      { key: "nav", label: "导航", desc: "页头侧边栏菜单项管理", Icon: Menu },
       { key: "contact", label: "联系方式", desc: "管理员 QQ/微信/头像", Icon: Contact },
     ],
   },
@@ -124,7 +131,7 @@ export default function Admin() {
 
   const loadCounts = useCallback(async () => {
     if (!supabase) return;
-    const [photos, footprints, videos, sections, content, media, posts, messages] = await Promise.all([
+    const [photos, footprints, videos, sections, content, media, posts, messages, blogs, navs] = await Promise.all([
       supabase.from("photos").select("id", { count: "exact", head: true }),
       supabase.from("footprints").select("id", { count: "exact", head: true }),
       supabase.from("videos").select("id", { count: "exact", head: true }),
@@ -133,6 +140,8 @@ export default function Admin() {
       supabase.from("media_library").select("id", { count: "exact", head: true }),
       supabase.from("posts").select("id", { count: "exact", head: true }),
       supabase.from("messages").select("id", { count: "exact", head: true }),
+      supabase.from("blogs").select("id", { count: "exact", head: true }),
+      supabase.from("nav_links").select("id", { count: "exact", head: true }),
     ]);
     setCounts({
       photo: photos.count ?? 0,
@@ -143,6 +152,8 @@ export default function Admin() {
       media: media.count ?? 0,
       post: posts.count ?? 0,
       message: messages.count ?? 0,
+      blog: blogs.count ?? 0,
+      nav: navs.count ?? 0,
     });
   }, []);
 
@@ -433,6 +444,8 @@ export default function Admin() {
                 {tab === "contact" && <ContactManager />}
                 {tab === "post" && <PostManager />}
                 {tab === "message" && <MessageManager />}
+                {tab === "blog" && <BlogManager />}
+                {tab === "nav" && <NavLinkManager />}
               </div>
             )}
           </main>

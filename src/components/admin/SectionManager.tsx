@@ -25,6 +25,7 @@ import { BUILTIN_BLOCKS, BUILTIN_LABELS } from "@/lib/config";
 import type { PageSection, SectionType } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import MediaPicker from "@/components/admin/MediaPicker";
+import SocialLinksEditor from "@/components/admin/SocialLinksEditor";
 import { invalidatePageBlocks } from "@/hooks/usePageBlocks";
 
 /** 系统内置页面（不可删除） */
@@ -593,6 +594,9 @@ export default function SectionManager() {
         </div>
         {hint && <p className="mt-3 text-xs text-coffee">{hint}</p>}
       </div>
+
+      {/* 全局页专属：页脚社媒图标管理 */}
+      {page === "global" && <SocialLinksEditor />}
 
       {/* 组件列表（草稿） */}
       <div className="rounded-card border border-coffee-line/70 bg-cream-200/60 p-4">

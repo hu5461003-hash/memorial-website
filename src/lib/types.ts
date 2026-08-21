@@ -201,6 +201,52 @@ export type PostComment = {
   created_at: string;
 };
 
+// ============ 博客系统 ============
+
+export type Blog = {
+  id: string;
+  title: string;
+  slug: string;
+  excerpt: string;
+  cover_url: string | null;
+  meta_title: string | null;
+  meta_description: string | null;
+  keywords: string | null;
+  content: string; // HTML
+  author: string;
+  published: boolean;
+  published_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+// ============ 侧边栏导航 ============
+
+export type NavLinkItem = {
+  id: string;
+  label: string;
+  url: string;
+  icon: string;
+  group_name: string;
+  sort_order: number;
+  active: boolean;
+  open_in_new: boolean;
+  created_at: string;
+};
+
+// ============ 页脚社媒图标 ============
+
+export type SocialLink = {
+  id: string;
+  label: string;
+  url: string;
+  icon: string;
+  icon_url: string | null;
+  sort_order: number;
+  active: boolean;
+  created_at: string;
+};
+
 // ================================================================
 
 export const DEFAULT_SITE_META: Record<string, string> = {
