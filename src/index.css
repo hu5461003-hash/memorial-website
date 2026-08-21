@@ -55,9 +55,10 @@ body {
 }
 
 @layer components {
-  /* 移动端：窄屏居中（顶部Logo栏 + 底部导航栏预留空间） */
+  /* 移动端：窄屏居中（顶部Logo栏 + 底部导航栏预留空间）
+     桌面端（≥768px）：加宽至 760px，底部导航隐藏、无需预留大留白 */
   .page-shell {
-    @apply mx-auto w-full max-w-[470px] px-4 pt-14 pb-24;
+    @apply mx-auto w-full max-w-[470px] px-4 pt-14 pb-24 md:max-w-[760px] md:pb-12;
   }
 
   /* 宽屏布局：管理后台等桌面端使用 */

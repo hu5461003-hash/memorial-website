@@ -63,7 +63,7 @@ export default function Blog() {
                 <p className="text-xs">{getValue("blog.empty")}</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {blogs.map((b) => (
                   <Link
                     key={b.id}

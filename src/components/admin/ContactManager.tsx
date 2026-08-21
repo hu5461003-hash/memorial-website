@@ -1,19 +1,20 @@
 import { useEffect, useState } from "react";
-import { Loader2, Save, User, Upload, Check } from "lucide-react";
+import { Loader2, Save, User, Upload, Check, EyeOff } from "lucide-react";
 import { useStore } from "@/store/useStore";
 import { supabase } from "@/lib/supabase";
 import { useAdminProfiles } from "@/hooks/useAdmin";
-import { getAdminAvatar } from "@/lib/types";
+import { getAdminAvatar, maskContactValue } from "@/lib/types";
 import type { AdminProfile } from "@/lib/types";
 
 type FieldKey = "nickname" | "qq" | "wechat" | "phone" | "email_display" | "avatar_url";
+type MaskKey = "qq" | "wechat" | "phone" | "email_display";
 
-const FIELDS: { key: FieldKey; label: string; desc: string; placeholder: string }[] = [
+const FIELDS: { key: FieldKey; label: string; desc: string; placeholder: string; maskable?: boolean }[] = [
   { key: "nickname",       label: "昵称",     desc: "首页联系方式卡片中显示的称呼",                 placeholder: "如：P" },
-  { key: "qq",             label: "QQ 号",    desc: "未上传自定义头像时，自动使用该 QQ 的头像",     placeholder: "如：10001" },
-  { key: "wechat",         label: "微信号",   desc: "可选，留空则不显示",                           placeholder: "如：wechat_id" },
-  { key: "phone",          label: "电话",     desc: "可选，留空则不显示",                           placeholder: "如：13800138000" },
-  { key: "email_display",  label: "邮箱",     desc: "可选，留空则不显示",                           placeholder: "如：admin@example.com" },
+  { key: "qq",             label: "QQ 号",    desc: "未上传自定义头像时，自动使用该 QQ 的头像",     placeholder: "如：10001", maskable: true },
+  { key: "wechat",         label: "微信号",   desc: "可选，留空则不显示",                           placeholder: "如：wechat_id", maskable: true },
+  { key: "phone",          label: "电话",     desc: "可选，留空则不显示",                           placeholder: "如：13800138000", maskable: true },
+  { key: "email_display",  label: "邮箱",     desc: "可选，留空则不显示",                           placeholder: "如：admin@example.com", maskable: true },
   { key: "avatar_url",     label: "自定义头像 URL", desc: "上传图片后自动填入；为空使用 QQ 头像",   placeholder: "https://..." },
 ];
 
@@ -31,6 +32,9 @@ export default function ContactManager() {
   const [form, setForm] = useState<Record<FieldKey, string>>({
     nickname: "", qq: "", wechat: "", phone: "", email_display: "", avatar_url: "",
   });
+  const [masks, setMasks] = useState<Record<MaskKey, boolean>>({
+    qq: false, wechat: false, phone: false, email_display: false,
+  });
   const [busy, setBusy] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [hint, setHint] = useState<string | null>(null);
@@ -45,6 +49,12 @@ export default function ContactManager() {
         phone: mine.phone ?? "",
         email_display: mine.email_display ?? "",
         avatar_url: mine.avatar_url ?? "",
+      });
+      setMasks({
+        qq: Boolean(mine.qq_masked),
+        wechat: Boolean(mine.wechat_masked),
+        phone: Boolean(mine.phone_masked),
+        email_display: Boolean(mine.email_masked),
       });
     }
   }, [mine]);
@@ -78,7 +88,13 @@ export default function ContactManager() {
     setBusy(true);
     setHint(null);
     setSaved(false);
-    const patch: Partial<AdminProfile> = form;
+    const patch: Partial<AdminProfile> = {
+      ...form,
+      qq_masked: masks.qq,
+      wechat_masked: masks.wechat,
+      phone_masked: masks.phone,
+      email_masked: masks.email_display,
+    };
     const ok = await saveMine(patch);
     setBusy(false);
     if (ok) {
@@ -161,16 +177,36 @@ export default function ContactManager() {
           我的联系方式
         </h3>
         <div className="space-y-3">
-          {FIELDS.map(({ key, label, desc, placeholder }) => (
+          {FIELDS.map(({ key, label, desc, placeholder, maskable }) => (
             <div key={key}>
-              <label className="field-label">{label}</label>
+              <div className="flex items-center justify-between">
+                <label className="field-label">{label}</label>
+                {maskable && (
+                  <label className="flex cursor-pointer items-center gap-1.5 text-[10px] text-ink-soft">
+                    <input
+                      type="checkbox"
+                      checked={masks[key as MaskKey]}
+                      onChange={(e) =>
+                        setMasks((m) => ({ ...m, [key]: e.target.checked }))
+                      }
+                      className="h-3.5 w-3.5 accent-gold"
+                    />
+                    <EyeOff className="h-3 w-3" strokeWidth={1.8} />
+                    前台加星号隐藏中间
+                  </label>
+                )}
+              </div>
               <input
                 value={form[key]}
                 onChange={(e) => update(key, e.target.value)}
                 placeholder={placeholder}
                 className="input-line"
               />
-              <p className="mt-0.5 text-[10px] text-ink-mute">{desc}</p>
+              <p className="mt-0.5 text-[10px] text-ink-mute">
+                {maskable && masks[key as MaskKey] && form[key].trim()
+                  ? `前台显示：${maskContactValue(form[key])}`
+                  : desc}
+              </p>
             </div>
           ))}
         </div>

@@ -8,10 +8,13 @@ import {
   Check,
   X,
   Save,
+  MapPin,
+  Globe,
+  UserRound,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import type { MessageNote, NoteColor } from "@/lib/types";
-import { NOTE_COLORS } from "@/lib/types";
+import { NOTE_COLORS, getMessageAvatar } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 const NOTE_BG: Record<NoteColor, string> = {
@@ -255,6 +258,7 @@ export default function MessageManager() {
                   NOTE_BG[m.color] ?? "bg-cream-50",
                 )}
               >
+                <MessageAvatar m={m} />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-baseline gap-2">
                     <p className="truncate text-xs font-semibold text-ink">{m.nickname}</p>
@@ -266,6 +270,7 @@ export default function MessageManager() {
                   <p className="mt-1 whitespace-pre-wrap break-words text-xs leading-relaxed text-ink-soft">
                     {m.content}
                   </p>
+                  <VisitorMeta m={m} />
                 </div>
                 <div className="flex flex-none gap-0.5">
                   <button
@@ -293,6 +298,49 @@ export default function MessageManager() {
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+/** 留言者头像：QQ 头像 > 昵称首字 */
+function MessageAvatar({ m }: { m: MessageNote }) {
+  const { url, letter } = getMessageAvatar(m);
+  return (
+    <span className="flex h-8 w-8 flex-none items-center justify-center overflow-hidden rounded-full border border-ink/10 bg-white/70 text-xs font-semibold text-ink-soft">
+      {url ? (
+        <img src={url} alt="" loading="lazy" className="h-full w-full object-cover" />
+      ) : (
+        letter
+      )}
+    </span>
+  );
+}
+
+/** 留言者信息行：真实 IP + 精确归属地 + QQ（仅后台可见） */
+function VisitorMeta({ m }: { m: MessageNote }) {
+  const ip = m.ip_address && !m.ip_address.startsWith("client-") ? m.ip_address : "";
+  const loc = m.ip_location && m.ip_location !== "(未知)" ? m.ip_location : "";
+  if (!ip && !loc && !m.qq) return null;
+  return (
+    <div className="mt-1.5 flex flex-wrap items-center gap-x-2.5 gap-y-1 rounded-soft bg-white/45 px-2 py-1 text-[10px] text-ink-mute">
+      {ip && (
+        <span className="inline-flex items-center gap-1 font-mono">
+          <Globe className="h-3 w-3" strokeWidth={1.8} />
+          {ip}
+        </span>
+      )}
+      {loc && (
+        <span className="inline-flex items-center gap-1">
+          <MapPin className="h-3 w-3" strokeWidth={1.8} />
+          {loc}
+        </span>
+      )}
+      {m.qq && (
+        <span className="inline-flex items-center gap-1">
+          <UserRound className="h-3 w-3" strokeWidth={1.8} />
+          QQ {m.qq}
+        </span>
+      )}
     </div>
   );
 }

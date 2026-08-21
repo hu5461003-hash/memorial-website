@@ -51,7 +51,6 @@ const SYSTEM_PAGES: { key: string; label: string }[] = [
   { key: "map", label: "足迹地图" },
   { key: "letter", label: "纪念长信" },
   { key: "messages", label: "留言板" },
-  { key: "posts", label: "帖子" },
   { key: "blog", label: "博客" },
   { key: "gallery", label: "私密相册" },
 ];

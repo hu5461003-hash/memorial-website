@@ -4,8 +4,9 @@ import PageHeader from "@/components/PageHeader";
 import Layout from "@/components/Layout";
 import Loading from "@/components/Loading";
 import { supabase, supabaseReady } from "@/lib/supabase";
-import { randomNoteColor } from "@/lib/types";
+import { randomNoteColor, getMessageAvatar } from "@/lib/types";
 import type { MessageNote, NoteColor } from "@/lib/types";
+import { getMyIpInfo } from "@/lib/ipInfo";
 import { useContent } from "@/hooks/useContent";
 import { cn } from "@/lib/utils";
 import PageBlocks from "@/components/PageBlocks";
@@ -28,11 +29,33 @@ function formatTime(iso: string) {
   return `${d.getFullYear()}.${mm}.${dd} ${hh}:${mi}`;
 }
 
+/** 前台展示留言者 IP：真实 IP 完整显示；接口失败的 client- 兜底串不显示 */
+function displayIp(ip: string | null | undefined): string {
+  if (!ip) return "";
+  if (ip.startsWith("client-")) return "";
+  return ip;
+}
+
+/** 便签头像：有 QQ 用 QQ 头像，否则昵称首字 */
+function NoteAvatar({ m }: { m: MessageNote }) {
+  const { url, letter } = getMessageAvatar(m);
+  return (
+    <span className="flex h-7 w-7 flex-none items-center justify-center overflow-hidden rounded-full border border-ink/10 bg-white/70 text-[11px] font-semibold text-ink-soft shadow-sm">
+      {url ? (
+        <img src={url} alt="" loading="lazy" className="h-full w-full object-cover" />
+      ) : (
+        letter
+      )}
+    </span>
+  );
+}
+
 export default function Messages() {
   const { getValue } = useContent();
   const [messages, setMessages] = useState<MessageNote[]>([]);
   const [loading, setLoading] = useState(true);
   const [nickname, setNickname] = useState("");
+  const [qq, setQq] = useState("");
   const [content, setContent] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [hint, setHint] = useState<{ type: "ok" | "err"; text: string } | null>(
@@ -86,11 +109,16 @@ export default function Messages() {
       return;
     }
     setSubmitting(true);
+    // 记录留言者真实 IP 与归属地（后台可见，前台展示 IP）
+    const ipInfo = await getMyIpInfo();
     const color = randomNoteColor();
     const { error } = await supabase.from("messages").insert({
       nickname: nickname.trim() || getValue("messages.anonymous_name"),
       content: text,
       color,
+      qq: qq.trim() || null,
+      ip_address: ipInfo.ip,
+      ip_location: ipInfo.ipLocation,
     });
     setSubmitting(false);
     if (error) {
@@ -100,6 +128,7 @@ export default function Messages() {
     setHint({ type: "ok", text: getValue("messages.hint_ok") });
     setContent("");
     setNickname("");
+    setQq("");
     load();
   }
 
@@ -126,6 +155,16 @@ export default function Messages() {
                 onChange={(e) => setNickname(e.target.value)}
                 placeholder={getValue("messages.form_nickname_placeholder")}
                 maxLength={20}
+                className="input-line"
+              />
+              <label className="field-label mt-3 block">{getValue("messages.form_qq_label")}</label>
+              <input
+                type="text"
+                inputMode="numeric"
+                value={qq}
+                onChange={(e) => setQq(e.target.value.replace(/\D/g, "").slice(0, 12))}
+                placeholder={getValue("messages.form_qq_placeholder")}
+                maxLength={12}
                 className="input-line"
               />
               <label className="field-label mt-3 block">{getValue("messages.form_content_label")}</label>
@@ -182,33 +221,44 @@ export default function Messages() {
               </p>
             </div>
           ) : (
-            <div className="columns-2 gap-3 [column-fill:balance]">
-              {messages.map((m, idx) => (
-                <div
-                  key={m.id}
-                  className={cn(
-                    "mb-3 inline-block w-full break-inside-avoid rounded-card p-3.5 shadow-note",
-                    NOTE_BG[m.color],
-                    NOTE_ROTATE[idx % NOTE_ROTATE.length],
-                  )}
-                >
-                  <Pin
-                    className="mx-auto mb-1.5 h-3.5 w-3.5 text-coffee/50"
-                    strokeWidth={1.6}
-                  />
-                  <p className="whitespace-pre-wrap font-hand text-[14px] leading-relaxed text-ink">
-                    {m.content}
-                  </p>
-                  <div className="mt-3 flex items-baseline justify-between">
-                    <span className="font-hand text-xs text-ink-soft">
-                      — {m.nickname}
-                    </span>
-                    <span className="text-[10px] text-ink-mute">
-                      {formatTime(m.created_at)}
-                    </span>
+            <div className="columns-2 gap-3 [column-fill:balance] md:columns-3">
+              {messages.map((m, idx) => {
+                const ip = displayIp(m.ip_address);
+                return (
+                  <div
+                    key={m.id}
+                    className={cn(
+                      "mb-3 inline-block w-full break-inside-avoid rounded-card p-3.5 shadow-note",
+                      NOTE_BG[m.color],
+                      NOTE_ROTATE[idx % NOTE_ROTATE.length],
+                    )}
+                  >
+                    <Pin
+                      className="mx-auto mb-1.5 h-3.5 w-3.5 text-coffee/50"
+                      strokeWidth={1.6}
+                    />
+                    <p className="whitespace-pre-wrap font-hand text-[14px] leading-relaxed text-ink">
+                      {m.content}
+                    </p>
+                    <div className="mt-3 flex items-center gap-2">
+                      <NoteAvatar m={m} />
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate font-hand text-xs text-ink-soft">
+                          — {m.nickname}
+                        </p>
+                        {ip && (
+                          <p className="text-[10px] leading-tight text-ink-mute">
+                            IP {ip}
+                          </p>
+                        )}
+                      </div>
+                      <span className="flex-none text-[10px] text-ink-mute">
+                        {formatTime(m.created_at)}
+                      </span>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           ),
         }}

@@ -36,7 +36,7 @@ const SYSTEM_PAGES: Record<string, string> = {
   letter: "长信",
   messages: "留言",
   gallery: "相册",
-  posts: "帖子",
+  blog: "博客",
 };
 
 const SECTION_TYPES: {

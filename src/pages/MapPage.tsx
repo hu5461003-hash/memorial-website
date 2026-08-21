@@ -256,7 +256,7 @@ export default function MapPage() {
           onClick={() => setActiveCity(null)}
         >
           <div
-            className="max-h-[88vh] w-full max-w-[480px] overflow-hidden rounded-t-card bg-cream-50 shadow-polaroid sm:rounded-card"
+            className="max-h-[88vh] w-full max-w-[480px] overflow-hidden rounded-t-card bg-cream-50 shadow-polaroid sm:rounded-card md:max-w-[720px]"
             onClick={(e) => e.stopPropagation()}
           >
             {/* 头部：中文城市名 */}
@@ -286,7 +286,7 @@ export default function MapPage() {
                   <p className="mt-2 text-xs">{noPhotosText}</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
                   {activeCityPhotos.map((p, idx) => (
                     <button
                       key={p.id}

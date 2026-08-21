@@ -8,7 +8,6 @@ const PAGE_BY_PATH: Record<string, string> = {
   "/map": "map",
   "/letter": "letter",
   "/messages": "messages",
-  "/posts": "posts",
   "/gallery": "gallery",
 };
 

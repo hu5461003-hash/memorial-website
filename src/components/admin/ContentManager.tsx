@@ -46,7 +46,7 @@ const PAGE_LABELS: Record<string, string> = {
   letter: "长信",
   messages: "留言",
   gallery: "相册",
-  posts: "帖子",
+  blog: "博客",
 };
 
 const LOGO_KEY = "global.logo_image";

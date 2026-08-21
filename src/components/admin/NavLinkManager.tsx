@@ -35,7 +35,6 @@ const QUICK_ROUTES: { label: string; url: string }[] = [
   { label: "足迹地图", url: "/map" },
   { label: "纪念长信", url: "/letter" },
   { label: "留言板", url: "/messages" },
-  { label: "帖子", url: "/posts" },
   { label: "博客", url: "/blog" },
   { label: "私密相册", url: "/gallery" },
   { label: "管理后台", url: "/admin" },
@@ -71,7 +70,7 @@ export default function NavLinkManager() {
       supabase.from("page_sections").select("page_name"),
       supabase.from("site_content").select("content_key, content_value").like("content_key", "page.%"),
     ]);
-    const system = new Set(["global", "home", "map", "letter", "messages", "gallery", "posts", "blog"]);
+    const system = new Set(["global", "home", "map", "letter", "messages", "gallery", "blog"]);
     const names = [...new Set((sectionsRes.data ?? []).map((d: { page_name: string }) => d.page_name))]
       .filter((n) => !system.has(n));
     const titles = new Map<string, string>();

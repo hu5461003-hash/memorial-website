@@ -8,7 +8,6 @@ const MapPage = lazy(() => import("@/pages/MapPage"));
 const Letter = lazy(() => import("@/pages/Letter"));
 const Messages = lazy(() => import("@/pages/Messages"));
 const Gallery = lazy(() => import("@/pages/Gallery"));
-const Posts = lazy(() => import("@/pages/Posts"));
 const Blog = lazy(() => import("@/pages/Blog"));
 const BlogPost = lazy(() => import("@/pages/BlogPost"));
 const Admin = lazy(() => import("@/pages/Admin"));
@@ -32,8 +31,6 @@ export default function App() {
           <Route path="/map" element={<MapPage />} />
           <Route path="/letter" element={<Letter />} />
           <Route path="/messages" element={<Messages />} />
-          <Route path="/posts" element={<Posts />} />
-          <Route path="/posts/:id" element={<Posts />} />
           <Route path="/blog" element={<Blog />} />
           <Route path="/blog/:slug" element={<BlogPost />} />
           <Route path="/gallery" element={<Gallery />} />

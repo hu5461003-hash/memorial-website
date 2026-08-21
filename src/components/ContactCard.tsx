@@ -2,12 +2,21 @@ import { MessageCircle, Mail, Phone, Copy, Check, User } from "lucide-react";
 import { useState } from "react";
 import { useAdminProfiles } from "@/hooks/useAdmin";
 import { useContent } from "@/hooks/useContent";
-import { getAdminAvatar } from "@/lib/types";
+import { getAdminAvatar, maskContactValue } from "@/lib/types";
 import type { AdminProfile } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 /** 各联系方式项的显示标签（后台「内容」可改） */
 type ContactLabels = { qq: string; wechat: string; phone: string; email: string };
+
+/** 联系方式项：value 为真实值（复制用），display 为前台展示值（可能打码） */
+type ContactItem = {
+  label: string;
+  value: string;
+  display: string;
+  href?: string;
+  Icon: typeof Mail;
+};
 
 /**
  * 首页联系方式卡片区域。
@@ -63,13 +72,30 @@ function hasAny(p: AdminProfile): boolean {
   );
 }
 
-function buildItems(p: AdminProfile, L: ContactLabels) {
-  const items: { label: string; value: string; href?: string; Icon: typeof Mail }[] = [];
-  if (p.qq?.trim()) items.push({ label: L.qq, value: p.qq.trim(), Icon: MessageCircle });
-  if (p.wechat?.trim()) items.push({ label: L.wechat, value: p.wechat.trim(), Icon: MessageCircle });
-  if (p.phone?.trim()) items.push({ label: L.phone, value: p.phone.trim(), href: `tel:${p.phone.trim()}`, Icon: Phone });
-  if (p.email_display?.trim())
-    items.push({ label: L.email, value: p.email_display.trim(), href: `mailto:${p.email_display.trim()}`, Icon: Mail });
+function buildItems(p: AdminProfile, L: ContactLabels): ContactItem[] {
+  const items: ContactItem[] = [];
+  const push = (
+    label: string,
+    value: string,
+    masked: boolean | null | undefined,
+    Icon: typeof Mail,
+    href?: string,
+  ) => {
+    const v = value.trim();
+    if (!v) return;
+    // 打码时前台展示星号版本，且不再生成 tel:/mailto: 链接（打码链接无意义）
+    items.push({
+      label,
+      value: v,
+      display: masked ? maskContactValue(v) : v,
+      href: masked ? undefined : href,
+      Icon,
+    });
+  };
+  push(L.qq, p.qq, p.qq_masked, MessageCircle);
+  push(L.wechat, p.wechat, p.wechat_masked, MessageCircle);
+  push(L.phone, p.phone, p.phone_masked, Phone, `tel:${p.phone.trim()}`);
+  push(L.email, p.email_display, p.email_masked, Mail, `mailto:${p.email_display.trim()}`);
   return items;
 }
 
@@ -125,7 +151,7 @@ function SingleCard({
         </button>
       </div>
       <div className="mt-3 grid grid-cols-1 gap-1.5">
-        {items.map(({ label, value, href, Icon }) => (
+        {items.map(({ label, display, href, Icon }) => (
           <div
             key={label}
             className="flex items-center gap-2 rounded-soft bg-cream-50/60 px-2.5 py-1.5"
@@ -137,10 +163,12 @@ function SingleCard({
                 href={href}
                 className="ml-auto truncate text-xs text-ink-soft hover:text-coffee"
               >
-                {value}
+                {display}
               </a>
             ) : (
-              <span className="ml-auto truncate text-xs text-ink-soft">{value}</span>
+              <span className="ml-auto truncate font-mono text-xs tracking-wider text-ink-soft">
+                {display}
+              </span>
             )}
           </div>
         ))}

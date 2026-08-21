@@ -70,7 +70,7 @@ export const CONTENT_DEFAULTS: ContentDefault[] = [
   // 底部导航标签
   { content_key: "global.nav_home", page: "global", label: "底部导航·首页文字", type: "text", content_value: "首页", image_url: null, sort_order: 6 },
   { content_key: "global.nav_map", page: "global", label: "底部导航·足迹文字", type: "text", content_value: "足迹", image_url: null, sort_order: 7 },
-  { content_key: "global.nav_posts", page: "global", label: "底部导航·帖子文字", type: "text", content_value: "帖子", image_url: null, sort_order: 8 },
+  { content_key: "global.nav_blog", page: "global", label: "底部导航·博客文字", type: "text", content_value: "博客", image_url: null, sort_order: 8 },
   { content_key: "global.nav_letter", page: "global", label: "底部导航·长信文字", type: "text", content_value: "长信", image_url: null, sort_order: 9 },
   { content_key: "global.nav_messages", page: "global", label: "底部导航·留言文字", type: "text", content_value: "留言", image_url: null, sort_order: 10 },
   { content_key: "global.nav_gallery", page: "global", label: "底部导航·相册文字", type: "text", content_value: "相册", image_url: null, sort_order: 11 },
@@ -87,9 +87,6 @@ export const CONTENT_DEFAULTS: ContentDefault[] = [
   { content_key: "custom.not_found_subtitle", page: "custom", label: "自定义页·不存在时副标题", type: "text", content_value: "该页面尚未创建或已被删除", image_url: null, sort_order: 3 },
   { content_key: "custom.not_found_desc", page: "custom", label: "自定义页·不存在时说明", type: "text", content_value: "在浏览器地址栏确认链接是否正确，或到后台「排版」重新创建。", image_url: null, sort_order: 4 },
   // 首页
-  { content_key: "home.featured_title", page: "home", label: "推荐帖区块标题", type: "text", content_value: "推荐帖子", image_url: null, sort_order: 1 },
-  { content_key: "home.featured_more", page: "home", label: "推荐帖「全部」链接文字", type: "text", content_value: "全部", image_url: null, sort_order: 2 },
-  { content_key: "home.featured_empty", page: "home", label: "无推荐帖子时提示", type: "text", content_value: "暂无推荐帖子（请后台「帖子管理」打开某条帖的「推荐到首页」开关）", image_url: null, sort_order: 3 },
   { content_key: "home.entry_map_title", page: "home", label: "入口卡片·足迹地图标题", type: "text", content_value: "足迹地图", image_url: null, sort_order: 4 },
   { content_key: "home.entry_map_desc", page: "home", label: "入口卡片·足迹地图描述", type: "text", content_value: "九座城市，一条暖色的河", image_url: null, sort_order: 5 },
   { content_key: "home.entry_letter_title", page: "home", label: "入口卡片·纪念长信标题", type: "text", content_value: "纪念长信", image_url: null, sort_order: 6 },
@@ -99,8 +96,6 @@ export const CONTENT_DEFAULTS: ContentDefault[] = [
   { content_key: "home.entry_gallery_title", page: "home", label: "入口卡片·私密相册标题", type: "text", content_value: "私密相册", image_url: null, sort_order: 10 },
   { content_key: "home.entry_gallery_desc", page: "home", label: "入口卡片·私密相册描述", type: "text", content_value: "需要一把小钥匙", image_url: null, sort_order: 11 },
   { content_key: "home.footer", page: "home", label: "首页底部文字", type: "text", content_value: "— 愿你在的那个地方 也有一盏灯 —", image_url: null, sort_order: 12 },
-  { content_key: "home.featured_load_error", page: "home", label: "推荐帖加载失败提示", type: "text", content_value: "加载推荐帖子失败", image_url: null, sort_order: 13 },
-  { content_key: "home.no_title", page: "home", label: "帖子无标题时占位文字", type: "text", content_value: "(无标题)", image_url: null, sort_order: 14 },
   // 首页 · 联系卡片
   { content_key: "home.contact_subtitle", page: "home", label: "联系卡片·「联系方式」文字", type: "text", content_value: "联系方式", image_url: null, sort_order: 15 },
   { content_key: "home.contact_admin_fallback", page: "home", label: "联系卡片·无名管理员占位", type: "text", content_value: "管理员", image_url: null, sort_order: 16 },
@@ -133,6 +128,8 @@ export const CONTENT_DEFAULTS: ContentDefault[] = [
   { content_key: "messages.form_nickname_placeholder", page: "messages", label: "表单·昵称占位提示", type: "text", content_value: "一位访客", image_url: null, sort_order: 4 },
   { content_key: "messages.form_content_label", page: "messages", label: "表单·留言标签", type: "text", content_value: "留言", image_url: null, sort_order: 5 },
   { content_key: "messages.form_content_placeholder", page: "messages", label: "表单·留言占位提示", type: "text", content_value: "写下你想说的一句话…", image_url: null, sort_order: 6 },
+  { content_key: "messages.form_qq_label", page: "messages", label: "表单·QQ 标签", type: "text", content_value: "QQ（可不填）", image_url: null, sort_order: 18 },
+  { content_key: "messages.form_qq_placeholder", page: "messages", label: "表单·QQ 占位提示", type: "text", content_value: "填写后留言将显示您的 QQ 头像", image_url: null, sort_order: 19 },
   { content_key: "messages.submit", page: "messages", label: "提交按钮文字", type: "text", content_value: "留下便签", image_url: null, sort_order: 7 },
   { content_key: "messages.submitting", page: "messages", label: "提交中按钮文字", type: "text", content_value: "发送中…", image_url: null, sort_order: 8 },
   { content_key: "messages.loading", page: "messages", label: "加载提示文字", type: "text", content_value: "正在收集便签…", image_url: null, sort_order: 9 },
@@ -168,54 +165,6 @@ export const CONTENT_DEFAULTS: ContentDefault[] = [
   { content_key: "gallery.album_count_photos", page: "gallery", label: "相簿卡片仅照片文字（{p} 为数字）", type: "text", content_value: "{p} 照片", image_url: null, sort_order: 19 },
   { content_key: "gallery.uncategorized", page: "gallery", label: "未分类文件夹名称", type: "text", content_value: "未分类", image_url: null, sort_order: 20 },
   { content_key: "gallery.close", page: "gallery", label: "关闭按钮无障碍文字", type: "text", content_value: "关闭", image_url: null, sort_order: 21 },
-  // 帖子页
-  { content_key: "posts.title", page: "posts", label: "页面标题", type: "text", content_value: "帖子", image_url: null, sort_order: 1 },
-  { content_key: "posts.subtitle", page: "posts", label: "帖子页副标题", type: "text", content_value: "所有人均可匿名发帖", image_url: null, sort_order: 2 },
-  { content_key: "posts.tip", page: "posts", label: "列表左上角提示文字", type: "text", content_value: "所有人均可匿名发帖", image_url: null, sort_order: 3 },
-  { content_key: "posts.form_toggle", page: "posts", label: "「我要发帖」按钮文字", type: "text", content_value: "我要发帖", image_url: null, sort_order: 4 },
-  { content_key: "posts.form_collapse", page: "posts", label: "「收起表单」按钮文字", type: "text", content_value: "收起表单", image_url: null, sort_order: 5 },
-  { content_key: "posts.form_title", page: "posts", label: "发帖表单标题", type: "text", content_value: "匿名发帖", image_url: null, sort_order: 6 },
-  { content_key: "posts.form_nickname_label", page: "posts", label: "发帖表单·昵称标签", type: "text", content_value: "昵称（可选）", image_url: null, sort_order: 7 },
-  { content_key: "posts.form_title_label", page: "posts", label: "发帖表单·标题标签", type: "text", content_value: "标题", image_url: null, sort_order: 8 },
-  { content_key: "posts.form_content_label", page: "posts", label: "发帖表单·正文标签", type: "text", content_value: "正文", image_url: null, sort_order: 9 },
-  { content_key: "posts.submit", page: "posts", label: "发帖提交按钮文字", type: "text", content_value: "发布", image_url: null, sort_order: 10 },
-  // 帖子页 · 列表与详情
-  { content_key: "posts.count", page: "posts", label: "帖子总数文字（{n} 为数字）", type: "text", content_value: "共 {n} 篇", image_url: null, sort_order: 11 },
-  { content_key: "posts.loading", page: "posts", label: "帖子列表加载提示", type: "text", content_value: "正在加载帖子…", image_url: null, sort_order: 12 },
-  { content_key: "posts.load_error", page: "posts", label: "帖子列表加载失败提示", type: "text", content_value: "加载帖子失败", image_url: null, sort_order: 13 },
-  { content_key: "posts.reload", page: "posts", label: "「重新加载」按钮文字", type: "text", content_value: "重新加载", image_url: null, sort_order: 14 },
-  { content_key: "posts.detail_title", page: "posts", label: "帖子详情页标题", type: "text", content_value: "帖子详情", image_url: null, sort_order: 15 },
-  { content_key: "posts.detail_load_error", page: "posts", label: "详情加载失败提示", type: "text", content_value: "加载帖子详情失败", image_url: null, sort_order: 16 },
-  { content_key: "posts.not_found", page: "posts", label: "帖子不存在提示", type: "text", content_value: "帖子不存在或已删除", image_url: null, sort_order: 17 },
-  { content_key: "posts.back_list", page: "posts", label: "「返回帖子列表」按钮文字", type: "text", content_value: "返回帖子列表", image_url: null, sort_order: 18 },
-  { content_key: "posts.share", page: "posts", label: "「分享」按钮文字", type: "text", content_value: "分享", image_url: null, sort_order: 19 },
-  { content_key: "posts.anonymous", page: "posts", label: "匿名显示文字", type: "text", content_value: "匿名", image_url: null, sort_order: 20 },
-  { content_key: "posts.admin_label", page: "posts", label: "管理员作者显示文字", type: "text", content_value: "管理员", image_url: null, sort_order: 21 },
-  { content_key: "posts.avatar_letter", page: "posts", label: "评论头像占位字", type: "text", content_value: "匿", image_url: null, sort_order: 22 },
-  // 帖子页 · 提示语
-  { content_key: "posts.hint_post_ok", page: "posts", label: "发帖成功提示", type: "text", content_value: "✓ 发帖成功，等待管理员推荐到首页", image_url: null, sort_order: 23 },
-  { content_key: "posts.hint_post_failed", page: "posts", label: "发帖失败提示", type: "text", content_value: "发帖失败", image_url: null, sort_order: 24 },
-  { content_key: "posts.hint_liked", page: "posts", label: "已点赞提示", type: "text", content_value: "已经赞过啦", image_url: null, sort_order: 25 },
-  { content_key: "posts.hint_like_failed", page: "posts", label: "点赞失败提示", type: "text", content_value: "点赞失败", image_url: null, sort_order: 26 },
-  { content_key: "posts.hint_share_ok", page: "posts", label: "分享成功提示", type: "text", content_value: "✓ 链接已复制，快去分享吧", image_url: null, sort_order: 27 },
-  { content_key: "posts.hint_share_failed", page: "posts", label: "分享失败提示", type: "text", content_value: "分享失败", image_url: null, sort_order: 28 },
-  { content_key: "posts.hint_comment_ok", page: "posts", label: "评论成功提示", type: "text", content_value: "✓ 评论已发出", image_url: null, sort_order: 29 },
-  { content_key: "posts.hint_comment_failed", page: "posts", label: "评论失败提示", type: "text", content_value: "评论失败", image_url: null, sort_order: 30 },
-  // 帖子页 · 评论区
-  { content_key: "posts.comment_title", page: "posts", label: "评论区标题（{n} 为数量）", type: "text", content_value: "评论（{n}）", image_url: null, sort_order: 31 },
-  { content_key: "posts.comment_empty", page: "posts", label: "无评论时提示", type: "text", content_value: "抢沙发 — 说点什么吧", image_url: null, sort_order: 32 },
-  { content_key: "posts.comment_nickname_placeholder", page: "posts", label: "评论·昵称占位提示", type: "text", content_value: "昵称（可选）", image_url: null, sort_order: 33 },
-  { content_key: "posts.comment_placeholder", page: "posts", label: "评论·内容占位提示", type: "text", content_value: "写评论…", image_url: null, sort_order: 34 },
-  { content_key: "posts.comment_submit", page: "posts", label: "评论提交按钮文字", type: "text", content_value: "发送", image_url: null, sort_order: 35 },
-  // 帖子页 · 表单占位与杂项
-  { content_key: "posts.form_nickname_placeholder", page: "posts", label: "发帖表单·昵称占位提示", type: "text", content_value: "默认显示为「匿名」", image_url: null, sort_order: 36 },
-  { content_key: "posts.form_title_placeholder", page: "posts", label: "发帖表单·标题占位提示", type: "text", content_value: "一句话标题", image_url: null, sort_order: 37 },
-  { content_key: "posts.form_content_placeholder", page: "posts", label: "发帖表单·正文占位提示", type: "text", content_value: "想说的话…", image_url: null, sort_order: 38 },
-  { content_key: "posts.form_no_image_tip", page: "posts", label: "发帖表单·图片说明小字", type: "text", content_value: "* 游客发帖暂不支持图片，带图帖子请在后台发布", image_url: null, sort_order: 39 },
-  { content_key: "posts.empty", page: "posts", label: "无帖子提示", type: "text", content_value: "还没有帖子", image_url: null, sort_order: 40 },
-  { content_key: "posts.no_title", page: "posts", label: "帖子无标题占位文字", type: "text", content_value: "(无标题)", image_url: null, sort_order: 41 },
-  { content_key: "posts.prev_image", page: "posts", label: "图片「上一张」无障碍文字", type: "text", content_value: "上一张", image_url: null, sort_order: 42 },
-  { content_key: "posts.next_image", page: "posts", label: "图片「下一张」无障碍文字", type: "text", content_value: "下一张", image_url: null, sort_order: 43 },
   // 博客页（/#/blog）
   { content_key: "blog.title", page: "blog", label: "博客页·标题", type: "text", content_value: "博客", image_url: null, sort_order: 1 },
   { content_key: "blog.subtitle", page: "blog", label: "博客页·副标题", type: "text", content_value: "记录每一段值得留下的文字", image_url: null, sort_order: 2 },
@@ -248,7 +197,6 @@ export const BUILTIN_BLOCKS: Record<
   { block: string; label: string; desc: string }[]
 > = {
   home: [
-    { block: "featured_posts", label: "推荐帖子", desc: "首页推荐帖横排" },
     { block: "entry_cards", label: "入口卡片", desc: "四宫格页面入口" },
     { block: "contact_card", label: "联系方式卡片", desc: "管理员联系卡片" },
     { block: "footer_text", label: "底部署名", desc: "页面底部一行字" },
@@ -267,9 +215,6 @@ export const BUILTIN_BLOCKS: Record<
   ],
   gallery: [
     { block: "gallery_grid", label: "相册内容区", desc: "相簿 / 全部网格" },
-  ],
-  posts: [
-    { block: "post_list", label: "帖子列表", desc: "发帖入口与帖子列表" },
   ],
   blog: [
     { block: "blog_list", label: "博客列表", desc: "博客卡片流" },

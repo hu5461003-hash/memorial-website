@@ -18,6 +18,12 @@ export type MessageNote = {
   content: string;
   color: "yellow" | "pink" | "blue";
   created_at: string;
+  /** 留言者 QQ（选填，前台展示 QQ 头像） */
+  qq?: string | null;
+  /** 留言者 IP（前台展示完整 IP） */
+  ip_address?: string | null;
+  /** IP 归属地（仅后台展示） */
+  ip_location?: string | null;
 };
 
 export type Photo = {
@@ -286,8 +292,35 @@ export type AdminProfile = {
   phone: string;
   email_display: string;
   avatar_url: string;
+  /** 各项联系方式是否在前台打码（中间星号隐藏） */
+  qq_masked?: boolean | null;
+  wechat_masked?: boolean | null;
+  phone_masked?: boolean | null;
+  email_masked?: boolean | null;
   updated_at: string;
 };
+
+/** 联系方式打码：保留首尾、中间用 4-5 个星号隐藏（如 100012345 → 10*****45） */
+export function maskContactValue(v: string): string {
+  const s = v.trim();
+  if (!s) return s;
+  if (s.length <= 2) return "*".repeat(4);
+  if (s.length <= 6) return `${s.slice(0, 1)}****${s.slice(-1)}`;
+  return `${s.slice(0, 2)}*****${s.slice(-2)}`;
+}
+
+/** 生成留言者头像：有 QQ 用 QQ 头像，否则用昵称首字 */
+export function getMessageAvatar(m: Pick<MessageNote, "qq" | "nickname">): {
+  url: string | null;
+  letter: string;
+} {
+  const qq = m.qq?.trim();
+  if (qq && /^\d{5,12}$/.test(qq)) {
+    return { url: `https://q1.qlogo.cn/g?b=qq&nk=${qq}&s=100`, letter: "" };
+  }
+  const letter = (m.nickname || "访").trim().charAt(0).toUpperCase();
+  return { url: null, letter };
+}
 
 // ============ 自定义相册文件夹 ============
 export type Album = {

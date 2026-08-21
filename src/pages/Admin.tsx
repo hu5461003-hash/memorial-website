@@ -15,7 +15,6 @@ import {
   Loader2,
   FolderOpen,
   Contact,
-  PenSquare,
   Menu,
   X,
   ExternalLink,
@@ -33,7 +32,6 @@ import ThemeManager from "@/components/admin/ThemeManager";
 import SeoManager from "@/components/admin/SeoManager";
 import MediaLibrary from "@/components/admin/MediaLibrary";
 import ContactManager from "@/components/admin/ContactManager";
-import PostManager from "@/components/admin/PostManager";
 import MessageManager from "@/components/admin/MessageManager";
 import BlogManager from "@/components/admin/BlogManager";
 import NavLinkManager from "@/components/admin/NavLinkManager";
@@ -52,7 +50,6 @@ type Tab =
   | "seo"
   | "media"
   | "contact"
-  | "post"
   | "message"
   | "blog"
   | "nav";
@@ -71,7 +68,6 @@ const NAV_GROUPS: { title: string; items: NavItemDef[] }[] = [
     items: [
       { key: "content", label: "内容", desc: "各页面文字、图片与 Logo", Icon: FileText },
       { key: "sections", label: "排版", desc: "页面组件显隐与排序", Icon: LayoutGrid },
-      { key: "post", label: "帖子", desc: "帖子管理与推荐到首页", Icon: PenSquare },
       { key: "blog", label: "博客", desc: "撰写与管理博客文章", Icon: Newspaper },
       { key: "message", label: "留言", desc: "访客留言查看与管理", Icon: StickyNote },
     ],
@@ -131,14 +127,13 @@ export default function Admin() {
 
   const loadCounts = useCallback(async () => {
     if (!supabase) return;
-    const [photos, footprints, videos, sections, content, media, posts, messages, blogs, navs] = await Promise.all([
+    const [photos, footprints, videos, sections, content, media, messages, blogs, navs] = await Promise.all([
       supabase.from("photos").select("id", { count: "exact", head: true }),
       supabase.from("footprints").select("id", { count: "exact", head: true }),
       supabase.from("videos").select("id", { count: "exact", head: true }),
       supabase.from("page_sections").select("id", { count: "exact", head: true }),
       supabase.from("site_content").select("id", { count: "exact", head: true }),
       supabase.from("media_library").select("id", { count: "exact", head: true }),
-      supabase.from("posts").select("id", { count: "exact", head: true }),
       supabase.from("messages").select("id", { count: "exact", head: true }),
       supabase.from("blogs").select("id", { count: "exact", head: true }),
       supabase.from("nav_links").select("id", { count: "exact", head: true }),
@@ -150,7 +145,6 @@ export default function Admin() {
       sections: sections.count ?? 0,
       content: content.count ?? 0,
       media: media.count ?? 0,
-      post: posts.count ?? 0,
       message: messages.count ?? 0,
       blog: blogs.count ?? 0,
       nav: navs.count ?? 0,
@@ -442,7 +436,6 @@ export default function Admin() {
                 {tab === "video" && <VideoManager />}
                 {tab === "media" && <MediaLibrary />}
                 {tab === "contact" && <ContactManager />}
-                {tab === "post" && <PostManager />}
                 {tab === "message" && <MessageManager />}
                 {tab === "blog" && <BlogManager />}
                 {tab === "nav" && <NavLinkManager />}

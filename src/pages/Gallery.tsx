@@ -283,7 +283,7 @@ export default function Gallery() {
 
               {/* ============ 视图1：自定义文件夹卡片网格 ============ */}
               {view === "albums" && (
-                <section className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                <section className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
                   {allAlbumCards.length === 0 && (
                     <div className="col-span-full flex flex-col items-center py-10 text-ink-mute">
                       <Folder className="h-8 w-8" strokeWidth={1.4} />
@@ -356,7 +356,7 @@ export default function Gallery() {
                     </div>
                   </div>
 
-                  <section className="grid grid-cols-3 gap-0.5 sm:gap-1">
+                  <section className="grid grid-cols-3 gap-0.5 sm:grid-cols-4 sm:gap-1 lg:grid-cols-6">
                     {currentAlbum.photos.map((p) => (
                       <button
                         key={p.id}
@@ -418,7 +418,7 @@ export default function Gallery() {
 
               {/* ============ 视图3：全部（平铺） ============ */}
               {view === "all" && (
-                <section className="grid grid-cols-3 gap-0.5 sm:gap-1">
+                <section className="grid grid-cols-3 gap-0.5 sm:grid-cols-4 sm:gap-1 lg:grid-cols-6">
                   {photos.map((p) => (
                     <button
                       key={p.id}
