@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { usePageSections } from "@/hooks/usePageSections";
 import { useTheme } from "@/hooks/useTheme";
 import type { PageSection } from "@/lib/types";
+import { cn } from "@/lib/utils";
 import MarqueeSection from "@/components/sections/MarqueeSection";
 import TimelineSection from "@/components/sections/TimelineSection";
 import CustomHtmlSection from "@/components/sections/CustomHtmlSection";
@@ -12,6 +13,7 @@ import SpacerSection from "@/components/sections/SpacerSection";
 export function SectionItem({ section }: { section: PageSection }) {
   const { theme } = useTheme();
   const s = section;
+  const data = (s.content_data ?? {}) as Record<string, unknown>;
 
   if (s.section_type === "builtin") return null;
 
@@ -51,13 +53,30 @@ export function SectionItem({ section }: { section: PageSection }) {
   // spacer 不需要包裹背景
   if (s.section_type === "spacer") return <>{inner}</>;
 
-  // 自定义代码块勾选「全宽」时：脱离页面容器与内边距，占满 100% 屏宽
-  if (s.section_type === "custom_html" && (s.content_data as Record<string, unknown>)?.full_width) {
-    return <div className="relative mb-4 w-screen max-w-none left-1/2 -translate-x-1/2">{inner}</div>;
+  if (s.section_type === "custom_html") {
+    const fullWidth = Boolean(data.full_width);
+    // 取消「跟随父级样式」：不套卡片（背景/边框/圆角/内边距），代码自带样式裸渲染
+    if (data.follow_parent === false) {
+      return fullWidth ? (
+        <div className="relative mb-4 w-screen max-w-none left-1/2 -translate-x-1/2">{inner}</div>
+      ) : (
+        <>{inner}</>
+      );
+    }
+    // 勾选「全宽」时：脱离页面容器与内边距，占满 100% 屏宽
+    if (fullWidth) {
+      return <div className="relative mb-4 w-screen max-w-none left-1/2 -translate-x-1/2">{inner}</div>;
+    }
   }
 
+  // 自定义代码块可关闭分区边框（背景/圆角/内边距保留）
+  const hideBorder = s.section_type === "custom_html" && data.show_border === false;
+
   return (
-    <section className="mb-4 rounded-card border p-4" style={sectionStyle}>
+    <section
+      className={cn("mb-4 rounded-card p-4", !hideBorder && "border")}
+      style={sectionStyle}
+    >
       {inner}
     </section>
   );

@@ -783,15 +783,36 @@ export default function SectionManager() {
                           placeholder={'<div style="text-align:center;color:#E8919F;">自定义内容</div>'}
                           className="w-full resize-y rounded-soft border border-coffee-line/70 bg-cream-50 px-3 py-2 font-mono text-xs focus:border-gold focus:outline-none"
                         />
-                        <label className="flex cursor-pointer items-center gap-1.5 text-[11px] text-ink-soft">
-                          <input
-                            type="checkbox"
-                            checked={Boolean(editObj.full_width)}
-                            onChange={(e) => setField("full_width", e.target.checked)}
-                            className="h-3.5 w-3.5 accent-gold"
-                          />
-                          全宽显示（脱离页面容器，占满屏幕 100% 宽度，适合需要整屏宽的代码）
-                        </label>
+                        <div className="space-y-1.5 rounded-soft border border-coffee-line/50 bg-cream-100/50 p-2.5">
+                          <p className="text-[10px] font-medium text-ink-mute">显示选项</p>
+                          <label className="flex cursor-pointer items-start gap-1.5 text-[11px] leading-relaxed text-ink-soft">
+                            <input
+                              type="checkbox"
+                              checked={Boolean(editObj.full_width)}
+                              onChange={(e) => setField("full_width", e.target.checked)}
+                              className="mt-0.5 h-3.5 w-3.5 accent-gold"
+                            />
+                            全宽显示（脱离页面容器，占满屏幕 100% 宽度，适合需要整屏宽的代码）
+                          </label>
+                          <label className="flex cursor-pointer items-start gap-1.5 text-[11px] leading-relaxed text-ink-soft">
+                            <input
+                              type="checkbox"
+                              checked={(editObj.show_border as boolean) ?? true}
+                              onChange={(e) => setField("show_border", e.target.checked)}
+                              className="mt-0.5 h-3.5 w-3.5 accent-gold"
+                            />
+                            显示分区边框（取消后不画边框线，背景色与内边距保留）
+                          </label>
+                          <label className="flex cursor-pointer items-start gap-1.5 text-[11px] leading-relaxed text-ink-soft">
+                            <input
+                              type="checkbox"
+                              checked={(editObj.follow_parent as boolean) ?? true}
+                              onChange={(e) => setField("follow_parent", e.target.checked)}
+                              className="mt-0.5 h-3.5 w-3.5 accent-gold"
+                            />
+                            跟随父级样式（背景色/文字色/圆角/内边距；取消后代码裸渲染，下方颜色覆盖不生效）
+                          </label>
+                        </div>
                         <div className="rounded-soft border border-coffee-line/50 bg-white p-2">
                           <p className="mb-1 text-[10px] text-ink-mute">预览</p>
                           <div
@@ -907,6 +928,11 @@ export default function SectionManager() {
                     {/* === 颜色覆盖（分区自定义） === */}
                     <div className="mt-3 rounded-soft border border-dashed border-coffee-line/50 bg-cream-100/50 p-2.5">
                       <p className="mb-2 text-[11px] font-medium text-ink-soft">分区颜色覆盖（留空则跟随全局主题）</p>
+                      {editType === "custom_html" && editObj.follow_parent === false && (
+                        <p className="mb-2 rounded-soft bg-gold/10 px-2 py-1 text-[10px] text-coffee">
+                          已取消「跟随父级样式」，本区颜色覆盖不会生效
+                        </p>
+                      )}
                       <div className="grid grid-cols-2 gap-2">
                         {([
                           ["bg_color", "背景色"],
