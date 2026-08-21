@@ -28,22 +28,6 @@ export const FALLBACK_FOOTPRINTS = [
   { name: "岳阳", lat: 29.3556, lng: 113.1289, visit_date: "2022-12-15", story: "洞庭天下水，岳阳天下楼。", cover_url: null, sort_order: 9 },
 ] as const;
 
-/** 长信正文默认值（可被后台 site_content.letter.body 覆盖） */
-export const LETTER_CONTENT = [
-  "P：",
-  "你走后的第三个秋天，我终于把那些散落的车票、照片和便签收进了抽屉的最深处。抽屉合上的那一刻，我才意识到，原来思念并不会因为收起凭证而停止——它只是从指尖挪到了更深的某个地方，安静地待着。",
-  "平江的清晨，汨罗江的水还带着幕阜山的凉意。你在江边回头冲我笑，说「以后我们要走很多很多地方」。那时我并未当真，只觉得你说什么都是对的。",
-  "后来真的走了很多地方。南宁的邕江湿热，柳州的螺蛳粉酸得你皱眉，永州的潇湘夜雨打湿了柳子街的青石板。长沙太平街的烟火里，你举着一串糖油粑粑说「这一口值了」。",
-  "开封的清明上河园灯火通明，你说像走进了北宋的旧梦；郑州黄河岸边的风吹乱了你的头发，你没去管，只是看着河水出神。南京秦淮河的桨声里，你轻声念「烟笼寒水月笼沙」；岳阳楼前，你望着洞庭湖，久久不语。",
-  "九座城市，九段故事。我把它们一一画在地图上，用暖色的线连起来，像一条慢慢延伸的、属于我们的河。",
-  "P，我没有更多的地方可以和你一起走了。但我会把这些走过的路，一座一座地记下来，让它们替我记住你笑着的模样。",
-  "愿你在的那个地方，也有一江春水，有一盏为你亮着的灯。",
-  "我，仍在这里。",
-];
-
-export const LETTER_SIGNATURE = "寄你，于每一个想你的清晨与黄昏";
-export const LETTER_DATE = "壹";
-
 // ============ 默认页面内容（site_content 兜底值） ============
 
 export type ContentDefault = {
@@ -67,12 +51,24 @@ export const CONTENT_DEFAULTS: ContentDefault[] = [
   { content_key: "global.footer_text", page: "global", label: "页脚文字（每页底部，留空不显示）", type: "text", content_value: "", image_url: null, sort_order: 3 },
   { content_key: "global.logo_text", page: "global", label: "Logo 文字（无图片时显示）", type: "text", content_value: "P", image_url: null, sort_order: 4 },
   { content_key: "global.logo_image", page: "global", label: "Logo 图片（优先显示）", type: "image", content_value: null, image_url: null, sort_order: 5 },
+  // 页头丰富自定义
+  { content_key: "global.header_subtitle", page: "global", label: "页头·副标题（Logo 下方小字）", type: "text", content_value: "", image_url: null, sort_order: 17 },
+  { content_key: "global.header_bg_image", page: "global", label: "页头·背景图片（留空用纯色）", type: "image", content_value: null, image_url: null, sort_order: 18 },
+  { content_key: "global.header_announcement", page: "global", label: "页头·公告栏文字（留空不显示）", type: "text", content_value: "", image_url: null, sort_order: 19 },
+  { content_key: "global.header_btn_text", page: "global", label: "页头·右侧按钮文字（留空不显示）", type: "text", content_value: "", image_url: null, sort_order: 20 },
+  { content_key: "global.header_btn_url", page: "global", label: "页头·右侧按钮链接地址", type: "text", content_value: "", image_url: null, sort_order: 21 },
+  // 页脚丰富自定义
+  { content_key: "global.footer_about", page: "global", label: "页脚·关于我们简介（留空不显示）", type: "longtext", content_value: "", image_url: null, sort_order: 22 },
+  { content_key: "global.footer_copyright", page: "global", label: "页脚·版权信息（留空用默认）", type: "text", content_value: "", image_url: null, sort_order: 23 },
+  { content_key: "global.footer_icp", page: "global", label: "页脚·备案号/ICP（留空不显示）", type: "text", content_value: "", image_url: null, sort_order: 24 },
+  { content_key: "global.footer_icp_url", page: "global", label: "页脚·备案号跳转链接", type: "text", content_value: "https://beian.miit.gov.cn", image_url: null, sort_order: 25 },
+  { content_key: "global.footer_quick_links_title", page: "global", label: "页脚·快速链接标题", type: "text", content_value: "快速导航", image_url: null, sort_order: 26 },
+  { content_key: "global.footer_show_quick_links", page: "global", label: "页脚·是否显示快速链接（1显示/0隐藏）", type: "text", content_value: "1", image_url: null, sort_order: 27 },
   // 底部导航标签
   { content_key: "global.nav_home", page: "global", label: "底部导航·首页文字", type: "text", content_value: "首页", image_url: null, sort_order: 6 },
   { content_key: "global.nav_map", page: "global", label: "底部导航·足迹文字", type: "text", content_value: "足迹", image_url: null, sort_order: 7 },
   { content_key: "global.nav_blog", page: "global", label: "底部导航·博客文字", type: "text", content_value: "博客", image_url: null, sort_order: 8 },
-  { content_key: "global.nav_letter", page: "global", label: "底部导航·长信文字", type: "text", content_value: "长信", image_url: null, sort_order: 9 },
-  { content_key: "global.nav_messages", page: "global", label: "底部导航·留言文字", type: "text", content_value: "留言", image_url: null, sort_order: 10 },
+  { content_key: "global.nav_messages", page: "global", label: "底部导航·留言文字", type: "text", content_value: "留言", image_url: null, sort_order: 9 },
   { content_key: "global.nav_gallery", page: "global", label: "底部导航·相册文字", type: "text", content_value: "相册", image_url: null, sort_order: 11 },
   // 通用提示
   { content_key: "global.loading", page: "global", label: "通用加载提示文字", type: "text", content_value: "加载中…", image_url: null, sort_order: 12 },
@@ -89,8 +85,6 @@ export const CONTENT_DEFAULTS: ContentDefault[] = [
   // 首页
   { content_key: "home.entry_map_title", page: "home", label: "入口卡片·足迹地图标题", type: "text", content_value: "足迹地图", image_url: null, sort_order: 4 },
   { content_key: "home.entry_map_desc", page: "home", label: "入口卡片·足迹地图描述", type: "text", content_value: "九座城市，一条暖色的河", image_url: null, sort_order: 5 },
-  { content_key: "home.entry_letter_title", page: "home", label: "入口卡片·纪念长信标题", type: "text", content_value: "纪念长信", image_url: null, sort_order: 6 },
-  { content_key: "home.entry_letter_desc", page: "home", label: "入口卡片·纪念长信描述", type: "text", content_value: "写给那段时光", image_url: null, sort_order: 7 },
   { content_key: "home.entry_messages_title", page: "home", label: "入口卡片·温暖留言标题", type: "text", content_value: "温暖留言", image_url: null, sort_order: 8 },
   { content_key: "home.entry_messages_desc", page: "home", label: "入口卡片·温暖留言描述", type: "text", content_value: "留下一张便签", image_url: null, sort_order: 9 },
   { content_key: "home.entry_gallery_title", page: "home", label: "入口卡片·私密相册标题", type: "text", content_value: "私密相册", image_url: null, sort_order: 10 },
@@ -114,13 +108,6 @@ export const CONTENT_DEFAULTS: ContentDefault[] = [
   { content_key: "map.no_photos", page: "map", label: "城市无照片提示", type: "text", content_value: "这里还没有照片", image_url: null, sort_order: 6 },
   { content_key: "map.no_footprints", page: "map", label: "无足迹节点提示", type: "text", content_value: "还没有足迹节点，请在后台上传", image_url: null, sort_order: 7 },
   { content_key: "map.photo_unit", page: "map", label: "照片数量文字（{n} 为数字）", type: "text", content_value: "{n} 张", image_url: null, sort_order: 8 },
-  // 长信页
-  { content_key: "letter.title", page: "letter", label: "页面标题", type: "text", content_value: "纪念长信", image_url: null, sort_order: 1 },
-  { content_key: "letter.subtitle", page: "letter", label: "页面副标题", type: "text", content_value: "一封永远在路上的长信", image_url: null, sort_order: 2 },
-  { content_key: "letter.body", page: "letter", label: "长信正文（段落用空行分隔）", type: "longtext", content_value: LETTER_CONTENT.join("\n\n"), image_url: null, sort_order: 3 },
-  { content_key: "letter.signature", page: "letter", label: "长信落款", type: "text", content_value: LETTER_SIGNATURE, image_url: null, sort_order: 4 },
-  { content_key: "letter.side_text", page: "letter", label: "信纸左上角装饰文字", type: "text", content_value: "长信", image_url: null, sort_order: 5 },
-  { content_key: "letter.sign", page: "letter", label: "页面底部署名", type: "text", content_value: "— 此信 长存于此 —", image_url: null, sort_order: 6 },
   // 留言页
   { content_key: "messages.title", page: "messages", label: "页面标题", type: "text", content_value: "温暖留言", image_url: null, sort_order: 1 },
   { content_key: "messages.subtitle", page: "messages", label: "留言板副标题", type: "text", content_value: "留下一张便签", image_url: null, sort_order: 2 },
@@ -204,10 +191,6 @@ export const BUILTIN_BLOCKS: Record<
   map: [
     { block: "map_view", label: "足迹地图", desc: "地图主体" },
     { block: "city_list", label: "旅程列表", desc: "按顺序的城市列表" },
-  ],
-  letter: [
-    { block: "letter_body", label: "长信正文", desc: "信件内容与落款" },
-    { block: "letter_sign", label: "底部署名", desc: "页面底部一行字" },
   ],
   messages: [
     { block: "message_form", label: "留言表单", desc: "昵称与留言输入" },

@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Map, BookOpen, Mail, Image } from "lucide-react";
+import { Map, Mail, Image } from "lucide-react";
 import Layout from "@/components/Layout";
 import { useContent } from "@/hooks/useContent";
 import PageBlocks from "@/components/PageBlocks";
@@ -7,7 +7,6 @@ import ContactCard from "@/components/ContactCard";
 
 const ENTRIES = [
   { to: "/map", titleKey: "home.entry_map_title", descKey: "home.entry_map_desc", Icon: Map },
-  { to: "/letter", titleKey: "home.entry_letter_title", descKey: "home.entry_letter_desc", Icon: BookOpen },
   { to: "/messages", titleKey: "home.entry_messages_title", descKey: "home.entry_messages_desc", Icon: Mail },
   { to: "/gallery", titleKey: "home.entry_gallery_title", descKey: "home.entry_gallery_desc", Icon: Image },
 ] as const;
@@ -22,7 +21,7 @@ export default function Home() {
         pageName="home"
         blocks={{
           entry_cards: (
-            <section className="mt-6 grid grid-cols-2 gap-3 pb-8 md:grid-cols-4">
+            <section className="mt-6 grid grid-cols-1 gap-3 pb-8 sm:grid-cols-3">
               {ENTRIES.map(({ to, titleKey, descKey, Icon }, idx) => (
                 <Link
                   key={to}

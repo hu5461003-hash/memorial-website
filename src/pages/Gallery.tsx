@@ -10,6 +10,7 @@ import { supabase, supabaseReady } from "@/lib/supabase";
 import { GALLERY_PASSWORD } from "@/lib/config";
 import { useStore } from "@/store/useStore";
 import { useContent } from "@/hooks/useContent";
+import { useSiteMeta } from "@/hooks/useSiteMeta";
 import PageBlocks from "@/components/PageBlocks";
 import type { Photo, Video, Album } from "@/lib/types";
 
@@ -24,6 +25,9 @@ type View = "albums" | "all" | "album";
 export default function Gallery() {
   const { galleryUnlocked, unlockGallery } = useStore();
   const { getValue } = useContent();
+  const { meta } = useSiteMeta();
+  // 相册密码：优先从数据库 site_meta.gallery_password 读取，兜底用默认值
+  const galleryPassword = meta.gallery_password || GALLERY_PASSWORD;
   const galleryTitle = getValue("gallery.title");
   const gallerySubtitle = getValue("gallery.subtitle");
   const uncategorizedName = getValue("gallery.uncategorized");
@@ -82,7 +86,7 @@ export default function Gallery() {
 
   function handleUnlock(e: React.FormEvent) {
     e.preventDefault();
-    if (pwd === GALLERY_PASSWORD) {
+    if (pwd === galleryPassword) {
       setError(false);
       unlockGallery();
     } else {

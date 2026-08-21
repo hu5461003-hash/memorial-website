@@ -33,7 +33,6 @@ const EMPTY_DRAFT: NavDraft = {
 const QUICK_ROUTES: { label: string; url: string }[] = [
   { label: "首页", url: "/" },
   { label: "足迹地图", url: "/map" },
-  { label: "纪念长信", url: "/letter" },
   { label: "留言板", url: "/messages" },
   { label: "博客", url: "/blog" },
   { label: "私密相册", url: "/gallery" },

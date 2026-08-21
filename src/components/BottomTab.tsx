@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom";
-import { Home, Map, Mail, Image, BookOpen, Newspaper } from "lucide-react";
+import { Home, Map, Mail, Image, Newspaper } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useContent } from "@/hooks/useContent";
 import { useTheme } from "@/hooks/useTheme";
@@ -9,7 +9,6 @@ const NAV_ITEMS = [
   { to: "/", key: "home", Icon: Home, color: "#E1306C" },
   { to: "/map", key: "map", Icon: Map, color: "#F5853F" },
   { to: "/blog", key: "blog", Icon: Newspaper, color: "#833AB4" },
-  { to: "/letter", key: "letter", Icon: BookOpen, color: "#FCAF45" },
   { to: "/messages", key: "messages", Icon: Mail, color: "#C13584" },
   { to: "/gallery", key: "gallery", Icon: Image, color: "#F77737" },
 ] as const;

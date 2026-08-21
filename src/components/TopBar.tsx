@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
-import { Menu, Home, Map, BookOpen, Mail, Image, Newspaper } from "lucide-react";
+import { Menu, Home, Map, Mail, Image, Newspaper, Megaphone, ExternalLink } from "lucide-react";
 import { useContent } from "@/hooks/useContent";
 import { useTheme } from "@/hooks/useTheme";
 import { usePageBlocks } from "@/hooks/usePageBlocks";
@@ -12,7 +12,6 @@ const TOP_NAV = [
   { to: "/", key: "home", Icon: Home },
   { to: "/map", key: "map", Icon: Map },
   { to: "/blog", key: "blog", Icon: Newspaper },
-  { to: "/letter", key: "letter", Icon: BookOpen },
   { to: "/messages", key: "messages", Icon: Mail },
   { to: "/gallery", key: "gallery", Icon: Image },
 ] as const;
@@ -32,6 +31,11 @@ export default function TopBar() {
   const { openSidenav } = useStore();
   const logoImage = getImage("global.logo_image");
   const logoText = getValue("global.logo_text");
+  const headerSubtitle = getValue("global.header_subtitle");
+  const headerBgImage = getImage("global.header_bg_image");
+  const announcement = getValue("global.header_announcement");
+  const headerBtnText = getValue("global.header_btn_text");
+  const headerBtnUrl = getValue("global.header_btn_url");
   const [hidden, setHidden] = useState(false);
 
   // 后台「排版 · 全局」隐藏页头区块时不渲染
@@ -75,71 +79,121 @@ export default function TopBar() {
   if (!headerActive) return null;
 
   return (
-    <header
-      className="fixed inset-x-0 top-0 z-40 backdrop-blur-md transition-transform duration-300 ease-out"
-      style={{
-        backgroundColor: theme.nav_bg_color,
-        borderBottom: `1px solid ${theme.border_color}`,
-        transform: hidden ? "translateY(-100%)" : "translateY(0)",
-      }}
-    >
-      <div className="relative mx-auto flex h-12 w-full max-w-[470px] items-center justify-center px-4 md:max-w-[760px] md:justify-start md:gap-4">
-        {/* 汉堡按钮：打开侧边栏导航（移动端绝对定位居左） */}
-        <button
-          type="button"
-          onClick={openSidenav}
-          aria-label={getValue("global.a11y_menu")}
-          className="absolute left-1.5 inline-flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-black/5 md:static"
-          style={{ color: theme.nav_text_color }}
-        >
-          <Menu className="h-5 w-5" strokeWidth={1.8} />
-        </button>
+    <>
+      {/* 公告栏（页头上方） */}
+      {announcement && (
+        <div className="fixed inset-x-0 top-0 z-40 bg-gold/90 text-center text-[11px] font-medium text-white backdrop-blur-sm">
+          <div className="mx-auto flex max-w-[470px] items-center justify-center gap-1.5 px-4 py-1 md:max-w-[760px]">
+            <Megaphone className="h-3 w-3 flex-none" strokeWidth={1.8} />
+            <span className="truncate">{announcement}</span>
+          </div>
+        </div>
+      )}
 
-        <NavLink
-          to="/"
-          className="flex items-center justify-center md:flex-none"
-        >
-          {logoImage ? (
-            <img
-              src={logoImage}
-              alt={getValue("global.a11y_logo")}
-              className="h-9 w-9 rounded-full border border-cream-300 object-cover"
-            />
-          ) : (
-            <span
-              className="text-lg font-bold tracking-wide"
-              style={{ color: theme.logo_text_color || theme.text_color }}
-            >
-              {logoText}
-            </span>
-          )}
-        </NavLink>
-
-        {/* 桌面端横向导航（移动端隐藏，用底部导航） */}
-        {navActive && (
-          <nav className="ml-auto hidden items-center gap-0.5 md:flex" aria-label="主导航">
-            {TOP_NAV.map(({ to, key, Icon }) => (
-              <NavLink
-                key={to}
-                to={to}
-                end={to === "/"}
-                className={({ isActive }) =>
-                  cn(
-                    "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
-                    isActive ? "bg-black/5" : "hover:bg-black/5",
-                  )
-                }
-                style={({ isActive }) => ({
-                  color: isActive ? theme.nav_active_color : theme.nav_text_color,
-                })}
-              >
-                <Icon className="h-4 w-4" strokeWidth={1.8} />
-                {getValue(`global.nav_${key}`)}
-              </NavLink>
-            ))}
-          </nav>
+      <header
+        className={cn(
+          "fixed inset-x-0 z-40 backdrop-blur-md transition-transform duration-300 ease-out",
+          announcement ? "top-[24px]" : "top-0",
         )}
-      </div>
-    </header>
+        style={{
+          backgroundColor: headerBgImage ? "transparent" : theme.nav_bg_color,
+          backgroundImage: headerBgImage ? `url(${headerBgImage})` : undefined,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          borderBottom: `1px solid ${theme.border_color}`,
+          transform: hidden ? "translateY(-100%)" : "translateY(0)",
+        }}
+      >
+        <div className="relative mx-auto flex w-full max-w-[470px] items-center justify-center px-4 py-1.5 md:max-w-[760px] md:justify-start md:gap-4">
+          {/* 汉堡按钮：打开侧边栏导航（移动端绝对定位居左） */}
+          <button
+            type="button"
+            onClick={openSidenav}
+            aria-label={getValue("global.a11y_menu")}
+            className="absolute left-1.5 inline-flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-black/5 md:static"
+            style={{ color: theme.nav_text_color }}
+          >
+            <Menu className="h-5 w-5" strokeWidth={1.8} />
+          </button>
+
+          <NavLink
+            to="/"
+            className="flex flex-col items-center justify-center md:flex-none md:items-start"
+          >
+            {logoImage ? (
+              <img
+                src={logoImage}
+                alt={getValue("global.a11y_logo")}
+                className="h-9 w-9 rounded-full border border-cream-300 object-cover"
+              />
+            ) : (
+              <span
+                className="text-lg font-bold tracking-wide"
+                style={{ color: theme.logo_text_color || theme.text_color }}
+              >
+                {logoText}
+              </span>
+            )}
+            {headerSubtitle && (
+              <span
+                className="mt-0.5 text-[9px] tracking-wider opacity-70"
+                style={{ color: theme.nav_text_color }}
+              >
+                {headerSubtitle}
+              </span>
+            )}
+          </NavLink>
+
+          {/* 桌面端横向导航（移动端隐藏，用底部导航） */}
+          {navActive && (
+            <nav className="ml-auto hidden items-center gap-0.5 md:flex" aria-label="主导航">
+              {TOP_NAV.map(({ to, key, Icon }) => (
+                <NavLink
+                  key={to}
+                  to={to}
+                  end={to === "/"}
+                  className={({ isActive }) =>
+                    cn(
+                      "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
+                      isActive ? "bg-black/5" : "hover:bg-black/5",
+                    )
+                  }
+                  style={({ isActive }) => ({
+                    color: isActive ? theme.nav_active_color : theme.nav_text_color,
+                  })}
+                >
+                  <Icon className="h-4 w-4" strokeWidth={1.8} />
+                  {getValue(`global.nav_${key}`)}
+                </NavLink>
+              ))}
+              {/* 自定义按钮 */}
+              {headerBtnText && headerBtnUrl && (
+                <a
+                  href={headerBtnUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="ml-2 inline-flex items-center gap-1 rounded-full bg-gold px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-gold/90"
+                >
+                  {headerBtnText}
+                  <ExternalLink className="h-3 w-3" strokeWidth={1.8} />
+                </a>
+              )}
+            </nav>
+          )}
+
+          {/* 移动端自定义按钮 */}
+          {headerBtnText && headerBtnUrl && (
+            <a
+              href={headerBtnUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="absolute right-1.5 inline-flex items-center gap-1 rounded-full bg-gold px-2.5 py-1 text-[10px] font-semibold text-white md:hidden"
+            >
+              {headerBtnText}
+            </a>
+          )}
+        </div>
+      </header>
+    </>
   );
 }

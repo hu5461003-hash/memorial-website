@@ -2,9 +2,12 @@ import { useCallback, useEffect, useState } from "react";
 import {
   Trash2, Plus, Loader2, Upload, Image as ImageIcon, X,
   FolderOpen, FolderPlus, Pencil, Check, Folder, ChevronLeft,
+  KeyRound, Lock, Save, Eye, EyeOff,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useStore } from "@/store/useStore";
+import { useSiteMeta } from "@/hooks/useSiteMeta";
+import { GALLERY_PASSWORD } from "@/lib/config";
 import type { Photo, Album } from "@/lib/types";
 
 type PendingFile = {
@@ -21,6 +24,38 @@ type PendingFile = {
 export default function PhotoManager() {
   const { session } = useStore();
   const uid = session?.user?.id ?? null;
+  const { meta, saveMeta } = useSiteMeta();
+
+  // 相册密码修改
+  const [newPwd, setNewPwd] = useState("");
+  const [confirmPwd, setConfirmPwd] = useState("");
+  const [showPwd, setShowPwd] = useState(false);
+  const [pwdBusy, setPwdBusy] = useState(false);
+  const [pwdHint, setPwdHint] = useState<{ type: "ok" | "err"; text: string } | null>(null);
+  const currentPwd = meta.gallery_password || GALLERY_PASSWORD;
+
+  async function handleChangePwd(e: React.FormEvent) {
+    e.preventDefault();
+    if (!newPwd.trim()) {
+      setPwdHint({ type: "err", text: "新密码不能为空" });
+      return;
+    }
+    if (newPwd !== confirmPwd) {
+      setPwdHint({ type: "err", text: "两次输入的密码不一致" });
+      return;
+    }
+    setPwdBusy(true);
+    setPwdHint(null);
+    const ok = await saveMeta("gallery_password", newPwd.trim());
+    setPwdBusy(false);
+    if (ok) {
+      setPwdHint({ type: "ok", text: "✓ 相册密码已修改，前台立即生效" });
+      setNewPwd("");
+      setConfirmPwd("");
+    } else {
+      setPwdHint({ type: "err", text: "修改失败，请重试" });
+    }
+  }
 
   const [albums, setAlbums] = useState<Album[]>([]);
   const [photos, setPhotos] = useState<Photo[]>([]);
@@ -245,6 +280,63 @@ export default function PhotoManager() {
   /* ========= 渲染 ========= */
   return (
     <div className="space-y-5">
+      {/* ========== 相册密码设置 ========== */}
+      <div className="rounded-card border border-gold/30 bg-cream-200 p-4 shadow-paper">
+        <h3 className="mb-3 flex items-center gap-1.5 text-base font-bold text-ink">
+          <Lock className="h-4 w-4 text-gold" strokeWidth={1.8} />
+          相册访问密码
+          <span className="ml-1 text-xs font-normal text-ink-mute">（前台相册页解锁用）</span>
+        </h3>
+        <div className="mb-3 flex items-center gap-2 rounded-soft bg-cream-50/60 px-3 py-2">
+          <KeyRound className="h-3.5 w-3.5 flex-none text-ink-mute" strokeWidth={1.6} />
+          <span className="text-xs text-ink-soft">当前密码：</span>
+          <span className="font-mono text-sm font-semibold tracking-wider text-coffee">
+            {showPwd ? currentPwd : "••••••"}
+          </span>
+          <button
+            type="button"
+            onClick={() => setShowPwd((v) => !v)}
+            className="ml-auto rounded p-1 text-ink-mute hover:bg-cream-100 hover:text-ink"
+            aria-label={showPwd ? "隐藏密码" : "显示密码"}
+          >
+            {showPwd ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+          </button>
+        </div>
+        <form onSubmit={handleChangePwd} className="grid gap-2 sm:grid-cols-2">
+          <div>
+            <label className="field-label">新密码</label>
+            <input
+              type={showPwd ? "text" : "password"}
+              value={newPwd}
+              onChange={(e) => setNewPwd(e.target.value)}
+              placeholder="输入新密码"
+              className="input-line"
+            />
+          </div>
+          <div>
+            <label className="field-label">确认新密码</label>
+            <input
+              type={showPwd ? "text" : "password"}
+              value={confirmPwd}
+              onChange={(e) => setConfirmPwd(e.target.value)}
+              placeholder="再次输入新密码"
+              className="input-line"
+            />
+          </div>
+          <div className="sm:col-span-2">
+            {pwdHint && (
+              <p className={`mb-2 text-xs ${pwdHint.type === "ok" ? "text-coffee" : "text-rust"}`}>
+                {pwdHint.text}
+              </p>
+            )}
+            <button type="submit" disabled={pwdBusy} className="btn-gold !px-4 !py-2 text-xs">
+              {pwdBusy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+              修改密码
+            </button>
+          </div>
+        </form>
+      </div>
+
       {/* ========== 上传表单 ========== */}
       <form
         onSubmit={handleUpload}

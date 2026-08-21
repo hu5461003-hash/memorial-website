@@ -3,10 +3,11 @@
 -- 执行方式：Supabase Dashboard → SQL Editor → 整段运行（可重复执行）
 -- ============================================================
 
--- 1. messages 表：留言者 QQ（头像用）、IP 与归属地
+-- 1. messages 表：留言者 QQ（头像用）、IP 与归属地、是否管理员发布
 alter table public.messages add column if not exists qq text;
 alter table public.messages add column if not exists ip_address text;
 alter table public.messages add column if not exists ip_location text;
+alter table public.messages add column if not exists is_admin boolean not null default false;
 
 -- 2. admin_profiles 表：每项联系方式的打码开关（勾选后前台中间用星号隐藏）
 alter table public.admin_profiles add column if not exists qq_masked boolean not null default false;

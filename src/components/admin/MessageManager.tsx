@@ -86,6 +86,7 @@ export default function MessageManager() {
       nickname: newNickname.trim() || "管理员",
       content,
       color: newColor,
+      is_admin: true,
     });
     setBusy(false);
     if (error) {

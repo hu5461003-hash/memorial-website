@@ -6,7 +6,6 @@ import { useSiteMeta } from "@/hooks/useSiteMeta";
 const PAGE_BY_PATH: Record<string, string> = {
   "/": "home",
   "/map": "map",
-  "/letter": "letter",
   "/messages": "messages",
   "/gallery": "gallery",
 };

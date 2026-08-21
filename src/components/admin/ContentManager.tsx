@@ -43,7 +43,6 @@ const PAGE_LABELS: Record<string, string> = {
   global: "全局",
   home: "首页",
   map: "地图",
-  letter: "长信",
   messages: "留言",
   gallery: "相册",
   blog: "博客",

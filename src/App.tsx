@@ -5,7 +5,6 @@ import RouteMeta from "@/components/RouteMeta";
 
 // 路由级代码分割：首屏只加载首页所需的代码
 const MapPage = lazy(() => import("@/pages/MapPage"));
-const Letter = lazy(() => import("@/pages/Letter"));
 const Messages = lazy(() => import("@/pages/Messages"));
 const Gallery = lazy(() => import("@/pages/Gallery"));
 const Blog = lazy(() => import("@/pages/Blog"));
@@ -29,7 +28,6 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/map" element={<MapPage />} />
-          <Route path="/letter" element={<Letter />} />
           <Route path="/messages" element={<Messages />} />
           <Route path="/blog" element={<Blog />} />
           <Route path="/blog/:slug" element={<BlogPost />} />

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Send, AlertCircle, CheckCircle2, Pin } from "lucide-react";
+import { Send, AlertCircle, CheckCircle2, Pin, MapPin } from "lucide-react";
 import PageHeader from "@/components/PageHeader";
 import Layout from "@/components/Layout";
 import Loading from "@/components/Loading";
@@ -8,7 +8,7 @@ import { randomNoteColor, getMessageAvatar } from "@/lib/types";
 import type { MessageNote, NoteColor } from "@/lib/types";
 import { getMyIpInfo } from "@/lib/ipInfo";
 import { useContent } from "@/hooks/useContent";
-import { cn } from "@/lib/utils";
+import { cn, extractProvince } from "@/lib/utils";
 import PageBlocks from "@/components/PageBlocks";
 
 const NOTE_BG: Record<NoteColor, string> = {
@@ -221,18 +221,27 @@ export default function Messages() {
               </p>
             </div>
           ) : (
-            <div className="columns-2 gap-3 [column-fill:balance] md:columns-3">
+            <div className="grid grid-cols-2 gap-3">
               {messages.map((m, idx) => {
                 const ip = displayIp(m.ip_address);
+                const province = extractProvince(m.ip_location);
+                const isAdmin = Boolean(m.is_admin);
                 return (
                   <div
                     key={m.id}
                     className={cn(
-                      "mb-3 inline-block w-full break-inside-avoid rounded-card p-3.5 shadow-note",
+                      "relative break-inside-avoid rounded-card p-3.5 shadow-note transition-all",
                       NOTE_BG[m.color],
                       NOTE_ROTATE[idx % NOTE_ROTATE.length],
+                      isAdmin && "ring-2 ring-gold ring-offset-1 ring-offset-transparent",
                     )}
+                    style={isAdmin ? { borderWidth: "3px", borderStyle: "solid", borderColor: "rgba(212,175,55,0.6)" } : undefined}
                   >
+                    {isAdmin && (
+                      <span className="absolute -top-2 left-1/2 -translate-x-1/2 rounded-full bg-gold px-2 py-0.5 text-[9px] font-bold text-white shadow-sm">
+                        管理员
+                      </span>
+                    )}
                     <Pin
                       className="mx-auto mb-1.5 h-3.5 w-3.5 text-coffee/50"
                       strokeWidth={1.6}
@@ -246,9 +255,15 @@ export default function Messages() {
                         <p className="truncate font-hand text-xs text-ink-soft">
                           — {m.nickname}
                         </p>
-                        {ip && (
-                          <p className="text-[10px] leading-tight text-ink-mute">
-                            IP {ip}
+                        {(ip || province) && (
+                          <p className="flex flex-wrap items-center gap-x-1.5 text-[10px] leading-tight text-ink-mute">
+                            {province && (
+                              <span className="inline-flex items-center gap-0.5">
+                                <MapPin className="h-2.5 w-2.5" strokeWidth={1.8} />
+                                {province}
+                              </span>
+                            )}
+                            {ip && <span className="font-mono">IP {ip}</span>}
                           </p>
                         )}
                       </div>

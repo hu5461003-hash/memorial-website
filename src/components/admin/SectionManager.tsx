@@ -19,6 +19,9 @@ import {
   Undo2,
   Check,
   ExternalLink,
+  Square,
+  AlignLeft,
+  Link as LinkIcon,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { BUILTIN_BLOCKS, BUILTIN_LABELS } from "@/lib/config";
@@ -33,7 +36,6 @@ const SYSTEM_PAGES: Record<string, string> = {
   global: "全局",
   home: "首页",
   map: "地图",
-  letter: "长信",
   messages: "留言",
   gallery: "相册",
   blog: "博客",
@@ -45,11 +47,15 @@ const SECTION_TYPES: {
   Icon: typeof Code;
   desc: string;
 }[] = [
+  { type: "heading", label: "标题文字", Icon: TypeIcon, desc: "插入一段标题" },
+  { type: "text", label: "文本段落", Icon: AlignLeft, desc: "多行文字段落" },
+  { type: "image", label: "图片块", Icon: ImageIcon, desc: "单张图片展示" },
+  { type: "button", label: "按钮", Icon: Square, desc: "可点击跳转按钮" },
+  { type: "divider", label: "分割线", Icon: Minus, desc: "水平分隔线" },
+  { type: "spacer", label: "留白间隔", Icon: Minus, desc: "插入垂直空白" },
   { type: "marquee", label: "无限滚动相册", Icon: ImageIcon, desc: "横向自动滚动的照片条" },
   { type: "timeline", label: "恋爱时间轴", Icon: Clock, desc: "垂直时间线展示重要日期" },
   { type: "custom_html", label: "自定义代码块", Icon: Code, desc: "注入 HTML/CSS/JS" },
-  { type: "heading", label: "标题文字", Icon: TypeIcon, desc: "插入一段标题" },
-  { type: "spacer", label: "留白间隔", Icon: Minus, desc: "插入垂直空白" },
 ];
 
 /** 参与变更对比的字段 */
@@ -776,6 +782,382 @@ export default function SectionManager() {
                       </div>
                     )}
 
+                    {/* === 图片块 === */}
+                    {editType === "image" && (
+                      <div className="space-y-2.5">
+                        <div>
+                          <label className="field-label">图片地址</label>
+                          <MediaPicker
+                            value={(editObj.url as string) ?? ""}
+                            onChange={(url) => setField("url", url)}
+                            label=""
+                            accept="image/*"
+                            mediaType="image"
+                          />
+                        </div>
+                        <div>
+                          <label className="field-label">图片描述（alt，可选）</label>
+                          <input
+                            value={(editObj.alt as string) ?? ""}
+                            onChange={(e) => setField("alt", e.target.value)}
+                            placeholder="图片描述文字"
+                            className="input-line"
+                          />
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <label className="field-label">宽度：{(editObj.width as number) ?? 100}%</label>
+                            <input
+                              type="range"
+                              min={20}
+                              max={100}
+                              step={5}
+                              value={(editObj.width as number) ?? 100}
+                              onChange={(e) => setField("width", Number(e.target.value))}
+                              className="w-full accent-gold"
+                            />
+                          </div>
+                          <div>
+                            <label className="field-label">对齐方式</label>
+                            <div className="flex gap-1">
+                              {(["left", "center", "right"] as const).map((al) => (
+                                <button
+                                  key={al}
+                                  type="button"
+                                  onClick={() => setField("align", al)}
+                                  className={cn(
+                                    "flex-1 rounded-soft border py-1.5 text-xs",
+                                    (editObj.align as string) === al
+                                      ? "border-gold bg-gold/15 text-coffee"
+                                      : "border-coffee-line/50 text-ink-mute hover:text-ink",
+                                  )}
+                                >
+                                  {{ left: "左", center: "中", right: "右" }[al]}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <label className="flex cursor-pointer items-center gap-2 text-[11px] text-ink-soft">
+                            <input
+                              type="checkbox"
+                              checked={(editObj.rounded as boolean) ?? true}
+                              onChange={(e) => setField("rounded", e.target.checked)}
+                              className="h-3.5 w-3.5 accent-gold"
+                            />
+                            圆角显示
+                          </label>
+                          <label className="flex cursor-pointer items-center gap-2 text-[11px] text-ink-soft">
+                            <input
+                              type="checkbox"
+                              checked={(editObj.open_in_new as boolean) ?? true}
+                              onChange={(e) => setField("open_in_new", e.target.checked)}
+                              className="h-3.5 w-3.5 accent-gold"
+                            />
+                            新窗口打开链接
+                          </label>
+                        </div>
+                        <div>
+                          <label className="field-label">点击跳转链接（留空不跳转）</label>
+                          <input
+                            value={(editObj.link as string) ?? ""}
+                            onChange={(e) => setField("link", e.target.value)}
+                            placeholder="https://… 或 /页面路径"
+                            className="input-line font-mono text-xs"
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    {/* === 文本段落 === */}
+                    {editType === "text" && (
+                      <div className="space-y-2.5">
+                        <div>
+                          <label className="field-label">段落内容</label>
+                          <textarea
+                            value={(editObj.text as string) ?? ""}
+                            onChange={(e) => setField("text", e.target.value)}
+                            rows={5}
+                            placeholder="输入段落文字，支持换行"
+                            className="w-full resize-y rounded-soft border border-coffee-line/70 bg-cream-50 px-3 py-2 text-sm focus:border-gold focus:outline-none"
+                          />
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <label className="field-label">对齐方式</label>
+                            <div className="flex gap-1">
+                              {(["left", "center", "right", "justify"] as const).map((al) => (
+                                <button
+                                  key={al}
+                                  type="button"
+                                  onClick={() => setField("align", al)}
+                                  className={cn(
+                                    "flex-1 rounded-soft border py-1.5 text-[10px]",
+                                    (editObj.align as string) === al
+                                      ? "border-gold bg-gold/15 text-coffee"
+                                      : "border-coffee-line/50 text-ink-mute hover:text-ink",
+                                  )}
+                                >
+                                  {{ left: "左", center: "中", right: "右", justify: "两端" }[al]}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                          <div>
+                            <label className="field-label">字号</label>
+                            <select
+                              value={(editObj.font_size as string) ?? "14px"}
+                              onChange={(e) => setField("font_size", e.target.value)}
+                              className="w-full rounded-soft border border-coffee-line/50 bg-cream-50 px-2 py-1.5 text-xs focus:border-gold focus:outline-none"
+                            >
+                              <option value="12px">12px 小</option>
+                              <option value="14px">14px 正常</option>
+                              <option value="16px">16px 中</option>
+                              <option value="18px">18px 大</option>
+                              <option value="20px">20px 特大</option>
+                            </select>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <label className="field-label">字重</label>
+                            <select
+                              value={(editObj.font_weight as string) ?? "normal"}
+                              onChange={(e) => setField("font_weight", e.target.value)}
+                              className="w-full rounded-soft border border-coffee-line/50 bg-cream-50 px-2 py-1.5 text-xs focus:border-gold focus:outline-none"
+                            >
+                              <option value="normal">正常</option>
+                              <option value="500">中等</option>
+                              <option value="bold">加粗</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="field-label">文字颜色（留空默认）</label>
+                            <div className="flex items-center gap-1.5">
+                              <input
+                                type="color"
+                                value={(editObj.color as string) || "#1A1A1A"}
+                                onChange={(e) => setField("color", e.target.value)}
+                                className="h-7 w-10 cursor-pointer rounded border border-coffee-line/50 bg-transparent"
+                              />
+                              {(editObj.color as string) && (
+                                <button
+                                  type="button"
+                                  onClick={() => setField("color", "")}
+                                  className="text-[10px] text-ink-mute hover:text-rust"
+                                >
+                                  清除
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* === 按钮 === */}
+                    {editType === "button" && (
+                      <div className="space-y-2.5">
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <label className="field-label">按钮文字</label>
+                            <input
+                              value={(editObj.text as string) ?? ""}
+                              onChange={(e) => setField("text", e.target.value)}
+                              placeholder="如 点击查看"
+                              className="input-line"
+                            />
+                          </div>
+                          <div>
+                            <label className="field-label">跳转链接 *</label>
+                            <input
+                              value={(editObj.link as string) ?? ""}
+                              onChange={(e) => setField("link", e.target.value)}
+                              placeholder="https://… 或 /页面"
+                              className="input-line font-mono text-xs"
+                            />
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-3 gap-2">
+                          <div>
+                            <label className="field-label">样式</label>
+                            <select
+                              value={(editObj.style as string) ?? "solid"}
+                              onChange={(e) => setField("style", e.target.value)}
+                              className="w-full rounded-soft border border-coffee-line/50 bg-cream-50 px-2 py-1.5 text-xs focus:border-gold focus:outline-none"
+                            >
+                              <option value="solid">实心</option>
+                              <option value="outline">描边</option>
+                              <option value="ghost">幽灵</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="field-label">大小</label>
+                            <select
+                              value={(editObj.size as string) ?? "md"}
+                              onChange={(e) => setField("size", e.target.value)}
+                              className="w-full rounded-soft border border-coffee-line/50 bg-cream-50 px-2 py-1.5 text-xs focus:border-gold focus:outline-none"
+                            >
+                              <option value="sm">小</option>
+                              <option value="md">中</option>
+                              <option value="lg">大</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="field-label">对齐</label>
+                            <div className="flex gap-1">
+                              {(["left", "center", "right"] as const).map((al) => (
+                                <button
+                                  key={al}
+                                  type="button"
+                                  onClick={() => setField("align", al)}
+                                  className={cn(
+                                    "flex-1 rounded-soft border py-1.5 text-[10px]",
+                                    (editObj.align as string) === al
+                                      ? "border-gold bg-gold/15 text-coffee"
+                                      : "border-coffee-line/50 text-ink-mute hover:text-ink",
+                                  )}
+                                >
+                                  {{ left: "左", center: "中", right: "右" }[al]}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div className="flex items-center gap-1.5">
+                            <label className="field-label mb-0 flex-none">背景色</label>
+                            <input
+                              type="color"
+                              value={(editObj.bg_color as string) || "#1A1A1A"}
+                              onChange={(e) => setField("bg_color", e.target.value)}
+                              className="h-7 w-10 flex-none cursor-pointer rounded border border-coffee-line/50 bg-transparent"
+                            />
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <label className="field-label mb-0 flex-none">文字色</label>
+                            <input
+                              type="color"
+                              value={(editObj.text_color as string) || "#FFFFFF"}
+                              onChange={(e) => setField("text_color", e.target.value)}
+                              className="h-7 w-10 flex-none cursor-pointer rounded border border-coffee-line/50 bg-transparent"
+                            />
+                          </div>
+                        </div>
+                        <label className="flex cursor-pointer items-center gap-2 text-[11px] text-ink-soft">
+                          <input
+                            type="checkbox"
+                            checked={(editObj.open_in_new as boolean) ?? true}
+                            onChange={(e) => setField("open_in_new", e.target.checked)}
+                            className="h-3.5 w-3.5 accent-gold"
+                          />
+                          新窗口打开链接
+                        </label>
+                        {/* 预览 */}
+                        <div className="rounded-soft border border-coffee-line/50 bg-cream-100/50 p-3">
+                          <p className="mb-2 text-[10px] text-ink-mute">按钮预览</p>
+                          <div style={{ textAlign: ((editObj.align as string) || "center") as React.CSSProperties["textAlign"] }}>
+                            <span
+                              className={cn(
+                                "inline-flex items-center gap-1.5 rounded-full font-semibold",
+                                { "px-3 py-1.5 text-xs": (editObj.size as string) === "sm" },
+                                { "px-5 py-2 text-sm": (editObj.size as string) === "md" || !editObj.size },
+                                { "px-7 py-2.5 text-base": (editObj.size as string) === "lg" },
+                              )}
+                              style={
+                                (editObj.style as string) === "outline"
+                                  ? { backgroundColor: "transparent", color: (editObj.bg_color as string) || "#1A1A1A", border: `2px solid ${(editObj.bg_color as string) || "#1A1A1A"}` }
+                                  : (editObj.style as string) === "ghost"
+                                    ? { backgroundColor: "transparent", color: (editObj.bg_color as string) || "#1A1A1A" }
+                                    : { backgroundColor: (editObj.bg_color as string) || "#1A1A1A", color: (editObj.text_color as string) || "#FFFFFF" }
+                              }
+                            >
+                              {(editObj.text as string) || "按钮文字"}
+                              {(editObj.open_in_new as boolean) !== false && <ExternalLink className="h-3 w-3" strokeWidth={2} />}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* === 分割线 === */}
+                    {editType === "divider" && (
+                      <div className="space-y-2.5">
+                        <div>
+                          <label className="field-label">样式</label>
+                          <div className="grid grid-cols-4 gap-1">
+                            {(["solid", "dashed", "dotted", "gradient"] as const).map((st) => (
+                              <button
+                                key={st}
+                                type="button"
+                                onClick={() => setField("style", st)}
+                                className={cn(
+                                  "rounded-soft border py-2 text-[10px]",
+                                  (editObj.style as string) === st
+                                    ? "border-gold bg-gold/15 text-coffee"
+                                    : "border-coffee-line/50 text-ink-mute hover:text-ink",
+                                )}
+                              >
+                                {{ solid: "实线", dashed: "虚线", dotted: "点线", gradient: "渐变" }[st]}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div className="flex items-center gap-1.5">
+                            <label className="field-label mb-0 flex-none">颜色</label>
+                            <input
+                              type="color"
+                              value={(editObj.color as string) || "#E5E5E5"}
+                              onChange={(e) => setField("color", e.target.value)}
+                              className="h-7 w-10 flex-none cursor-pointer rounded border border-coffee-line/50 bg-transparent"
+                            />
+                          </div>
+                          <div>
+                            <label className="field-label">粗细：{(editObj.thickness as number) ?? 1}px</label>
+                            <input
+                              type="range"
+                              min={1}
+                              max={6}
+                              step={1}
+                              value={(editObj.thickness as number) ?? 1}
+                              onChange={(e) => setField("thickness", Number(e.target.value))}
+                              className="w-full accent-gold"
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <label className="field-label">上下间距：{(editObj.spacing as number) ?? 24}px</label>
+                          <input
+                            type="range"
+                            min={8}
+                            max={64}
+                            step={4}
+                            value={(editObj.spacing as number) ?? 24}
+                            onChange={(e) => setField("spacing", Number(e.target.value))}
+                            className="w-full accent-gold"
+                          />
+                        </div>
+                        {/* 预览 */}
+                        <div className="rounded-soft border border-coffee-line/50 bg-cream-100/50 p-3">
+                          <p className="mb-2 text-[10px] text-ink-mute">分割线预览</p>
+                          <div
+                            style={
+                              (editObj.style as string) === "gradient"
+                                ? {
+                                    height: `${(editObj.thickness as number) ?? 1}px`,
+                                    background: `linear-gradient(90deg, transparent, ${(editObj.color as string) || "#E5E5E5"}, transparent)`,
+                                  }
+                                : {
+                                    borderTop: `${(editObj.thickness as number) ?? 1}px ${(editObj.style as string) || "solid"} ${(editObj.color as string) || "#E5E5E5"}`,
+                                  }
+                            }
+                          />
+                        </div>
+                      </div>
+                    )}
+
                     {/* === 自定义代码块 === */}
                     {editType === "custom_html" && (
                       <div className="space-y-2">
@@ -1050,6 +1432,10 @@ function sectionLabel(type: SectionType): string {
     custom_html: "自定义代码块",
     heading: "标题文字",
     spacer: "留白间隔",
+    image: "图片块",
+    text: "文本段落",
+    button: "按钮",
+    divider: "分割线",
   };
   return map[type] ?? type;
 }
@@ -1066,6 +1452,14 @@ function getDefaultData(type: SectionType): Record<string, unknown> {
       return { text: "标题", level: "h3", align: "center" };
     case "spacer":
       return { height: 32 };
+    case "image":
+      return { url: "", alt: "", width: 100, align: "center", rounded: true, link: "", open_in_new: true };
+    case "text":
+      return { text: "在这里输入段落文字...", align: "left", font_size: "14px", font_weight: "normal", color: "" };
+    case "button":
+      return { text: "点击查看", link: "", open_in_new: true, bg_color: "#1A1A1A", text_color: "#FFFFFF", size: "md", align: "center", style: "solid" };
+    case "divider":
+      return { style: "solid", color: "#E5E5E5", thickness: 1, spacing: 24 };
     default:
       return {};
   }

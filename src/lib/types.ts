@@ -22,8 +22,10 @@ export type MessageNote = {
   qq?: string | null;
   /** 留言者 IP（前台展示完整 IP） */
   ip_address?: string | null;
-  /** IP 归属地（仅后台展示） */
+  /** IP 归属地（仅后台展示完整，前台展示省份） */
   ip_location?: string | null;
+  /** 是否管理员发布（前台便签边框加粗突出） */
+  is_admin?: boolean | null;
 };
 
 export type Photo = {
@@ -93,7 +95,11 @@ export type SectionType =
   | "timeline"      // 恋爱时间轴
   | "custom_html"   // 自定义代码块
   | "heading"       // 标题文字
-  | "spacer";       // 留白间隔
+  | "spacer"        // 留白间隔
+  | "image"         // 图片块
+  | "text"          // 文本段落块
+  | "button"        // 按钮块
+  | "divider";      // 分割线
 
 export type PageSection = {
   id: string;

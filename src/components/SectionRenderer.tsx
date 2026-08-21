@@ -8,6 +8,10 @@ import TimelineSection from "@/components/sections/TimelineSection";
 import CustomHtmlSection from "@/components/sections/CustomHtmlSection";
 import HeadingSection from "@/components/sections/HeadingSection";
 import SpacerSection from "@/components/sections/SpacerSection";
+import ImageSection from "@/components/sections/ImageSection";
+import TextSection from "@/components/sections/TextSection";
+import ButtonSection from "@/components/sections/ButtonSection";
+import DividerSection from "@/components/sections/DividerSection";
 
 /** 渲染单个动态分区（内置区块返回 null，由 PageBlocks 处理） */
 export function SectionItem({ section }: { section: PageSection }) {
@@ -46,12 +50,24 @@ export function SectionItem({ section }: { section: PageSection }) {
     case "spacer":
       inner = <SpacerSection data={s.content_data} />;
       break;
+    case "image":
+      inner = <ImageSection data={s.content_data} />;
+      break;
+    case "text":
+      inner = <TextSection data={s.content_data} />;
+      break;
+    case "button":
+      inner = <ButtonSection data={s.content_data} />;
+      break;
+    case "divider":
+      inner = <DividerSection data={s.content_data} />;
+      break;
     default:
       return null;
   }
 
-  // spacer 不需要包裹背景
-  if (s.section_type === "spacer") return <>{inner}</>;
+  // spacer 和 divider 不需要包裹背景
+  if (s.section_type === "spacer" || s.section_type === "divider") return <>{inner}</>;
 
   if (s.section_type === "custom_html") {
     const fullWidth = Boolean(data.full_width);
